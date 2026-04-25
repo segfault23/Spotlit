@@ -5,6 +5,7 @@
 
   let themeMenuOpen = $state(false);
   let showFlash = $state(false);
+  let showEditName = $state(true);
   let flashTimeout;
 
   function handleFearToken(i) {
@@ -39,6 +40,10 @@
     }
   }
 
+  function handleSave() {
+    showEditName = !showEditName;
+  }
+
   function handleOutsideClick(e) {
     if (!e.target.closest('.theme-toggle-wrap')) {
       themeMenuOpen = false;
@@ -56,7 +61,11 @@
     placeholder="Name this encounter…"
     value={$encounter.encounterName}
     oninput={e => encounter.setEncounterName(e.currentTarget.value)}
+    readonly={!showEditName}
   />
+  <button class="hdr-btn" onclick={handleSave}>
+    {showEditName ? '💾 Save' : '✏️ Edit'}
+  </button>
 
   <!-- Fear -->
   <div class="hgroup">

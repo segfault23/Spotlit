@@ -48,7 +48,13 @@ function createEncounterStore() {
         creatures: s.creatures.map(c => {
           if (c.id !== id) return c;
           if (key === 'hp')  return { ...c, hp:      c.hp      > i ? i : i + 1 };
-          if (key === 'str') return { ...c, str:     c.str     > i ? i : i + 1 };
+          if (key === 'str') {
+            const newStr = c.str > i ? i : i + 1;
+            return { ...c, 
+              str: newStr,
+              conds: { ...c.conds, vulnerable: newStr >= c.maxStr }
+            };
+          };
           if (key === 'arm') return { ...c, armUsed: (c.armUsed || 0) > i ? i : i + 1 };
           return c;
         })

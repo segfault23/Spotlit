@@ -190,6 +190,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 #header{position:relative;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 #encounter-name{flex:1;min-width:160px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--accent);font-family:var(--font-head);font-style:italic;font-size:1.1rem;padding:2px 4px;outline:none}
 #encounter-name::placeholder{color:var(--text-faint)}
+#encounter-name:readonly {border:none;border-color:transparent;border-bottom:none;background: var(--surface2);color:var(--text-dim);cursor:default}
 .hgroup{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;flex-shrink:0}
 .hg-label{font-family:var(--font-mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim)}
 .hg-val{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);min-width:22px;text-align:center}
