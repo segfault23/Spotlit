@@ -27,6 +27,12 @@
     themeMenuOpen = false;
   }
 
+  function handleNew() {
+    if (confirm('Start new encounter? This will clear HP, Stress, Armor, conditions, Fear, and round. Creatures stay.')) {
+      encounter.new();
+    }
+  }
+
   function handleReset() {
     if (confirm('Reset encounter? HP, Stress, Armor, conditions, Fear, and round clear. Creatures stay.')) {
       encounter.reset();
@@ -43,6 +49,7 @@
 <svelte:window onclick={handleOutsideClick} />
 
 <div id="header">
+  <button class="hdr-btn" onclick={handleNew}>🗎 New Encounter</button>
   <input
     id="encounter-name"
     type="text"

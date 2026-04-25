@@ -133,6 +133,14 @@ function createEncounterStore() {
           notes: ''
         }))
       }));
+    },
+
+    new() {
+      update(s => ({
+        ...s,
+        fear: 0, round: 1, uid: 1, encounterName: '',
+        creatures: [], expandedFeats: []
+      }));
     }
   };
 }

@@ -2,16 +2,17 @@
 // (features + creature presets). Anything imported from `$lib/server/...`
 // is automatically excluded from the client bundle by SvelteKit.
 
+import { env } from '$env/dynamic/private';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-const TABLE = process.env.CONTENT_TABLE;
+const TABLE = env.CONTENT_TABLE;
 
 function assertTable() {
   if (!TABLE) throw new Error('CONTENT_TABLE env var not set');
 }
-
+1
 export async function getFeature(slug) {
   assertTable();
   const r = await ddb.send(new GetCommand({
