@@ -6,6 +6,14 @@
   import AddAdversaryModal from '$lib/components/AddAdversaryModal.svelte';
   import { encounter } from '$lib/stores/encounter.js';
   import { activeModal } from '$lib/stores/modal.js';
+  import { featuresByName, presetsByName } from '$lib/stores/catalog.js';
+
+  let { data } = $props();
+
+  // Sync server-loaded catalogue into the client-side stores so any
+  // descendant component can read them without prop-drilling.
+  $effect(() => { featuresByName.set(data.featuresByName); });
+  $effect(() => { presetsByName.set(data.presetsByName); });
 </script>
 
 <EncounterHeader />

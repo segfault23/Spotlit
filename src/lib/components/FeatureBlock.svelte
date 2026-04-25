@@ -1,11 +1,11 @@
 <script>
-  import { FEATURES } from '$lib/data.js';
+  import { featuresByName } from '$lib/stores/catalog.js';
 
   let { feat } = $props();
 
   let fname    = $derived(feat.split('|')[0]);
   let fnote    = $derived(feat.split('|')[1]);
-  let fd       = $derived(FEATURES[fname]);
+  let fd       = $derived($featuresByName[fname]);
   let cls      = $derived(!fd ? 'action'
     : fd.t === 'Passive'   ? 'passive'
     : fd.t === 'Action'    ? 'action'

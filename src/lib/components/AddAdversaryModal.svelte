@@ -1,12 +1,14 @@
 <script>
-  import { PRESETS } from '$lib/data.js';
+  import { presetsByName } from '$lib/stores/catalog.js';
   import { encounter } from '$lib/stores/encounter.js';
   import { closeModal } from '$lib/stores/modal.js';
 
-  const PRESET_ENTRIES = Object.entries(PRESETS);
-
   let searchQuery = $state('');
   let selectedAdversaries = $state(new Set());
+
+  // Reactive entries view of the preset catalogue (refills as the catalogue
+  // store updates after server load).
+  let PRESET_ENTRIES = $derived(Object.entries($presetsByName));
 
   // Form fields
   let fName    = $state('');
@@ -43,7 +45,7 @@
   }
 
   function loadPreset(name) {
-    const p = PRESETS[name];
+    const p = $presetsByName[name];
     fName = name; fType = p.type; fTier = p.tier; fDiff = p.diff;
     fAtk = p.atk; fHP = p.hp; fStr = p.str; fThresh = p.thresh;
     fDmg = p.dmg; fAtkName = p.atkName; fFeats = p.feats.join(', ');
@@ -65,7 +67,7 @@
       });
     } else {
       selectedAdversaries.forEach(presetName => {
-        const p = PRESETS[presetName];
+        const p = $presetsByName[presetName];
         encounter.addCreature({
           name: presetName,
           type:    fType !== 'Solo' ? fType    : p.type,
