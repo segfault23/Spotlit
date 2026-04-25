@@ -49,34 +49,36 @@
   <div class="modal modal-sm">
     <div class="modal-title">Add PC to Encounter</div>
 
-    <p class="sect-title">From roster</p>
-    <div class="roster-list">
-      {#if $roster.length}
-        {#each $roster as r (r.id)}
-          <div class="roster-row">
-            <div style="flex:1">
-              <div class="roster-name">{r.name}</div>
-              <div class="roster-stats">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion} · Armor {r.armor}</div>
+    <div class="modal-scroll-body">
+      <p class="sect-title">From roster</p>
+      <div class="roster-list">
+        {#if $roster.length}
+          {#each $roster as r (r.id)}
+            <div class="roster-row">
+              <div style="flex:1">
+                <div class="roster-name">{r.name}</div>
+                <div class="roster-stats">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion} · Armor {r.armor}</div>
+              </div>
+              <button class="roster-add-btn" onclick={() => addFromRoster(r)}>+ Add</button>
             </div>
-            <button class="roster-add-btn" onclick={() => addFromRoster(r)}>+ Add</button>
-          </div>
-        {/each}
-      {:else}
-        <div class="empty" style="padding:12px 0">No characters saved yet.</div>
-      {/if}
-    </div>
+          {/each}
+        {:else}
+          <div class="empty" style="padding:12px 0">No characters saved yet.</div>
+        {/if}
+      </div>
 
-    <hr class="divider" />
-    <p class="sect-title">Or add one-time custom PC</p>
+      <hr class="divider" />
+      <p class="sect-title">Or add one-time custom PC</p>
 
-    <div class="fg"><label for="pc-name">Name</label><input id="pc-name" type="text" placeholder="Character name" bind:value={name} /></div>
-    <div class="fgrow">
-      <div class="fg"><label for="pc-hp">Max HP</label><input id="pc-hp" type="number" min="1" max="12" bind:value={maxHP} /></div>
-      <div class="fg"><label for="pc-str">Max Stress</label><input id="pc-str" type="number" min="1" max="12" bind:value={maxStr} /></div>
-    </div>
-    <div class="fgrow">
-      <div class="fg"><label for="pc-ev">Evasion</label><input id="pc-ev" type="number" bind:value={evasion} /></div>
-      <div class="fg"><label for="pc-arm">Armor Score</label><input id="pc-arm" type="number" min="0" max="12" bind:value={armor} /></div>
+      <div class="fg"><label for="pc-name">Name</label><input id="pc-name" type="text" placeholder="Character name" bind:value={name} /></div>
+      <div class="fgrow">
+        <div class="fg"><label for="pc-hp">Max HP</label><input id="pc-hp" type="number" min="1" max="12" bind:value={maxHP} /></div>
+        <div class="fg"><label for="pc-str">Max Stress</label><input id="pc-str" type="number" min="1" max="12" bind:value={maxStr} /></div>
+      </div>
+      <div class="fgrow">
+        <div class="fg"><label for="pc-ev">Evasion</label><input id="pc-ev" type="number" bind:value={evasion} /></div>
+        <div class="fg"><label for="pc-arm">Armor Score</label><input id="pc-arm" type="number" min="0" max="12" bind:value={armor} /></div>
+      </div>
     </div>
 
     <div class="modal-foot">

@@ -1,6 +1,7 @@
 <script>
   import EncounterHeader from '$lib/components/EncounterHeader.svelte';
   import CreatureCard from '$lib/components/CreatureCard.svelte';
+  import PCCompactCard from '$lib/components/PCCompactCard.svelte';
   import RosterModal from '$lib/components/RosterModal.svelte';
   import AddPCModal from '$lib/components/AddPCModal.svelte';
   import AddAdversaryModal from '$lib/components/AddAdversaryModal.svelte';
@@ -19,26 +20,21 @@
 <EncounterHeader />
 
 <div id="main">
-  <div class="col">
-    <div class="col-head"><span class="col-title">Party</span></div>
-    <div class="col-body">
-      {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
-        <CreatureCard {creature} />
-      {:else}
-        <div class="empty">None added yet.</div>
-      {/each}
-    </div>
+  <div class="pc-strip">
+    <span class="col-title" style="align-self:center;flex-shrink:0">Party</span>
+    {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
+      <PCCompactCard {creature} />
+    {:else}
+      <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center">No PCs added yet.</span>
+    {/each}
   </div>
 
-  <div class="col">
-    <div class="col-head"><span class="col-title">Adversaries</span></div>
-    <div class="col-body">
-      {#each $encounter.creatures.filter(c => !c.isPC) as creature (creature.id)}
-        <CreatureCard {creature} />
-      {:else}
-        <div class="empty">None added yet.</div>
-      {/each}
-    </div>
+  <div class="adv-grid">
+    {#each $encounter.creatures.filter(c => !c.isPC) as creature (creature.id)}
+      <CreatureCard {creature} />
+    {:else}
+      <div class="empty" style="grid-column:1/-1">No adversaries yet.</div>
+    {/each}
   </div>
 </div>
 

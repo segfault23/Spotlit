@@ -37,34 +37,36 @@
   <div class="modal modal-sm">
     <div class="modal-title">Party Roster</div>
 
-    <p class="sect-title">Saved characters</p>
-    <div class="roster-list">
-      {#if $roster.length}
-        {#each $roster as r (r.id)}
-          <div class="roster-row">
-            <div style="flex:1">
-              <div class="roster-name">{r.name}</div>
-              <div class="roster-stats">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion} · Armor {r.armor}</div>
+    <div class="modal-scroll-body">
+      <p class="sect-title">Saved characters</p>
+      <div class="roster-list">
+        {#if $roster.length}
+          {#each $roster as r (r.id)}
+            <div class="roster-row">
+              <div style="flex:1">
+                <div class="roster-name">{r.name}</div>
+                <div class="roster-stats">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion} · Armor {r.armor}</div>
+              </div>
+              <button class="roster-del-btn" onclick={() => deleteEntry(r.id)}>✕</button>
             </div>
-            <button class="roster-del-btn" onclick={() => deleteEntry(r.id)}>✕</button>
-          </div>
-        {/each}
-      {:else}
-        <div class="empty" style="padding:12px 0">No characters saved yet.</div>
-      {/if}
-    </div>
+          {/each}
+        {:else}
+          <div class="empty" style="padding:12px 0">No characters saved yet.</div>
+        {/if}
+      </div>
 
-    <hr class="divider" />
-    <p class="sect-title">Add character to roster</p>
+      <hr class="divider" />
+      <p class="sect-title">Add character to roster</p>
 
-    <div class="fg"><label for="r-name">Name</label><input id="r-name" type="text" placeholder="Character name" bind:value={name} /></div>
-    <div class="fgrow">
-      <div class="fg"><label for="r-hp">Max HP</label><input id="r-hp" type="number" min="1" max="12" bind:value={maxHP} /></div>
-      <div class="fg"><label for="r-str">Max Stress</label><input id="r-str" type="number" min="1" max="12" bind:value={maxStr} /></div>
-    </div>
-    <div class="fgrow">
-      <div class="fg"><label for="r-ev">Evasion</label><input id="r-ev" type="number" bind:value={evasion} /></div>
-      <div class="fg"><label for="r-arm">Armor Score</label><input id="r-arm" type="number" min="0" max="12" bind:value={armor} /></div>
+      <div class="fg"><label for="r-name">Name</label><input id="r-name" type="text" placeholder="Character name" bind:value={name} /></div>
+      <div class="fgrow">
+        <div class="fg"><label for="r-hp">Max HP</label><input id="r-hp" type="number" min="1" max="12" bind:value={maxHP} /></div>
+        <div class="fg"><label for="r-str">Max Stress</label><input id="r-str" type="number" min="1" max="12" bind:value={maxStr} /></div>
+      </div>
+      <div class="fgrow">
+        <div class="fg"><label for="r-ev">Evasion</label><input id="r-ev" type="number" bind:value={evasion} /></div>
+        <div class="fg"><label for="r-arm">Armor Score</label><input id="r-arm" type="number" min="0" max="12" bind:value={armor} /></div>
+      </div>
     </div>
 
     <div class="modal-foot">
