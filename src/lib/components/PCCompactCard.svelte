@@ -31,7 +31,7 @@
       tabindex="0"
       onclick={() => expanded = true}
       onkeydown={e => e.key === 'Enter' && (expanded = true)}
-      title="Expand"
+      title={creature.name}
     >{creature.name}</span>
 
     <div class="pc-tracks">

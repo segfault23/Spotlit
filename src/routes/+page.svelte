@@ -21,12 +21,14 @@
 
 <div id="main">
   <div class="pc-strip">
-    <span class="col-title" style="align-self:center;flex-shrink:0">Party</span>
-    {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
-      <PCCompactCard {creature} />
-    {:else}
-      <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center">No PCs added yet.</span>
-    {/each}
+    <span class="col-title pc-strip-label">Party</span>
+    <div class="pc-cards">
+      {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
+        <PCCompactCard {creature} />
+      {:else}
+        <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center">No PCs added yet.</span>
+      {/each}
+    </div>
   </div>
 
   <div class="adv-grid">

@@ -223,11 +223,13 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .col-title{font-family:var(--font-mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:3px;color:var(--text-dim)}
 
 /* ─ PC Strip ─ */
-.pc-strip{display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
-.pc-compact{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--pc-border);border-radius:6px;padding:4px 8px;flex:1;min-width:220px;max-width:460px;transition:border-color .15s}
+.pc-strip{display:flex;align-items:flex-start;gap:10px;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.pc-strip-label{align-self:center;flex-shrink:0}
+.pc-cards{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0}
+.pc-compact{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--pc-border);border-radius:6px;padding:4px 8px;min-width:200px;max-width:440px;transition:border-color .15s;overflow:hidden}
 .pc-compact.spotlit{border-color:var(--spotlight);box-shadow:0 0 0 1px var(--accent-dim)}
 .pc-compact.defeated{opacity:.4}
-.pc-cname{font-family:var(--font-head);font-size:0.82rem;color:#7abf94;flex-shrink:0;cursor:pointer;white-space:nowrap}
+.pc-cname{font-family:var(--font-head);font-size:0.82rem;color:#7abf94;flex-shrink:1;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 .pc-cname:hover{color:#a0dfb4}
 .pc-spot{padding:2px 5px;font-size:0.8rem}
 .pc-tracks{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
