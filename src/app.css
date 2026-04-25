@@ -2,20 +2,20 @@
 
 /* ═ Color Themes ═ */
 
-/* Drylands (Default) */
+/* Drylands (Default) - Wild West Desert */
 :root {
-  --bg:#0e0b06;--surface:#1a1408;--surface2:#231b0a;--surface3:#2d2210;
-  --border:#3d2e14;--border2:#5a4420;--text:#e0cfa8;--text-dim:#7a6840;
-  --text-faint:#4a3e24;--accent:#c89830;--accent-dim:#7a5c18;
-  --fear:#c42800;--fear-glow:#ff4400;--fear-bg:#3a0800;
-  --hp-on:#d64040;--hp-off:#3a1810;--hp-border:#8a5030;
-  --stress-on:#7a3080;--stress-off:#2a1240;--stress-border:#6a4a80;
-  --armor-on:#5a80b0;--armor-off:#2a3850;--armor-border:#6a7a9a;
-  --spotlight:#c89830;--pc-border:#2a6040;--danger:#aa2200;
-  --f-passive:#1a3a55;--f-passive-t:#5aabdf;
-  --f-action:#3a2800;--f-action-t:#c89830;
-  --f-reaction:#2e1800;--f-reaction-t:#d07832;
-  --f-fear:#3a0800;--f-fear-t:#e04020;
+  --bg:#1f1614;--surface:#2a1f18;--surface2:#342819;--surface3:#3e3220;
+  --border:#4a3828;--border2:#5a4a38;--text:#f8e8d4;--text-dim:#c8a878;
+  --text-faint:#8a7058;--accent:#e85f35;--accent-dim:#b84020;
+  --fear:#ff5533;--fear-glow:#ff7744;--fear-bg:#4a1a08;
+  --hp-on:#ff7a5a;--hp-off:#4a2410;--hp-border:#c8785a;
+  --stress-on:#b8845a;--stress-off:#3a2810;--stress-border:#d8a878;
+  --armor-on:#6a9fd8;--armor-off:#2a3850;--armor-border:#8aafdd;
+  --spotlight:#e85f35;--pc-border:#2a5a40;--danger:#ff5533;
+  --f-passive:#1a4560;--f-passive-t:#7adaff;
+  --f-action:#4a3220;--f-action-t:#e85f35;
+  --f-reaction:#5a3a20;--f-reaction-t:#f09a50;
+  --f-fear:#5a1a08;--f-fear-t:#ff8855;
   --font-head:'Playfair Display',Georgia,serif;
   --font-body:'Crimson Pro',Georgia,serif;
   --font-mono:'JetBrains Mono',monospace;
@@ -23,18 +23,34 @@
 
 /* Midnight Forest */
 body.theme-forest {
-  --bg:#0a0f14;--surface:#0f1620;--surface2:#141b28;--surface3:#1a2235;
-  --border:#2a3548;--border2:#3a4a68;--text:#c5d5e8;--text-dim:#7a8fa8;
-  --text-faint:#4a5a70;--accent:#4a9fd8;--accent-dim:#2a6fa0;
-  --fear:#d64040;--fear-glow:#ff5555;--fear-bg:#4a1020;
-  --hp-on:#d64040;--hp-off:#1e2a40;--hp-border:#6a8aaa;
-  --stress-on:#7a5ab0;--stress-off:#1a2a50;--stress-border:#5a7ab0;
-  --armor-on:#5a9aff;--armor-off:#1a3a60;--armor-border:#5a8aff;
-  --spotlight:#4a9fd8;--pc-border:#2a6040;--danger:#d64040;
-  --f-passive:#1a4560;--f-passive-t:#5acdff;
-  --f-action:#2a3548;--f-action-t:#4a9fd8;
-  --f-reaction:#3a2a40;--f-reaction-t:#7abadd;
-  --f-fear:#4a1020;--f-fear-t:#ff6a5a;
+  --bg:#0f1518;--surface:#151d24;--surface2:#1a2530;--surface3:#202a38;
+  --border:#2a4050;--border2:#3a5568;--text:#d5e5f8;--text-dim:#8aadcc;
+  --text-faint:#5a7a9a;--accent:#5aafdd;--accent-dim:#3a7fa8;
+  --fear:#d64040;--fear-glow:#ff5555;--fear-bg:#5a1020;
+  --hp-on:#d64040;--hp-off:#1f2a40;--hp-border:#7aaccc;
+  --stress-on:#8a8acc;--stress-off:#1a2a50;--stress-border:#6aabdd;
+  --armor-on:#6ab0ff;--armor-off:#1a3a68;--armor-border:#6aaaff;
+  --spotlight:#5aafdd;--pc-border:#2a6040;--danger:#d64040;
+  --f-passive:#1a4a70;--f-passive-t:#6addff;
+  --f-action:#2a3a50;--f-action-t:#5aafdd;
+  --f-reaction:#3a2a40;--f-reaction-t:#8acabd;
+  --f-fear:#5a1020;--f-fear-t:#ff7a6a;
+}
+
+/* Sunset Over Dunes */
+body.theme-sunset {
+  --bg:#1a1410;--surface:#251e18;--surface2:#302819;--surface3:#3a3220;
+  --border:#4a3820;--border2:#5a4828;--text:#f5d9b8;--text-dim:#c8a878;
+  --text-faint:#8a7a58;--accent:#d97e3a;--accent-dim:#a84a20;
+  --fear:#ff5533;--fear-glow:#ff7755;--fear-bg:#5a1a08;
+  --hp-on:#ff6a4a;--hp-off:#5a2418;--hp-border:#d8885a;
+  --stress-on:#8a5a9a;--stress-off:#3a1a50;--stress-border:#a87aaa;
+  --armor-on:#7abaff;--armor-off:#1a3a60;--armor-border:#8acabf;
+  --spotlight:#d97e3a;--pc-border:#3a5a40;--danger:#ff6a4a;
+  --f-passive:#1a4560;--f-passive-t:#7addff;
+  --f-action:#4a3020;--f-action-t:#d97e3a;
+  --f-reaction:#5a2a1a;--f-reaction-t:#f0a860;
+  --f-fear:#5a1a0a;--f-fear-t:#ff8866;
 }
 
 /* Infernal */
@@ -55,18 +71,18 @@ body.theme-infernal {
 
 /* Frostborn */
 body.theme-frost {
-  --bg:#08121a;--surface:#0d1a28;--surface2:#132240;--surface3:#1a3050;
-  --border:#2a4860;--border2:#3a5a88;--text:#d4e5f5;--text-dim:#7a9ac8;
-  --text-faint:#4a6a90;--accent:#6ac8ff;--accent-dim:#3a88c8;
-  --fear:#d24848;--fear-glow:#ff6666;--fear-bg:#3a0a20;
-  --hp-on:#d64040;--hp-off:#1a3050;--hp-border:#8aaa9a;
-  --stress-on:#8a7ab0;--stress-off:#1a2850;--stress-border:#8a9eff;
-  --armor-on:#7ab8ff;--armor-off:#1a2a50;--armor-border:#7ad8ff;
-  --spotlight:#6ac8ff;--pc-border:#1a4a60;--danger:#ff6666;
-  --f-passive:#0a3a60;--f-passive-t:#7adaff;
-  --f-action:#1a3840;--f-action-t:#6ac8ff;
-  --f-reaction:#2a2840;--f-reaction-t:#8ad8ff;
-  --f-fear:#3a0a20;--f-fear-t:#ff8888;
+  --bg:#0a1620;--surface:#102030;--surface2:#142840;--surface3:#1a3850;
+  --border:#2a5070;--border2:#3a6880;--text:#d8e8f8;--text-dim:#88aadd;
+  --text-faint:#4a7aaa;--accent:#6ad0ff;--accent-dim:#4a9acc;
+  --fear:#d24848;--fear-glow:#ff6666;--fear-bg:#401020;
+  --hp-on:#d64040;--hp-off:#1a3858;--hp-border:#8abbd8;
+  --stress-on:#9a88cc;--stress-off:#1a2858;--stress-border:#9abaff;
+  --armor-on:#7ac0ff;--armor-off:#1a3060;--armor-border:#7ae8ff;
+  --spotlight:#6ad0ff;--pc-border:#1a5070;--danger:#ff6666;
+  --f-passive:#0a4a80;--f-passive-t:#7ae8ff;
+  --f-action:#1a4050;--f-action-t:#6ad0ff;
+  --f-reaction:#2a3850;--f-reaction-t:#8ae0ff;
+  --f-fear:#401020;--f-fear-t:#ff9898;
 }
 
 /* Royal Purple */
@@ -85,20 +101,20 @@ body.theme-royal {
   --f-fear:#4a1a40;--f-fear-t:#ff9999;
 }
 
-/* Light Mode */
+/* Light Desert */
 body.theme-light {
-  --bg:#f5f3f0;--surface:#ffffff;--surface2:#f0ede8;--surface3:#e8e5e0;
-  --border:#d0c8c0;--border2:#c0b8b0;--text:#2a2620;--text-dim:#6a5a50;
-  --text-faint:#a0886a;--accent:#c88830;--accent-dim:#a8681a;
-  --fear:#d84040;--fear-glow:#ff7777;--fear-bg:#fff0f0;
-  --hp-on:#e04848;--hp-off:#f0dada;--hp-border:#c86868;
-  --stress-on:#b070d8;--stress-off:#f0e8f8;--stress-border:#8855cc;
-  --armor-on:#6a9fd8;--armor-off:#dae8f8;--armor-border:#5a8ab0;
-  --spotlight:#c88830;--pc-border:#5ac060;--danger:#d84040;
+  --bg:#f9f3ea;--surface:#ffffff;--surface2:#f5ede2;--surface3:#ede5d8;
+  --border:#d8cac0;--border2:#c8bab0;--text:#4a3620;--text-dim:#8a6a50;
+  --text-faint:#b89a80;--accent:#c94d2c;--accent-dim:#a83a18;
+  --fear:#d84a40;--fear-glow:#ff7777;--fear-bg:#fff0f0;
+  --hp-on:#d84a40;--hp-off:#f8e0e0;--hp-border:#c88080;
+  --stress-on:#8a5a9a;--stress-off:#f0e8f8;--stress-border:#9a7aaa;
+  --armor-on:#6a9fd8;--armor-off:#e0eff8;--armor-border:#7aafdd;
+  --spotlight:#c94d2c;--pc-border:#4ab050;--danger:#d84a40;
   --f-passive:#e8f0ff;--f-passive-t:#2a6aaa;
-  --f-action:#fff5e8;--f-action-t:#b86820;
-  --f-reaction:#ffe8e0;--f-reaction-t:#b04420;
-  --f-fear:#fff0e0;--f-fear-t:#d04020;
+  --f-action:#fff9f0;--f-action-t:#a84a28;
+  --f-reaction:#ffe8e0;--f-reaction-t:#a04828;
+  --f-fear:#fff0f0;--f-fear-t:#c84a4a;
 }
 
 /* Ocean Deep */
