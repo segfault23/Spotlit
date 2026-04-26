@@ -114,8 +114,31 @@ export async function listCustomCreatures(sub) {
   return r.Items ?? [];
 }
 
-export async function putCustomCreature(sub, creature) {
-  const slug = creature.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+export async function getCustomCreature(sub, slug) {
+  const r = await ddb.send(new GetCommand({
+    TableName: TABLE,
+    Key: { pk: `USER#${sub}`, sk: `CUSTOM_CREATURE#${slug}` },
+  }));
+  return r.Item ?? null;
+}
+
+function slugify(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+export async function putCustomCreature(sub, creature, existingSlug = null) {
+  const slug = slugify(creature.name);
+  const now = Date.now();
+
+  // Renamed → delete old key first so we don't leave a duplicate item behind
+  if (existingSlug && existingSlug !== slug) {
+    await deleteCustomCreature(sub, existingSlug);
+  }
+
+  // Preserve createdAt across renames; set it for brand-new items
+  const existing = existingSlug ? await getCustomCreature(sub, existingSlug) : null;
+  const createdAt = existing?.createdAt ?? now;
+
   await ddb.send(new PutCommand({
     TableName: TABLE,
     Item: {
@@ -123,7 +146,8 @@ export async function putCustomCreature(sub, creature) {
       sk: `CUSTOM_CREATURE#${slug}`,
       slug,
       ...creature,
-      updatedAt: Date.now(),
+      createdAt,
+      updatedAt: now,
     },
   }));
   return slug;
@@ -133,5 +157,57 @@ export async function deleteCustomCreature(sub, slug) {
   await ddb.send(new DeleteCommand({
     TableName: TABLE,
     Key: { pk: `USER#${sub}`, sk: `CUSTOM_CREATURE#${slug}` },
+  }));
+}
+
+// ── Custom features ───────────────────────────────────────────────────────────
+
+export async function listCustomFeatures(sub) {
+  const r = await ddb.send(new QueryCommand({
+    TableName: TABLE,
+    KeyConditionExpression: 'pk = :pk AND begins_with(sk, :pfx)',
+    ExpressionAttributeValues: { ':pk': `USER#${sub}`, ':pfx': 'CUSTOM_FEATURE#' },
+    ScanIndexForward: true,
+  }));
+  return r.Items ?? [];
+}
+
+export async function getCustomFeature(sub, slug) {
+  const r = await ddb.send(new GetCommand({
+    TableName: TABLE,
+    Key: { pk: `USER#${sub}`, sk: `CUSTOM_FEATURE#${slug}` },
+  }));
+  return r.Item ?? null;
+}
+
+export async function putCustomFeature(sub, feature, existingSlug = null) {
+  const slug = slugify(feature.name);
+  const now = Date.now();
+
+  if (existingSlug && existingSlug !== slug) {
+    await deleteCustomFeature(sub, existingSlug);
+  }
+
+  const existing = existingSlug ? await getCustomFeature(sub, existingSlug) : null;
+  const createdAt = existing?.createdAt ?? now;
+
+  await ddb.send(new PutCommand({
+    TableName: TABLE,
+    Item: {
+      pk: `USER#${sub}`,
+      sk: `CUSTOM_FEATURE#${slug}`,
+      slug,
+      ...feature,
+      createdAt,
+      updatedAt: now,
+    },
+  }));
+  return slug;
+}
+
+export async function deleteCustomFeature(sub, slug) {
+  await ddb.send(new DeleteCommand({
+    TableName: TABLE,
+    Key: { pk: `USER#${sub}`, sk: `CUSTOM_FEATURE#${slug}` },
   }));
 }

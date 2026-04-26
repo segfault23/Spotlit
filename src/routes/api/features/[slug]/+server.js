@@ -1,23 +1,23 @@
 import { json, error } from '@sveltejs/kit';
-import { getCustomCreature, putCustomCreature, deleteCustomCreature } from '$lib/server/user.js';
+import { getCustomFeature, putCustomFeature, deleteCustomFeature } from '$lib/server/user.js';
 
 export async function GET({ locals, params }) {
   if (!locals.user) error(401, 'Unauthorized');
-  const item = await getCustomCreature(locals.user.sub, params.slug);
+  const item = await getCustomFeature(locals.user.sub, params.slug);
   if (!item) error(404, 'Not found');
   return json(item);
 }
 
 export async function PUT({ locals, params, request }) {
   if (!locals.user) error(401, 'Unauthorized');
-  const creature = await request.json();
-  if (!creature.name?.trim()) error(400, 'name required');
-  const slug = await putCustomCreature(locals.user.sub, creature, params.slug);
+  const feature = await request.json();
+  if (!feature.name?.trim()) error(400, 'name required');
+  const slug = await putCustomFeature(locals.user.sub, feature, params.slug);
   return json({ slug });
 }
 
 export async function DELETE({ locals, params }) {
   if (!locals.user) error(401, 'Unauthorized');
-  await deleteCustomCreature(locals.user.sub, params.slug);
+  await deleteCustomFeature(locals.user.sub, params.slug);
   return new Response(null, { status: 204 });
 }
