@@ -1,17 +1,14 @@
 import { redirect, error } from '@sveltejs/kit';
-import { exchangeCode } from '$lib/server/auth.js';
+import { exchangeCode, verifyState } from '$lib/server/auth.js';
 import { cookieDefaults } from '../../../hooks.server.js';
 
 export async function GET({ url, cookies }) {
   const code  = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const storedState = cookies.get('oauth_state');
 
-  if (!code || !state || state !== storedState) {
+  if (!code || !await verifyState(state)) {
     error(400, 'Invalid OAuth state');
   }
-
-  cookies.delete('oauth_state', { path: '/' });
 
   let tokens;
   try {

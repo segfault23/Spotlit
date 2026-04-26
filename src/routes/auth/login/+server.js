@@ -1,11 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { randomBytes } from 'crypto';
-import { cookieDefaults } from '../../../hooks.server.js';
+import { signState } from '$lib/server/auth.js';
 
-export function GET({ cookies, url }) {
-  const state = randomBytes(16).toString('hex');
-  cookies.set('oauth_state', state, { ...cookieDefaults, maxAge: 600 });
+export async function GET({ url }) {
+  const state = await signState();
 
   const params = new URLSearchParams({
     client_id: env.COGNITO_CLIENT_ID,

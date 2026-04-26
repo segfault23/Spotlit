@@ -2,6 +2,7 @@
 // The client secret is never stored in env vars; Lambda fetches it once from
 // Cognito's DescribeUserPoolClient API and caches it for the process lifetime.
 
+import crypto from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import {
   CognitoIdentityProviderClient,
@@ -43,6 +44,38 @@ export async function exchangeCode(code, redirectUri) {
   });
   if (!res.ok) throw new Error(`Token exchange failed: ${await res.text()}`);
   return res.json();
+}
+
+// HMAC-signed OAuth state, replacing the cookie-based approach.
+// Cookies were unreliable through the CloudFront layer fronting the Lambda
+// (Set-Cookie was being stripped by the Managed-CachingDisabled cache policy).
+// The signed state proves to /auth/callback that the value came from us and
+// hasn't expired, without needing a round-trip cookie.
+
+export async function signState() {
+  const secret = await getClientSecret();
+  const nonce = crypto.randomBytes(12).toString('base64url');
+  const exp   = String(Math.floor(Date.now() / 1000) + 600); // 10 min
+  const payload = `${nonce}.${exp}`;
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+export async function verifyState(state) {
+  if (!state || typeof state !== 'string') return false;
+  const parts = state.split('.');
+  if (parts.length !== 3) return false;
+  const [nonce, exp, sig] = parts;
+  if (!nonce || !exp || !sig) return false;
+  if (Number(exp) < Math.floor(Date.now() / 1000)) return false;
+
+  const secret   = await getClientSecret();
+  const expected = crypto.createHmac('sha256', secret).update(`${nonce}.${exp}`).digest('base64url');
+
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length) return false;
+  return crypto.timingSafeEqual(sigBuf, expBuf);
 }
 
 export async function refreshTokens(refreshToken) {
