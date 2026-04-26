@@ -100,8 +100,19 @@ export const handler = async (event) => {
   }
 
   // 3. SSR via SvelteKit
-  const host = headers['x-forwarded-host'] || headers.host || 'lambda';
-  const proto = headers['x-forwarded-proto'] || 'https';
+  // PUBLIC_ORIGIN (e.g. "https://spotlit.online") forces every request to
+  // use the public domain when building url.origin — matters for OAuth
+  // redirect_uri, since proxies in front of Lambda Function URLs may not
+  // forward x-forwarded-host reliably.
+  let host, proto;
+  if (process.env.PUBLIC_ORIGIN) {
+    const u = new URL(process.env.PUBLIC_ORIGIN);
+    host = u.host;
+    proto = u.protocol.replace(':', '');
+  } else {
+    host = headers['x-forwarded-host'] || headers.host || 'lambda';
+    proto = headers['x-forwarded-proto'] || 'https';
+  }
   const url = `${proto}://${host}${rawPath}${rawQueryString ? '?' + rawQueryString : ''}`;
 
   const reqHeaders = new Headers();
