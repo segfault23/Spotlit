@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 
 const DEFAULT_CREATURE = {
   isPC: false, name: '', type: 'Standard', tier: 1, diff: 11,
@@ -10,12 +10,15 @@ const DEFAULT_CREATURE = {
 };
 
 function createEncounterStore() {
-  const { subscribe, update } = writable({
+  const store = writable({
     fear: 0, round: 1, uid: 1,
     encounterName: '',
     creatures: [],
     expandedFeats: [],
+    currentEncounterId: null,
   });
+
+  const { subscribe, update } = store;
 
   return {
     subscribe,
@@ -47,14 +50,11 @@ function createEncounterStore() {
         ...s,
         creatures: s.creatures.map(c => {
           if (c.id !== id) return c;
-          if (key === 'hp')  return { ...c, hp:      c.hp      > i ? i : i + 1 };
+          if (key === 'hp')  return { ...c, hp: c.hp > i ? i : i + 1 };
           if (key === 'str') {
             const newStr = c.str > i ? i : i + 1;
-            return { ...c, 
-              str: newStr,
-              conds: { ...c.conds, vulnerable: newStr >= c.maxStr }
-            };
-          };
+            return { ...c, str: newStr, conds: { ...c.conds, vulnerable: newStr >= c.maxStr } };
+          }
           if (key === 'arm') return { ...c, armUsed: (c.armUsed || 0) > i ? i : i + 1 };
           return c;
         })
@@ -145,9 +145,39 @@ function createEncounterStore() {
       update(s => ({
         ...s,
         fear: 0, round: 1, uid: 1, encounterName: '',
-        creatures: [], expandedFeats: []
+        creatures: [], expandedFeats: [],
+        currentEncounterId: null,
       }));
-    }
+    },
+
+    async save() {
+      const s = get(store);
+      const { currentEncounterId, ...state } = s;
+      const method = currentEncounterId ? 'PUT' : 'POST';
+      const path   = currentEncounterId
+        ? `/api/encounters/${encodeURIComponent(currentEncounterId)}`
+        : '/api/encounters';
+
+      const res = await fetch(path, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      });
+
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+
+      if (!currentEncounterId) {
+        const { id } = await res.json();
+        update(s2 => ({ ...s2, currentEncounterId: id }));
+      }
+    },
+
+    async load(id) {
+      const res = await fetch(`/api/encounters/${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+      const { state } = await res.json();
+      update(() => ({ ...state, currentEncounterId: id }));
+    },
   };
 }
 

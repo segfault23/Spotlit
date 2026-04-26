@@ -2,12 +2,37 @@
   import { presetsByName } from '$lib/stores/catalog.js';
   import { encounter } from '$lib/stores/encounter.js';
   import { closeModal } from '$lib/stores/modal.js';
+  import { user } from '$lib/stores/user.js';
 
   let searchQuery = $state('');
   let selectedAdversaries = $state(new Set());
 
   // Per-preset quantities — map of name → count, defaults to 1.
   let quantities = $state({});
+
+  // Custom creature save option
+  let saveAsCustom = $state(false);
+
+  // Logged-in user's saved custom creatures
+  let customCreatures   = $state([]);
+  let customLoading     = $state(false);
+
+  $effect(() => {
+    if ($user) {
+      customLoading = true;
+      fetch('/api/creatures')
+        .then(r => r.ok ? r.json() : [])
+        .then(data => { customCreatures = data; })
+        .finally(() => { customLoading = false; });
+    }
+  });
+
+  async function deleteCustom(slug, e) {
+    e.stopPropagation();
+    if (!confirm('Delete this custom adversary?')) return;
+    await fetch(`/api/creatures/${slug}`, { method: 'DELETE' });
+    customCreatures = customCreatures.filter(c => c.slug !== slug);
+  }
 
   function getQty(name) { return quantities[name] ?? 1; }
   function adjQty(name, delta, e) {
@@ -40,9 +65,7 @@
   );
 
   let selectedCount = $derived(selectedAdversaries.size);
-  // Customize panel only makes sense for a single creature.
   let showCustomize = $derived(selectedCount <= 1);
-  // Total creatures the Add button will create.
   let addCount = $derived(
     selectedCount === 0 ? 1 :
     [...selectedAdversaries].reduce((sum, name) => sum + getQty(name), 0)
@@ -57,7 +80,6 @@
     }
     selectedAdversaries = next;
 
-    // Repopulate form when exactly one preset is selected.
     if (selectedAdversaries.size === 1) {
       const onlyName = [...selectedAdversaries][0];
       loadPreset(onlyName);
@@ -69,6 +91,14 @@
     fName = name; fType = p.type; fTier = p.tier; fDiff = p.diff;
     fAtk = p.atk; fHP = p.hp; fStr = p.str; fThresh = p.thresh;
     fDmg = p.dmg; fAtkName = p.atkName; fFeats = p.feats.join(', ');
+  }
+
+  function loadCustom(creature) {
+    fName = creature.name; fType = creature.type; fTier = creature.tier;
+    fDiff = creature.diff; fAtk = creature.atk; fHP = creature.maxHP;
+    fStr = creature.maxStr; fThresh = creature.thresh; fDmg = creature.dmg;
+    fAtkName = creature.atkName; fFeats = (creature.feats ?? []).join(', ');
+    selectedAdversaries = new Set();
   }
 
   function parseFeats(raw) {
@@ -96,10 +126,18 @@
     };
   }
 
-  function addAdversary() {
+  async function addAdversary() {
     if (selectedCount === 0) {
       if (!fName.trim()) return;
-      encounter.addCreature(buildFromForm(fName.trim()));
+      const creature = buildFromForm(fName.trim());
+      encounter.addCreature(creature);
+      if (saveAsCustom && $user) {
+        await fetch('/api/creatures', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(creature),
+        });
+      }
     } else if (selectedCount === 1) {
       const onlyName = [...selectedAdversaries][0];
       const displayName = fName.trim() || onlyName;
@@ -108,7 +146,6 @@
         encounter.addCreature(buildFromForm(displayName));
       }
     } else {
-      // 2+ presets: each added qty times with its own preset stats.
       selectedAdversaries.forEach(presetName => {
         const qty = getQty(presetName);
         for (let i = 0; i < qty; i++) {
@@ -145,6 +182,43 @@
     />
 
     <div class="modal-scroll-body">
+
+      <!-- My Custom Adversaries (logged-in users only) -->
+      {#if $user}
+        <p class="sect-title">My Custom Adversaries</p>
+        {#if customLoading}
+          <div style="color:var(--text-dim);font-size:0.82rem;padding:4px 0">Loading…</div>
+        {:else if customCreatures.length === 0}
+          <div style="color:var(--text-dim);font-size:0.82rem;padding:4px 0;font-style:italic">None saved yet.</div>
+        {:else}
+          <div class="adv-list" style="margin-bottom:8px">
+            {#each customCreatures as c (c.slug)}
+              <div
+                class="adv-row"
+                role="button"
+                tabindex="0"
+                onclick={() => loadCustom(c)}
+                onkeydown={e => e.key === 'Enter' && loadCustom(c)}
+              >
+                <div class="adv-row-name">{c.name}</div>
+                <div class="adv-row-badge-group">
+                  <span class="badge type">{c.type}</span>
+                  <span class="badge">T{c.tier}</span>
+                </div>
+                <div class="adv-row-stats">HP {c.maxHP} · Diff {c.diff}</div>
+                <button
+                  class="adv-custom-del"
+                  onclick={e => deleteCustom(c.slug, e)}
+                  title="Delete custom adversary"
+                >✕</button>
+              </div>
+            {/each}
+          </div>
+        {/if}
+        <hr class="divider" />
+      {/if}
+
+      <!-- Preset catalogue -->
       <div class="adv-list">
         {#each filteredPresets as [name, p] (name)}
           {@const selected = selectedAdversaries.has(name)}
@@ -218,6 +292,13 @@
 
         <div class="fg"><label for="a-atkname">Standard Attack (name · range)</label><input id="a-atkname" type="text" placeholder="Bone Crush · Melee" bind:value={fAtkName} /></div>
         <div class="fg"><label for="a-feats">Features (comma-separated names)</label><input id="a-feats" type="text" placeholder="Ancient Colossus, Relentless, Death Rattle" bind:value={fFeats} /></div>
+
+        {#if $user && selectedCount === 0}
+          <label class="save-custom-label">
+            <input type="checkbox" bind:checked={saveAsCustom} />
+            Save as my custom adversary
+          </label>
+        {/if}
       {:else}
         <p class="sect-title">{selectedCount} adversaries selected</p>
         <p style="color:var(--text-dim);font-size:0.85rem;margin:4px 0 0">
@@ -234,3 +315,32 @@
     </div>
   </div>
 </div>
+
+<style>
+  .adv-custom-del {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 0.75rem;
+    opacity: 0.5;
+    margin-left: auto;
+  }
+  .adv-custom-del:hover {
+    opacity: 1;
+    color: var(--feat-fear);
+  }
+  .save-custom-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .save-custom-label input {
+    accent-color: var(--accent, #7c6fcd);
+  }
+</style>

@@ -1,0 +1,10 @@
+{
+  "name": "spotlit-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime dependencies installed into build/ for the Lambda deployment. AWS SDK v3 is provided by the Node 20 runtime, so only third-party deps are listed.",
+  "dependencies": {
+    "aws-jwt-verify": "^4.0.1"
+  }
+}
