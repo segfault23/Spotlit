@@ -254,7 +254,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:11px;margin-bottom:9px;position:relative;transition:border-color .2s}
 .card.pc-card{border-left:3px solid var(--pc-border)}
 .card.spotlit{border-color:var(--spotlight);box-shadow:0 0 0 1px var(--accent-dim)}
-.card.defeated{opacity:.35;pointer-events:none}
+.card.defeated{opacity:.55}
 .card-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
 .cname{font-family:var(--font-head);font-size:1rem;color:var(--text);flex:1;line-height:1.2}
 .pc-card .cname{color:#7abf94}
