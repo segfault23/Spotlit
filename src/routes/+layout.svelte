@@ -2,6 +2,7 @@
   import '../app.css';
   import { theme } from '$lib/stores/theme.js';
   import { user } from '$lib/stores/user.js';
+  import { encounter } from '$lib/stores/encounter.js';
   import { loadRosterFromServer } from '$lib/stores/roster.js';
   import { browser } from '$app/environment';
 
@@ -13,12 +14,17 @@
     }
   });
 
-  // Sync auth state into the user store and load server-side roster when logged in
+  // Sync auth state into stores; toggle encounter autosave when user changes
   $effect(() => {
     const u = data.user ?? null;
     user.set(u);
-    if (browser && u) {
-      loadRosterFromServer();
+    if (browser) {
+      if (u) {
+        loadRosterFromServer();
+        encounter.enableAutosave();
+      } else {
+        encounter.disableAutosave();
+      }
     }
   });
 </script>

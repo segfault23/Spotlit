@@ -1,4 +1,5 @@
 import { writable, get } from 'svelte/store';
+import { browser } from '$app/environment';
 
 const DEFAULT_CREATURE = {
   isPC: false, name: '', type: 'Standard', tier: 1, diff: 11,
@@ -8,6 +9,41 @@ const DEFAULT_CREATURE = {
   conds: { hidden: false, restrained: false, vulnerable: false },
   notes: ''
 };
+
+// 'idle' | 'saving' | 'saved' | 'error'
+export const saveStatus = writable('idle');
+
+// Snapshot of the encounter contents (excluding currentEncounterId).
+// Used to skip redundant autosaves after load() / a no-op update.
+function snapKey(s) {
+  return JSON.stringify({
+    f: s.fear, r: s.round, u: s.uid,
+    n: s.encounterName,
+    c: s.creatures,
+    e: s.expandedFeats,
+  });
+}
+
+async function persist(state, currentEncounterId) {
+  const method = currentEncounterId ? 'PUT' : 'POST';
+  const path   = currentEncounterId
+    ? `/api/encounters/${encodeURIComponent(currentEncounterId)}`
+    : '/api/encounters';
+
+  const res = await fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(state),
+  });
+
+  if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+
+  if (!currentEncounterId) {
+    const { id } = await res.json();
+    return id;
+  }
+  return currentEncounterId;
+}
 
 function createEncounterStore() {
   const store = writable({
@@ -20,8 +56,75 @@ function createEncounterStore() {
 
   const { subscribe, update } = store;
 
+  // ── Autosave ─────────────────────────────────────────────────────────────
+  let autosaveEnabled = false;
+  let autosaveTimer   = null;
+  let inflight        = null;
+  let lastSavedKey    = '';
+
+  function flashStatus(state, ms = 1500) {
+    saveStatus.set(state);
+    setTimeout(() => {
+      saveStatus.update(cur => cur === state ? 'idle' : cur);
+    }, ms);
+  }
+
+  async function doSave() {
+    const full = get(store);
+    const { currentEncounterId, ...state } = full;
+    saveStatus.set('saving');
+    try {
+      const newId = await persist(state, currentEncounterId);
+      if (!currentEncounterId) update(s => ({ ...s, currentEncounterId: newId }));
+      lastSavedKey = snapKey(get(store));
+      flashStatus('saved');
+    } catch (e) {
+      console.error('Autosave failed', e);
+      flashStatus('error', 3000);
+      throw e;
+    }
+  }
+
+  function scheduleAutosave() {
+    if (!autosaveEnabled) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(async () => {
+      const cur = get(store);
+      // Don't save an empty, never-saved encounter
+      const hasContent = cur.creatures.length > 0 || cur.encounterName?.trim().length > 0;
+      if (!hasContent && !cur.currentEncounterId) return;
+
+      // Skip if nothing changed since last save
+      if (snapKey(cur) === lastSavedKey) return;
+
+      // Serialize: wait for any in-flight save before starting another
+      if (inflight) {
+        try { await inflight; } catch {}
+      }
+      inflight = doSave().finally(() => { inflight = null; });
+      try { await inflight; } catch {}
+
+      // If state changed during save, schedule another pass
+      if (snapKey(get(store)) !== lastSavedKey) scheduleAutosave();
+    }, 1200);
+  }
+
+  if (browser) {
+    store.subscribe(s => {
+      if (!autosaveEnabled) return;
+      if (snapKey(s) === lastSavedKey) return;
+      scheduleAutosave();
+    });
+  }
+
   return {
     subscribe,
+
+    enableAutosave() { autosaveEnabled = true; },
+    disableAutosave() {
+      autosaveEnabled = false;
+      clearTimeout(autosaveTimer);
+    },
 
     adj(key, delta) {
       let roundAdvanced = false;
@@ -142,41 +245,31 @@ function createEncounterStore() {
     },
 
     new() {
+      clearTimeout(autosaveTimer);
       update(s => ({
         ...s,
         fear: 0, round: 1, uid: 1, encounterName: '',
         creatures: [], expandedFeats: [],
         currentEncounterId: null,
       }));
+      lastSavedKey = snapKey(get(store));
     },
 
+    // Manual save (still exposed in case anything wants to force a save)
     async save() {
-      const s = get(store);
-      const { currentEncounterId, ...state } = s;
-      const method = currentEncounterId ? 'PUT' : 'POST';
-      const path   = currentEncounterId
-        ? `/api/encounters/${encodeURIComponent(currentEncounterId)}`
-        : '/api/encounters';
-
-      const res = await fetch(path, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state),
-      });
-
-      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
-
-      if (!currentEncounterId) {
-        const { id } = await res.json();
-        update(s2 => ({ ...s2, currentEncounterId: id }));
-      }
+      clearTimeout(autosaveTimer);
+      if (inflight) { try { await inflight; } catch {} }
+      inflight = doSave().finally(() => { inflight = null; });
+      return inflight;
     },
 
     async load(id) {
+      clearTimeout(autosaveTimer);
       const res = await fetch(`/api/encounters/${encodeURIComponent(id)}`);
       if (!res.ok) throw new Error(`Load failed: ${res.status}`);
       const { state } = await res.json();
       update(() => ({ ...state, currentEncounterId: id }));
+      lastSavedKey = snapKey(get(store));
     },
   };
 }
