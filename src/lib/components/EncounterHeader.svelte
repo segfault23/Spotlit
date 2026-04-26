@@ -175,6 +175,14 @@
           {/if}
         </div>
 
+        <!-- Profile link (logged-in only) -->
+        {#if $user}
+          <a class="settings-row" href="/profile">
+            <span>👤 View Profile</span>
+            <span class="settings-row-arrow">Encounters · Adversaries · Features →</span>
+          </a>
+        {/if}
+
         <!-- Encounters (logged-in only) -->
         {#if $user}
           <div class="settings-section">
@@ -314,6 +322,26 @@
     flex-shrink: 0;
     font-size: 0.78rem;
     padding: 4px 10px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    transition: background 0.1s;
+  }
+  .settings-row:hover {
+    background: var(--surface2);
+  }
+  .settings-row-arrow {
+    color: var(--text-dim);
+    font-size: 0.7rem;
   }
 
   .settings-section {
