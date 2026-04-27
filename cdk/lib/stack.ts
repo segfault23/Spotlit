@@ -19,7 +19,6 @@ import { Distribution, OriginProtocolPolicy, CachePolicy, ViewerProtocolPolicy, 
 import { HttpOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { HostedZone, ARecord, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import * as wafv2 from 'aws-cdk-lib/aws-wafv2'; // 👈 ADD THIS
 
 export interface SpotlitCdkStackProps extends StackProps {
   certificateArn: string;
@@ -90,6 +89,8 @@ export class SpotlitCdkStack extends Stack {
     });
 
     const appUrl = this.node.tryGetContext('appUrl') as string | undefined;
+    const webAclArn = this.node.tryGetContext('webAclArn');
+
     const callbackUrl = appUrl ? `${appUrl}/auth/callback` : 'https://localhost:5173/auth/callback';
     const logoutUrl   = appUrl ?? 'https://localhost:5173';
 
@@ -156,17 +157,6 @@ export class SpotlitCdkStack extends Stack {
       protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
     });
 
-    const webAcl = new wafv2.CfnWebACL(this, 'SpotlitWebACL', {
-      defaultAction: { allow: {} },
-      scope: 'CLOUDFRONT',
-      visibilityConfig: {
-        cloudWatchMetricsEnabled: true,
-        metricName: 'SpotlitWebACL',
-        sampledRequestsEnabled: true,
-      },
-      rules: [],
-    });
-
     // ── CloudFront ─────────────────────────────────────────────────────────────
     const distribution = new Distribution(this, 'SpotlitDistribution', {
       defaultBehavior: {
@@ -184,7 +174,7 @@ export class SpotlitCdkStack extends Stack {
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
-      webAclId: webAcl.attrArn,
+      webAclId: webAclArn, // 👈 comes from us-east-1 stack
     });
 
     const zone = HostedZone.fromLookup(this, 'Zone', {

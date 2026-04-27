@@ -2,6 +2,7 @@ import { env } from 'process';
 import { Stack, StackProps, CfnOutput, Fn } from 'aws-cdk-lib';
 import { ICertificate, Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { HostedZone } from 'aws-cdk-lib/aws-route53';
+import { CfnWebACL } from 'aws-cdk-lib/aws-wafv2';
 import { Construct } from 'constructs';
 
 export class CertStack extends Stack {
@@ -28,8 +29,23 @@ export class CertStack extends Stack {
 
     this.certificate = cert;
 
+    const webAcl = new CfnWebACL(this, 'SpotlitWebACL', {
+      defaultAction: { allow: {} },
+      scope: 'CLOUDFRONT',
+      visibilityConfig: {
+        cloudWatchMetricsEnabled: true,
+        metricName: 'SpotlitWebACL',
+        sampledRequestsEnabled: true,
+      },
+      rules: [],
+    });
+
     new CfnOutput(this, 'CertificateArn', {
       value: cert.certificateArn,
+    });
+
+    new CfnOutput(this, 'WebAclArn', {
+      value: webAcl.attrArn,
     });
 
     new CfnOutput(this, 'NameServers', {
