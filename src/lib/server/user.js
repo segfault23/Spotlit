@@ -36,7 +36,7 @@ export async function listEncounters(sub) {
     id: item.sk,
     name: item.name,
     updatedAt: item.updatedAt,
-  }));
+  })).sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 }
 
 export async function loadEncounter(sub, id) {
@@ -102,7 +102,7 @@ export async function putRoster(sub, characters) {
   }));
 }
 
-// ── Custom adversaries ────────────────────────────────────────────────────────
+// ── Custom adversaries ────────────────────────────────────────────────────────────
 
 export async function listCustomCreatures(sub) {
   const r = await ddb.send(new QueryCommand({
@@ -160,7 +160,7 @@ export async function deleteCustomCreature(sub, slug) {
   }));
 }
 
-// ── Custom features ───────────────────────────────────────────────────────────
+// ── Custom features ───────────────────────────────────────────────────────────────
 
 export async function listCustomFeatures(sub) {
   const r = await ddb.send(new QueryCommand({
