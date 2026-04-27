@@ -62,20 +62,52 @@ export async function signState() {
 }
 
 export async function verifyState(state) {
-  if (!state || typeof state !== 'string') return false;
+  if (!state || typeof state !== 'string') {
+    console.error('[verifyState] fail: missing or non-string state');
+    return false;
+  }
   const parts = state.split('.');
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) {
+    console.error('[verifyState] fail: wrong number of parts', parts.length);
+    return false;
+  }
   const [nonce, exp, sig] = parts;
-  if (!nonce || !exp || !sig) return false;
-  if (Number(exp) < Math.floor(Date.now() / 1000)) return false;
+  if (!nonce || !exp || !sig) {
+    console.error('[verifyState] fail: empty part nonce=%s exp=%s sig=%s', nonce, exp, sig);
+    return false;
+  }
+  const now = Math.floor(Date.now() / 1000);
+  if (Number(exp) < now) {
+    console.error('[verifyState] fail: expired exp=%s now=%s', exp, now);
+    return false;
+  }
 
-  const secret   = await getClientSecret();
+  let secret;
+  try {
+    secret = await getClientSecret();
+  } catch (e) {
+    console.error('[verifyState] fail: getClientSecret threw', e.message);
+    return false;
+  }
+
+  if (!secret) {
+    console.error('[verifyState] fail: secret is empty');
+    return false;
+  }
+
   const expected = crypto.createHmac('sha256', secret).update(`${nonce}.${exp}`).digest('base64url');
 
   const sigBuf = Buffer.from(sig);
   const expBuf = Buffer.from(expected);
-  if (sigBuf.length !== expBuf.length) return false;
-  return crypto.timingSafeEqual(sigBuf, expBuf);
+  if (sigBuf.length !== expBuf.length) {
+    console.error('[verifyState] fail: sig length mismatch got=%s want=%s', sigBuf.length, expBuf.length);
+    return false;
+  }
+  const match = crypto.timingSafeEqual(sigBuf, expBuf);
+  if (!match) {
+    console.error('[verifyState] fail: HMAC mismatch — secret first 4 chars: %s', String(secret).slice(0, 4));
+  }
+  return match;
 }
 
 export async function refreshTokens(refreshToken) {
