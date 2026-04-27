@@ -31,8 +31,24 @@ export async function getCreature(slug) {
   return r.Item ?? null;
 }
 
-export const listFeatures  = () => listByEntity('feature');
-export const listCreatures = () => listByEntity('creature');
+// Module-level promise cache: pre-made content never changes between deploys,
+// so warm Lambda instances skip DynamoDB entirely after the first request.
+let _featuresPromise  = null;
+let _creaturesPromise = null;
+
+export function listFeatures() {
+  if (!_featuresPromise) {
+    _featuresPromise = listByEntity('feature').catch(e => { _featuresPromise = null; throw e; });
+  }
+  return _featuresPromise;
+}
+
+export function listCreatures() {
+  if (!_creaturesPromise) {
+    _creaturesPromise = listByEntity('creature').catch(e => { _creaturesPromise = null; throw e; });
+  }
+  return _creaturesPromise;
+}
 
 async function listByEntity(entity) {
   assertTable();

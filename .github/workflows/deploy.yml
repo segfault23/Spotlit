@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    environment: AWS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build SvelteKit
+        run: npm run build
+
+      - name: Install Lambda runtime deps
+        run: |
+          cp lambda-deps.json build/package.json
+          cd build && npm install --omit=dev --omit=optional --no-audit --no-fund --silent
+
+      - name: Install CDK deps
+        run: npm install
+        working-directory: cdk
+
+      - name: Deploy
+        run: npx cdk deploy --all --require-approval never
+        working-directory: cdk
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-west-2
+          CONTENT_TABLE: SpotlitCdkStack-SpotlitContent6A8EDF6B-13EU24BV1IMMI
+          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: eu-west-2

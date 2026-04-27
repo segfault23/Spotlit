@@ -42,7 +42,10 @@ const MIME = {
 async function readFileIfExists(filePath, rootDir) {
   // Path traversal guard
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(path.resolve(rootDir) + path.sep) && resolved !== path.resolve(rootDir)) {
+  if (
+    !resolved.startsWith(path.resolve(rootDir) + path.sep) &&
+    resolved !== path.resolve(rootDir)
+  ) {
     return null;
   }
   try {
@@ -66,7 +69,8 @@ function fileResponse(content, contentType, cacheControl) {
 }
 
 export const handler = async (event) => {
-  const { requestContext, rawPath, rawQueryString, headers, body, isBase64Encoded, cookies } = event;
+  const { requestContext, rawPath, rawQueryString, headers, body, isBase64Encoded, cookies } =
+    event;
   const method = requestContext.http.method;
   const decodedPath = decodeURIComponent(rawPath);
 
@@ -93,7 +97,11 @@ export const handler = async (event) => {
       for (const c of candidates) {
         const content = await readFileIfExists(c, PRERENDERED_DIR);
         if (content) {
-          return fileResponse(content, 'text/html; charset=utf-8', 'public, max-age=0, must-revalidate');
+          return fileResponse(
+            content,
+            'text/html; charset=utf-8',
+            'public, max-age=0, must-revalidate'
+          );
         }
       }
     }
