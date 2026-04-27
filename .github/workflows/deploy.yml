@@ -22,6 +22,11 @@ jobs:
       - name: Build SvelteKit
         run: npm run build
 
+      - name: Install Lambda runtime deps
+        run: |
+          cp lambda-deps.json build/package.json
+          cd build && npm install --omit=dev --omit=optional --no-audit --no-fund --silent
+
       - name: Install CDK deps
         run: npm install
         working-directory: cdk
