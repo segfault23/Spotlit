@@ -151,17 +151,28 @@ export class SpotlitCdkStack extends Stack {
       props.certificateArn
     );
 
-    console.log(Fn.parseDomainName(url.url));
-
     const originDomain = Fn.parseDomainName(url.url);
+    const lambdaOrigin = new HttpOrigin(originDomain, {
+      protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
+    });
 
+    // ── CloudFront ─────────────────────────────────────────────────────────────
     const distribution = new Distribution(this, 'SpotlitDistribution', {
       defaultBehavior: {
-        origin: new HttpOrigin(originDomain, {
-          protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
-        }),
+        origin: lambdaOrigin,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      additionalBehaviors: {
+        // Immutable chunks have content hashes in their filenames so they
+        // are safe to cache at the edge forever. This also prevents Lambda
+        // 429 throttling when the browser fires several simultaneous
+        // modulepreload requests on first page load.
+        '/_app/immutable/*': {
+          origin: lambdaOrigin,
+          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
