@@ -52,5 +52,9 @@ export async function load({ locals }) {
     user: locals.user ?? null,
     featuresByName,
     presetsByName,
+    // Expose raw arrays so child page servers (e.g. /profile) can reuse them
+    // via parent() instead of issuing duplicate DynamoDB queries.
+    customCreatures,
+    customFeatures,
   };
 }
