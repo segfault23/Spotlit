@@ -76,42 +76,46 @@
     <h1 class="ed-title">{slug ? 'Edit Feature' : 'New Feature'}</h1>
   {/if}
 
-  <div class="fg">
-    <label for="ed-fname">Name</label>
-    <input id="ed-fname" type="text" placeholder="e.g. Bone Crush" bind:value={name} />
-  </div>
-
-  <div class="fg">
-    <span class="lbl">Type</span>
-    <div class="type-row">
-      {#each TYPES as t}
-        <label class="type-radio">
-          <input type="radio" name="ftype-{slug ?? 'new'}" value={t} bind:group={type} />
-          <span class="type-pill {t.toLowerCase()}" class:active={type === t}>{t}</span>
-        </label>
-      {/each}
-    </div>
-  </div>
-
-  <div class="fg">
-    <label for="ed-fcost">Cost <span class="dim">(optional)</span></label>
-    <input id="ed-fcost" type="text" placeholder="e.g. 1 Fear, Mark a Stress" bind:value={cost} />
-  </div>
-
-  <div class="fg">
-    <label for="ed-fbody">Body</label>
-    <textarea id="ed-fbody" rows="6" placeholder="Rules text…" bind:value={body}></textarea>
-  </div>
-
-  <div class="preview-wrap">
-    <span class="lbl-sm">Preview</span>
-    <div class="fblock {cls}">
-      <div class="fblock-head">
-        <span class="ftype">{type}</span>
-        <span class="fname">{name || '(unnamed)'}</span>
-        {#if cost}<span class="fcost">{cost}</span>{/if}
+  <div class="ed-cols">
+    <div class="ed-fields">
+      <div class="fg">
+        <label for="ed-fname">Name</label>
+        <input id="ed-fname" type="text" placeholder="e.g. Bone Crush" bind:value={name} />
       </div>
-      <div class="ftext">{body || '…rules text appears here'}</div>
+
+      <div class="fg">
+        <span class="lbl">Type</span>
+        <div class="type-row">
+          {#each TYPES as t}
+            <label class="type-radio">
+              <input type="radio" name="ftype-{slug ?? 'new'}" value={t} bind:group={type} />
+              <span class="type-pill {t.toLowerCase()}" class:active={type === t}>{t}</span>
+            </label>
+          {/each}
+        </div>
+      </div>
+
+      <div class="fg">
+        <label for="ed-fcost">Cost <span class="dim">(optional)</span></label>
+        <input id="ed-fcost" type="text" placeholder="e.g. 1 Fear, Mark a Stress" bind:value={cost} />
+      </div>
+
+      <div class="fg">
+        <label for="ed-fbody">Body</label>
+        <textarea id="ed-fbody" rows="8" placeholder="Rules text…" bind:value={body}></textarea>
+      </div>
+    </div>
+
+    <div class="preview-wrap">
+      <span class="lbl-sm">Preview</span>
+      <div class="fblock {cls}">
+        <div class="fblock-head">
+          <span class="ftype">{type}</span>
+          <span class="fname">{name || '(unnamed)'}</span>
+          {#if cost}<span class="fcost">{cost}</span>{/if}
+        </div>
+        <div class="ftext">{body || '…rules text appears here'}</div>
+      </div>
     </div>
   </div>
 
@@ -133,6 +137,25 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .ed-cols {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ed-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (min-width: 900px) {
+    .ed-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
   }
   .ed-title {
     margin: 0 0 6px;
@@ -185,7 +208,6 @@
   }
 
   .preview-wrap {
-    margin-top: 4px;
     padding: 10px;
     background: var(--surface2);
     border-radius: 4px;
