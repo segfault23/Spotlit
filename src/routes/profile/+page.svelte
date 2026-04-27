@@ -19,11 +19,15 @@
   }
 
   // ── Encounters ────────────────────────────────────────────────────────
+  let loadingId = $state(null);
+
   async function loadEncounter(id) {
+    loadingId = id;
     try {
       await encounter.load(id);
       goto('/');
     } catch (e) {
+      loadingId = null;
       alert(`Could not load encounter: ${e.message}`);
     }
   }
@@ -115,7 +119,9 @@
                 <div class="enc-sub">Last edited {fmtDate(enc.updatedAt)}</div>
               </div>
               <div class="enc-actions">
-                <button class="btn-p" onclick={() => loadEncounter(enc.id)}>Load</button>
+                <button class="btn-p" onclick={() => loadEncounter(enc.id)} disabled={loadingId !== null}>
+                  {loadingId === enc.id ? 'Loading…' : 'Load'}
+                </button>
                 <button class="btn-c btn-danger" onclick={() => deleteEncounter(enc.id)}>Delete</button>
               </div>
             </li>
