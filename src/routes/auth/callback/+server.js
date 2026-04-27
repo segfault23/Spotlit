@@ -6,6 +6,14 @@ export async function GET({ url, cookies }) {
   const code  = url.searchParams.get('code');
   const state = url.searchParams.get('state');
 
+  console.log('[auth/callback] params:', {
+    hasCode: !!code,
+    hasState: !!state,
+    error: url.searchParams.get('error'),
+    error_description: url.searchParams.get('error_description'),
+    origin: url.origin,
+  });
+
   if (!code || !await verifyState(state)) {
     error(400, 'Invalid OAuth state');
   }
