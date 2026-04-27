@@ -9,7 +9,7 @@
 
 <style>
   .ed-page {
-    max-width: 720px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 18px 22px 60px;
   }

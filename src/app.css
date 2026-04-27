@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ═ Color Themes ═ */
 
@@ -16,7 +16,7 @@
   --f-action:#4a3220;--f-action-t:#e85f35;
   --f-reaction:#5a3a20;--f-reaction-t:#f09a50;
   --f-fear:#5a1a08;--f-fear-t:#ff8855;
-  --font-head:'Playfair Display',Georgia,serif;
+  --font-head:'Cinzel',Georgia,serif;
   --font-body:'Crimson Pro',Georgia,serif;
   --font-mono:'JetBrains Mono',monospace;
 }
@@ -183,12 +183,12 @@ body.theme-eldritch {
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(13px,1.15vw,16px);display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(14px,1.4vw,18px);display:flex;flex-direction:column}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
 
 /* ─ Header ─ */
 #header{position:relative;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
-#encounter-name{flex:1;min-width:160px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--accent);font-family:var(--font-head);font-style:italic;font-size:1.1rem;padding:2px 4px;outline:none}
+#encounter-name{flex:1;min-width:160px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--accent);font-family:var(--font-body);font-style:italic;font-size:1.2rem;padding:2px 4px;outline:none}
 #encounter-name::placeholder{color:var(--text-faint)}
 #encounter-name:readonly {border:none;border-color:transparent;border-bottom:none;background: var(--surface2);color:var(--text-dim);cursor:default}
 .hgroup{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;flex-shrink:0}
@@ -235,7 +235,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .pc-tracks{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .pc-compact .stat-row{margin-bottom:0}
 .pc-compact .stat-lbl{display:none}
-.pc-compact .dot{width:10px;height:10px}
+.pc-compact .dot{width:14px;height:14px}
 .pc-conds{display:flex;gap:3px;flex-shrink:0}
 .pc-cond{font-family:var(--font-mono);font-size:0.5rem;font-weight:600;padding:1px 4px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--text-faint);cursor:pointer;transition:all .1s;line-height:1.4}
 .pc-cond.on.hidden{background:#0a2038;border-color:#2a6090;color:#7bbce0}
@@ -268,7 +268,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .stat-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .stat-lbl{font-family:var(--font-mono);font-size:0.56rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);width:36px;flex-shrink:0}
 .dots{display:flex;gap:2px;flex-wrap:wrap}
-.dot{width:16px;height:16px;border-radius:3px;border:1px solid;cursor:pointer;flex-shrink:0;transition:background .1s,border-color .1s}
+.dot{width:20px;height:20px;border-radius:4px;border:1px solid;cursor:pointer;flex-shrink:0;transition:background .1s,border-color .1s}
 .dot.hp{background:var(--hp-off);border-color:var(--hp-border)}
 .dot.hp.on{background:var(--hp-on);border-color:var(--hp-on)}
 .dot.str{background:var(--stress-off);border-color:var(--stress-border);border-radius:50%}
