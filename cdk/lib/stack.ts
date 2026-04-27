@@ -19,6 +19,7 @@ import { Distribution, OriginProtocolPolicy, CachePolicy, ViewerProtocolPolicy, 
 import { HttpOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { HostedZone, ARecord, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import * as wafv2 from 'aws-cdk-lib/aws-wafv2'; // 👈 ADD THIS
 
 export interface SpotlitCdkStackProps extends StackProps {
   certificateArn: string;
@@ -28,7 +29,6 @@ export class SpotlitCdkStack extends Stack {
   constructor(scope: Construct, id: string, props: SpotlitCdkStackProps) {
     super(scope, id, props);
 
-    // cdk/ lives inside the monorepo root; build/ is at the repo root
     const svelteKitBuildPath = join(__dirname, '../../build');
 
     // ── DynamoDB ──────────────────────────────────────────────────────────────
@@ -156,6 +156,17 @@ export class SpotlitCdkStack extends Stack {
       protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
     });
 
+    const webAcl = new wafv2.CfnWebACL(this, 'SpotlitWebACL', {
+      defaultAction: { allow: {} },
+      scope: 'CLOUDFRONT',
+      visibilityConfig: {
+        cloudWatchMetricsEnabled: true,
+        metricName: 'SpotlitWebACL',
+        sampledRequestsEnabled: true,
+      },
+      rules: [],
+    });
+
     // ── CloudFront ─────────────────────────────────────────────────────────────
     const distribution = new Distribution(this, 'SpotlitDistribution', {
       defaultBehavior: {
@@ -165,10 +176,6 @@ export class SpotlitCdkStack extends Stack {
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
       additionalBehaviors: {
-        // Immutable chunks have content hashes in filenames so they are
-        // safe to cache at the edge forever. This also prevents Lambda
-        // 429 throttling when the browser fires simultaneous modulepreload
-        // requests on first page load.
         '/_app/immutable/*': {
           origin: lambdaOrigin,
           cachePolicy: CachePolicy.CACHING_OPTIMIZED,
@@ -177,6 +184,7 @@ export class SpotlitCdkStack extends Stack {
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
+      webAclId: webAcl.attrArn,
     });
 
     const zone = HostedZone.fromLookup(this, 'Zone', {

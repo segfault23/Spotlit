@@ -6,3 +6,9 @@ node_modules
 !.env.example
 .claude/
 cdk/cdk.out
+cdk/bin/*.js
+cdk/bin/*.d.ts
+cdk/lib/*.js
+cdk/lib/*.d.ts
+cdk/test/*.js
+cdk/test/*.d.ts
