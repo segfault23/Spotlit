@@ -9,6 +9,7 @@
   let { initial = null, slug = null } = $props();
 
   const TYPES = ['Bruiser','Horde','Leader','Minion','Ranged','Skulk','Social','Solo','Standard','Support'];
+  const FEAT_TYPES = ['Passive', 'Action', 'Reaction', 'Fear'];
 
   let name     = $state(initial?.name ?? '');
   let type     = $state(initial?.type ?? 'Solo');
@@ -27,6 +28,7 @@
 
   // Feature picker state
   let pickerQuery = $state('');
+  let pickerType  = $state('');
   let createFeatureOpen = $state(false);
 
   // Available features = merged catalog minus those already attached
@@ -35,6 +37,7 @@
     const q = pickerQuery.trim().toLowerCase();
     return Object.entries($featuresByName)
       .filter(([n]) => !attachedNames.has(n))
+      .filter(([, fd]) => !pickerType || (fd?.t ?? '') === pickerType)
       .filter(([n, fd]) => !q || n.toLowerCase().includes(q) || (fd?.t ?? '').toLowerCase().includes(q))
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(0, 80);
@@ -222,10 +225,26 @@
       <hr class="divider-soft" />
 
       <span class="lbl">Add Feature</span>
+
+      <div class="type-filters">
+        <button
+          class="type-filter-btn"
+          class:active={pickerType === ''}
+          onclick={() => pickerType = ''}
+        >All</button>
+        {#each FEAT_TYPES as ft}
+          <button
+            class="type-filter-btn t-{ft.toLowerCase()}"
+            class:active={pickerType === ft}
+            onclick={() => pickerType = ft}
+          >{ft}</button>
+        {/each}
+      </div>
+
       <input
         class="picker-search"
         type="text"
-        placeholder="Search feature catalog…"
+        placeholder="Search features…"
         bind:value={pickerQuery}
       />
       <div class="picker-results">
@@ -237,7 +256,7 @@
           </button>
         {:else}
           <div class="picker-empty">
-            {pickerQuery ? 'No matches.' : 'Type to search, or create a new feature below.'}
+            {pickerQuery || pickerType ? 'No matches.' : 'Type to search, or create a new feature below.'}
           </div>
         {/each}
       </div>
@@ -431,6 +450,37 @@
     border: none;
     border-top: 1px dashed var(--border);
     margin: 4px 0;
+  }
+
+  .type-filters {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .type-filter-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .type-filter-btn.t-passive  { color: var(--feat-passive,  #6ec38c); }
+  .type-filter-btn.t-action   { color: var(--feat-action,   #d8a040); }
+  .type-filter-btn.t-reaction { color: var(--feat-reaction, #5aafdd); }
+  .type-filter-btn.t-fear     { color: var(--feat-fear,     #d64040); }
+  .type-filter-btn.active {
+    background: color-mix(in srgb, currentColor 18%, var(--surface2));
+    border-color: currentColor;
+  }
+  .type-filter-btn:hover:not(.active) {
+    border-color: var(--text-dim);
+    color: var(--text);
   }
 
   .picker-search {
