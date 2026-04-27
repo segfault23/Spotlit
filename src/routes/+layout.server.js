@@ -5,10 +5,7 @@ import { listCustomFeatures, listCustomCreatures } from '$lib/server/user.js';
 // every page — including /profile — gets it. Custom items shadow pre-made
 // items on name collision, giving users an "override" path.
 export async function load({ locals }) {
-  const [features, creatures] = await Promise.all([
-    listFeatures(),
-    listCreatures(),
-  ]);
+  const [features, creatures] = await Promise.all([listFeatures(), listCreatures()]);
 
   let customFeatures = [];
   let customCreatures = [];
@@ -32,19 +29,32 @@ export async function load({ locals }) {
   const presetsByName = {};
   for (const c of creatures) {
     presetsByName[c.name] = {
-      type: c.type, tier: c.tier, diff: c.diff, hp: c.hp, str: c.str,
-      atk: c.atk, thresh: c.thresh, dmg: c.dmg, atkName: c.atkName,
+      type: c.type,
+      tier: c.tier,
+      diff: c.diff,
+      hp: c.hp,
+      str: c.str,
+      atk: c.atk,
+      thresh: c.thresh,
+      dmg: c.dmg,
+      atkName: c.atkName,
       feats: c.feats,
     };
   }
   for (const c of customCreatures) {
     presetsByName[c.name] = {
-      type: c.type, tier: c.tier, diff: c.diff,
+      type: c.type,
+      tier: c.tier,
+      diff: c.diff,
       hp: c.maxHP ?? c.hp,
       str: c.maxStr ?? c.str,
-      atk: c.atk, thresh: c.thresh, dmg: c.dmg, atkName: c.atkName,
+      atk: c.atk,
+      thresh: c.thresh,
+      dmg: c.dmg,
+      atkName: c.atkName,
       feats: c.feats ?? [],
-      custom: true, slug: c.slug,
+      custom: true,
+      slug: c.slug,
     };
   }
 

@@ -8,7 +8,7 @@ export const roster = writable(initial);
 let syncTimer;
 
 if (browser) {
-  roster.subscribe(value => {
+  roster.subscribe((value) => {
     const currentUser = get(user);
     if (currentUser) {
       // Debounce server sync so rapid edits don't fire a request per keystroke

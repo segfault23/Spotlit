@@ -1,570 +1,804 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Colossus of the Drylands — Combat Tracker</title>
-<link rel="stylesheet" href="tracker-styles.css">
-</head>
-<body>
-
-<!-- Header -->
-<div id="header">
-  <input id="encounter-name" type="text" placeholder="Name this encounter…" />
-  <div class="hgroup">
-    <span class="hg-label" style="color:var(--fear)">Fear</span>
-    <button class="icon-btn" onclick="adj('fear',-1)">−</button>
-    <div id="fear-tokens"></div>
-    <div class="hg-val" id="fear-val" style="color:var(--fear)">0</div>
-    <button class="icon-btn" onclick="adj('fear',1)">+</button>
-  </div>
-  <div class="hgroup">
-    <span class="hg-label">Round</span>
-    <button class="icon-btn" onclick="adj('round',-1)">−</button>
-    <div class="hg-val" id="round-val">1</div>
-    <button class="icon-btn" onclick="adj('round',1)">+</button>
-  </div>
-  <span id="round-flash">— spotlights cleared —</span>
-  <button class="theme-toggle-btn" onclick="toggleThemeMenu()">🎨 Theme</button>
-  <div class="theme-menu hidden" id="theme-menu"></div>
-  <button class="hdr-btn accent" onclick="openRoster()">⊞ Roster</button>
-  <button class="hdr-btn" onclick="openAddPC()">+ PC</button>
-  <button class="hdr-btn" onclick="openAddAdv()">+ Adversary</button>
-  <button class="hdr-btn" onclick="doReset()" style="margin-left:2px">↺ Reset</button>
-</div>
-
-<!-- Main -->
-<div id="main">
-  <div class="col">
-    <div class="col-head"><span class="col-title">Party</span></div>
-    <div class="col-body" id="party-list"></div>
-  </div>
-  <div class="col">
-    <div class="col-head"><span class="col-title">Adversaries</span></div>
-    <div class="col-body" id="adv-list"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL: Roster Manager ══ -->
-<div class="overlay" id="ov-roster">
-<div class="modal modal-sm">
-  <div class="modal-title">Party Roster</div>
-  <p class="sect-title">Saved characters</p>
-  <div class="roster-list" id="roster-list"></div>
-  <hr class="divider">
-  <p class="sect-title">Add character to roster</p>
-  <div class="fg"><label>Name</label><input id="r-name" type="text" placeholder="Character name" /></div>
-  <div class="fgrow">
-    <div class="fg"><label>Max HP</label><input id="r-hp" type="number" value="6" min="1" max="12"/></div>
-    <div class="fg"><label>Max Stress</label><input id="r-str" type="number" value="6" min="1" max="12"/></div>
-  </div>
-  <div class="fgrow">
-    <div class="fg"><label>Evasion</label><input id="r-ev" type="number" value="10"/></div>
-    <div class="fg"><label>Armor Score</label><input id="r-arm" type="number" value="3" min="0" max="12"/></div>
-  </div>
-  <div class="modal-foot">
-    <button class="btn-c" onclick="closeAll()">Close</button>
-    <button class="btn-p" onclick="saveRosterEntry()">Save to Roster</button>
-  </div>
-</div>
-</div>
-
-<!-- ══ MODAL: Add PC ══ -->
-<div class="overlay" id="ov-pc">
-<div class="modal modal-sm">
-  <div class="modal-title">Add PC to Encounter</div>
-  <p class="sect-title">From roster</p>
-  <div class="roster-list" id="pc-roster-list"></div>
-  <hr class="divider">
-  <p class="sect-title">Or add one-time custom PC</p>
-  <div class="fg"><label>Name</label><input id="pc-name" type="text" placeholder="Character name"/></div>
-  <div class="fgrow">
-    <div class="fg"><label>Max HP</label><input id="pc-hp" type="number" value="6" min="1" max="12"/></div>
-    <div class="fg"><label>Max Stress</label><input id="pc-str" type="number" value="6" min="1" max="12"/></div>
-  </div>
-  <div class="fgrow">
-    <div class="fg"><label>Evasion</label><input id="pc-ev" type="number" value="10"/></div>
-    <div class="fg"><label>Armor Score</label><input id="pc-arm" type="number" value="3" min="0" max="12"/></div>
-  </div>
-  <div class="modal-foot">
-    <button class="btn-c" onclick="closeAll()">Cancel</button>
-    <button class="btn-p" onclick="addCustomPC()">Add Custom PC</button>
-  </div>
-</div>
-</div>
-
-<!-- ══ MODAL: Add Adversary ══ -->
-<div class="overlay" id="ov-adv">
-<div class="modal modal-lg">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-    <div class="modal-title" style="flex:1;margin:0;padding:0;border:none">Add Adversary</div>
-    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);background:var(--surface2);padding:4px 8px;border-radius:3px;border:1px solid var(--border)"><span id="adv-count">0</span> selected</div>
-  </div>
-  <input class="modal-search" id="adv-search" type="text" placeholder="Search adversaries…" oninput="filterAdvList()" />
-  <div class="adv-list" id="adv-picker"></div>
-  <hr class="divider">
-  <p class="sect-title">Customize before adding</p>
-  <div class="fgrow">
-    <div class="fg"><label>Name</label><input id="a-name" type="text" placeholder="Name"/></div>
-    <div class="fg"><label>Type</label>
-      <select id="a-type">
-        <option>Bruiser</option><option>Horde</option><option>Leader</option>
-        <option>Minion</option><option>Ranged</option><option>Skulk</option>
-        <option>Social</option><option selected>Solo</option>
-        <option>Standard</option><option>Support</option>
-      </select>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Colossus of the Drylands — Combat Tracker</title>
+    <link rel="stylesheet" href="tracker-styles.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <div id="header">
+      <input id="encounter-name" type="text" placeholder="Name this encounter…" />
+      <div class="hgroup">
+        <span class="hg-label" style="color: var(--fear)">Fear</span>
+        <button class="icon-btn" onclick="adj('fear', -1)">−</button>
+        <div id="fear-tokens"></div>
+        <div class="hg-val" id="fear-val" style="color: var(--fear)">0</div>
+        <button class="icon-btn" onclick="adj('fear', 1)">+</button>
+      </div>
+      <div class="hgroup">
+        <span class="hg-label">Round</span>
+        <button class="icon-btn" onclick="adj('round', -1)">−</button>
+        <div class="hg-val" id="round-val">1</div>
+        <button class="icon-btn" onclick="adj('round', 1)">+</button>
+      </div>
+      <span id="round-flash">— spotlights cleared —</span>
+      <button class="theme-toggle-btn" onclick="toggleThemeMenu()">🎨 Theme</button>
+      <div class="theme-menu hidden" id="theme-menu"></div>
+      <button class="hdr-btn accent" onclick="openRoster()">⊞ Roster</button>
+      <button class="hdr-btn" onclick="openAddPC()">+ PC</button>
+      <button class="hdr-btn" onclick="openAddAdv()">+ Adversary</button>
+      <button class="hdr-btn" onclick="doReset()" style="margin-left: 2px">↺ Reset</button>
     </div>
-  </div>
-  <div class="fgrow3">
-    <div class="fg"><label>Tier</label>
-      <select id="a-tier"><option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option><option value="4">T4</option></select>
+
+    <!-- Main -->
+    <div id="main">
+      <div class="col">
+        <div class="col-head"><span class="col-title">Party</span></div>
+        <div class="col-body" id="party-list"></div>
+      </div>
+      <div class="col">
+        <div class="col-head"><span class="col-title">Adversaries</span></div>
+        <div class="col-body" id="adv-list"></div>
+      </div>
     </div>
-    <div class="fg"><label>Difficulty</label><input id="a-diff" type="number" value="17"/></div>
-    <div class="fg"><label>ATK Mod</label><input id="a-atk" type="text" value="+3"/></div>
-  </div>
-  <div class="fgrow">
-    <div class="fg"><label>Max HP</label><input id="a-hp" type="number" value="10" min="1"/></div>
-    <div class="fg"><label>Max Stress</label><input id="a-str" type="number" value="4" min="0"/></div>
-  </div>
-  <div class="fgrow">
-    <div class="fg"><label>Thresholds (Major / Severe)</label><input id="a-thresh" type="text" placeholder="20 / 32"/></div>
-    <div class="fg"><label>Damage</label><input id="a-dmg" type="text" placeholder="3d12+5 phy"/></div>
-  </div>
-  <div class="fg"><label>Standard Attack (name · range)</label><input id="a-atkname" type="text" placeholder="Bone Crush · Melee"/></div>
-  <div class="fg"><label>Features (comma-separated names)</label><input id="a-feats" type="text" placeholder="Ancient Colossus, Relentless, Death Rattle"/></div>
-  <div class="modal-foot">
-    <button class="btn-c" onclick="closeAll()">Cancel</button>
-    <button class="btn-p" id="adv-add-btn" onclick="addAdversary()">Add to Encounter</button>
-  </div>
-</div>
-</div>
 
-<!-- Data (features + presets) loaded first, then logic -->
-<script src="tracker-data.js"></script>
-<script>
-// ══ STATE ═════════════════════════════════════════════════════════════════════
-let S = {fear:0, round:1, creatures:[], uid:1};
-let roster = JSON.parse(localStorage.getItem('dh_roster') || '[]');
-let expandedFeats = new Set();
-let selectedPreset = null;
-let selectedAdversaries = new Set();
+    <!-- ══ MODAL: Roster Manager ══ -->
+    <div class="overlay" id="ov-roster">
+      <div class="modal modal-sm">
+        <div class="modal-title">Party Roster</div>
+        <p class="sect-title">Saved characters</p>
+        <div class="roster-list" id="roster-list"></div>
+        <hr class="divider" />
+        <p class="sect-title">Add character to roster</p>
+        <div class="fg">
+          <label>Name</label><input id="r-name" type="text" placeholder="Character name" />
+        </div>
+        <div class="fgrow">
+          <div class="fg">
+            <label>Max HP</label><input id="r-hp" type="number" value="6" min="1" max="12" />
+          </div>
+          <div class="fg">
+            <label>Max Stress</label><input id="r-str" type="number" value="6" min="1" max="12" />
+          </div>
+        </div>
+        <div class="fgrow">
+          <div class="fg"><label>Evasion</label><input id="r-ev" type="number" value="10" /></div>
+          <div class="fg">
+            <label>Armor Score</label><input id="r-arm" type="number" value="3" min="0" max="12" />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="closeAll()">Close</button>
+          <button class="btn-p" onclick="saveRosterEntry()">Save to Roster</button>
+        </div>
+      </div>
+    </div>
 
-// ══ THEMES ════════════════════════════════════════════════════════════════════
-const THEMES = {
-  '': { name: 'Drylands', swatches: ['#c89830', '#1a1408', '#d64040', '#7a3080'] },
-  'forest': { name: 'Midnight Forest', swatches: ['#4a9fd8', '#0f1620', '#d64040', '#7a5ab0'] },
-  'infernal': { name: 'Infernal', swatches: ['#ff6b20', '#2a1008', '#ff6b6b', '#c85a7a'] },
-  'frost': { name: 'Frostborn', swatches: ['#6ac8ff', '#0d1a28', '#d64040', '#8a7ab0'] },
-  'royal': { name: 'Royal Purple', swatches: ['#b080ff', '#141025', '#d64040', '#a860d0'] },
-  'light': { name: 'Light Mode', swatches: ['#c88830', '#ffffff', '#e04848', '#b070d8'] },
-  'ocean': { name: 'Ocean Deep', swatches: ['#2abaff', '#0a1428', '#d64040', '#7a8ab0'] },
-  'autumn': { name: 'Autumn Rustic', swatches: ['#d8880a', '#261608', '#d86050', '#9a6030'] },
-  'cyber': { name: 'Cyberpunk', swatches: ['#ff00ff', '#141422', '#ff1a6a', '#9900ff'] },
-  'eldritch': { name: 'Eldritch', swatches: ['#aa66ff', '#12080f', '#d64444', '#8a40aa'] }
-};
+    <!-- ══ MODAL: Add PC ══ -->
+    <div class="overlay" id="ov-pc">
+      <div class="modal modal-sm">
+        <div class="modal-title">Add PC to Encounter</div>
+        <p class="sect-title">From roster</p>
+        <div class="roster-list" id="pc-roster-list"></div>
+        <hr class="divider" />
+        <p class="sect-title">Or add one-time custom PC</p>
+        <div class="fg">
+          <label>Name</label><input id="pc-name" type="text" placeholder="Character name" />
+        </div>
+        <div class="fgrow">
+          <div class="fg">
+            <label>Max HP</label><input id="pc-hp" type="number" value="6" min="1" max="12" />
+          </div>
+          <div class="fg">
+            <label>Max Stress</label><input id="pc-str" type="number" value="6" min="1" max="12" />
+          </div>
+        </div>
+        <div class="fgrow">
+          <div class="fg"><label>Evasion</label><input id="pc-ev" type="number" value="10" /></div>
+          <div class="fg">
+            <label>Armor Score</label><input id="pc-arm" type="number" value="3" min="0" max="12" />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="closeAll()">Cancel</button>
+          <button class="btn-p" onclick="addCustomPC()">Add Custom PC</button>
+        </div>
+      </div>
+    </div>
 
-function setTheme(name) {
-  document.body.className = name ? `theme-${name}` : '';
-  localStorage.setItem('dh_theme', name);
-  buildThemeMenu();
-  closeThemeMenu();
-}
+    <!-- ══ MODAL: Add Adversary ══ -->
+    <div class="overlay" id="ov-adv">
+      <div class="modal modal-lg">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+          <div class="modal-title" style="flex: 1; margin: 0; padding: 0; border: none">
+            Add Adversary
+          </div>
+          <div
+            style="
+              font-family: var(--font-mono);
+              font-size: 0.7rem;
+              color: var(--text-dim);
+              background: var(--surface2);
+              padding: 4px 8px;
+              border-radius: 3px;
+              border: 1px solid var(--border);
+            "
+          >
+            <span id="adv-count">0</span> selected
+          </div>
+        </div>
+        <input
+          class="modal-search"
+          id="adv-search"
+          type="text"
+          placeholder="Search adversaries…"
+          oninput="filterAdvList()"
+        />
+        <div class="adv-list" id="adv-picker"></div>
+        <hr class="divider" />
+        <p class="sect-title">Customize before adding</p>
+        <div class="fgrow">
+          <div class="fg">
+            <label>Name</label><input id="a-name" type="text" placeholder="Name" />
+          </div>
+          <div class="fg">
+            <label>Type</label>
+            <select id="a-type">
+              <option>Bruiser</option>
+              <option>Horde</option>
+              <option>Leader</option>
+              <option>Minion</option>
+              <option>Ranged</option>
+              <option>Skulk</option>
+              <option>Social</option>
+              <option selected>Solo</option>
+              <option>Standard</option>
+              <option>Support</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrow3">
+          <div class="fg">
+            <label>Tier</label>
+            <select id="a-tier">
+              <option value="1">T1</option>
+              <option value="2">T2</option>
+              <option value="3" selected>T3</option>
+              <option value="4">T4</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Difficulty</label><input id="a-diff" type="number" value="17" />
+          </div>
+          <div class="fg"><label>ATK Mod</label><input id="a-atk" type="text" value="+3" /></div>
+        </div>
+        <div class="fgrow">
+          <div class="fg">
+            <label>Max HP</label><input id="a-hp" type="number" value="10" min="1" />
+          </div>
+          <div class="fg">
+            <label>Max Stress</label><input id="a-str" type="number" value="4" min="0" />
+          </div>
+        </div>
+        <div class="fgrow">
+          <div class="fg">
+            <label>Thresholds (Major / Severe)</label
+            ><input id="a-thresh" type="text" placeholder="20 / 32" />
+          </div>
+          <div class="fg">
+            <label>Damage</label><input id="a-dmg" type="text" placeholder="3d12+5 phy" />
+          </div>
+        </div>
+        <div class="fg">
+          <label>Standard Attack (name · range)</label
+          ><input id="a-atkname" type="text" placeholder="Bone Crush · Melee" />
+        </div>
+        <div class="fg">
+          <label>Features (comma-separated names)</label
+          ><input
+            id="a-feats"
+            type="text"
+            placeholder="Ancient Colossus, Relentless, Death Rattle"
+          />
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="closeAll()">Cancel</button>
+          <button class="btn-p" id="adv-add-btn" onclick="addAdversary()">Add to Encounter</button>
+        </div>
+      </div>
+    </div>
 
-function toggleThemeMenu() {
-  const menu = document.getElementById('theme-menu');
-  menu.classList.toggle('hidden');
-}
+    <!-- Data (features + presets) loaded first, then logic -->
+    <script src="tracker-data.js"></script>
+    <script>
+      // ══ STATE ═════════════════════════════════════════════════════════════════════
+      let S = { fear: 0, round: 1, creatures: [], uid: 1 };
+      let roster = JSON.parse(localStorage.getItem('dh_roster') || '[]');
+      let expandedFeats = new Set();
+      let selectedPreset = null;
+      let selectedAdversaries = new Set();
 
-function closeThemeMenu() {
-  document.getElementById('theme-menu').classList.add('hidden');
-}
+      // ══ THEMES ════════════════════════════════════════════════════════════════════
+      const THEMES = {
+        '': { name: 'Drylands', swatches: ['#c89830', '#1a1408', '#d64040', '#7a3080'] },
+        forest: { name: 'Midnight Forest', swatches: ['#4a9fd8', '#0f1620', '#d64040', '#7a5ab0'] },
+        infernal: { name: 'Infernal', swatches: ['#ff6b20', '#2a1008', '#ff6b6b', '#c85a7a'] },
+        frost: { name: 'Frostborn', swatches: ['#6ac8ff', '#0d1a28', '#d64040', '#8a7ab0'] },
+        royal: { name: 'Royal Purple', swatches: ['#b080ff', '#141025', '#d64040', '#a860d0'] },
+        light: { name: 'Light Mode', swatches: ['#c88830', '#ffffff', '#e04848', '#b070d8'] },
+        ocean: { name: 'Ocean Deep', swatches: ['#2abaff', '#0a1428', '#d64040', '#7a8ab0'] },
+        autumn: { name: 'Autumn Rustic', swatches: ['#d8880a', '#261608', '#d86050', '#9a6030'] },
+        cyber: { name: 'Cyberpunk', swatches: ['#ff00ff', '#141422', '#ff1a6a', '#9900ff'] },
+        eldritch: { name: 'Eldritch', swatches: ['#aa66ff', '#12080f', '#d64444', '#8a40aa'] },
+      };
 
-function buildThemeMenu() {
-  const el = document.getElementById('theme-menu');
-  const current = localStorage.getItem('dh_theme') || '';
-  el.innerHTML = Object.entries(THEMES).map(([key, theme]) => `
-    <div class="theme-item${current===key?' active':''}" onclick="setTheme('${key}')">
+      function setTheme(name) {
+        document.body.className = name ? `theme-${name}` : '';
+        localStorage.setItem('dh_theme', name);
+        buildThemeMenu();
+        closeThemeMenu();
+      }
+
+      function toggleThemeMenu() {
+        const menu = document.getElementById('theme-menu');
+        menu.classList.toggle('hidden');
+      }
+
+      function closeThemeMenu() {
+        document.getElementById('theme-menu').classList.add('hidden');
+      }
+
+      function buildThemeMenu() {
+        const el = document.getElementById('theme-menu');
+        const current = localStorage.getItem('dh_theme') || '';
+        el.innerHTML = Object.entries(THEMES)
+          .map(
+            ([key, theme]) => `
+    <div class="theme-item${current === key ? ' active' : ''}" onclick="setTheme('${key}')">
       <div class="theme-preview">
-        ${theme.swatches.map(color => `<div class="theme-swatch" style="background:${color}"></div>`).join('')}
+        ${theme.swatches.map((color) => `<div class="theme-swatch" style="background:${color}"></div>`).join('')}
       </div>
       <div class="theme-name">${theme.name}</div>
-    </div>`).join('');
-}
+    </div>`
+          )
+          .join('');
+      }
 
-function initTheme() {
-  const saved = localStorage.getItem('dh_theme') || '';
-  setTheme(saved);
-}
+      function initTheme() {
+        const saved = localStorage.getItem('dh_theme') || '';
+        setTheme(saved);
+      }
 
-// ══ RENDER ════════════════════════════════════════════════════════════════════
-function render() {
-  renderFear();
-  document.getElementById('round-val').textContent = S.round;
-  renderList('party-list', S.creatures.filter(c => c.isPC));
-  renderList('adv-list',   S.creatures.filter(c => !c.isPC));
-}
+      // ══ RENDER ════════════════════════════════════════════════════════════════════
+      function render() {
+        renderFear();
+        document.getElementById('round-val').textContent = S.round;
+        renderList(
+          'party-list',
+          S.creatures.filter((c) => c.isPC)
+        );
+        renderList(
+          'adv-list',
+          S.creatures.filter((c) => !c.isPC)
+        );
+      }
 
-function renderFear() {
-  const el = document.getElementById('fear-tokens');
-  el.innerHTML = '';
-  for (let i = 0; i < 12; i++) {
-    const d = document.createElement('div');
-    d.className = 'ft' + (i < S.fear ? ' lit' : '');
-    d.onclick = () => { S.fear = i < S.fear ? i : i+1; renderFear(); document.getElementById('fear-val').textContent = S.fear; };
-    el.appendChild(d);
-  }
-  document.getElementById('fear-val').textContent = S.fear;
-}
-
-function renderList(id, list) {
-  const el = document.getElementById(id);
-  if (!list.length) { el.innerHTML = '<div class="empty">None added yet.</div>'; return; }
-  el.innerHTML = '';
-  list.forEach(c => el.appendChild(makeCard(c)));
-}
-
-function makeCard(c) {
-  const div = document.createElement('div');
-  const defeated = !c.isPC && c.hp >= c.maxHP;
-  div.className = 'card' + (c.isPC?' pc-card':'') + (c.spotlit?' spotlit':'') + (defeated?' defeated':'');
-
-  // Top
-  let h = `<div class="card-top"><div class="cname">${esc(c.name)}</div><div class="badges">`;
-  if (!c.isPC) h += `<span class="badge type">${esc(c.type)}</span><span class="badge">T${c.tier}</span>`;
-  h += `</div></div>`;
-
-  // HP
-  const hpLeft = c.maxHP - c.hp;
-  h += `<div class="stat-row"><span class="stat-lbl">HP</span><div class="dots">`;
-  for (let i = 0; i < c.maxHP; i++) h += `<div class="dot hp${i<c.hp?' on':''}" onclick="toggleDot(${c.id},'hp',${i})"></div>`;
-  h += `</div><span class="stat-aside">${hpLeft}/${c.maxHP}</span></div>`;
-
-  // Stress
-  if (c.maxStr > 0) {
-    h += `<div class="stat-row"><span class="stat-lbl">Stress</span><div class="dots">`;
-    for (let i = 0; i < c.maxStr; i++) h += `<div class="dot str${i<c.str?' on':''}" onclick="toggleDot(${c.id},'str',${i})"></div>`;
-    h += `</div><span class="stat-aside">${c.str}/${c.maxStr}</span></div>`;
-  }
-
-  // Armor (PC only)
-  if (c.isPC && c.armor > 0) {
-    h += `<div class="stat-row"><span class="stat-lbl">Armor</span><div class="dots">`;
-    for (let i = 0; i < c.armor; i++) h += `<div class="dot arm${i<c.armUsed?' on':''}" onclick="toggleDot(${c.id},'arm',${i})"></div>`;
-    h += `</div></div>`;
-  }
-
-  // Quick stats
-  if (c.isPC) {
-    h += `<div class="qstats"><span class="qs">Evasion <strong>${c.evasion}</strong></span></div>`;
-  } else {
-    h += `<div class="qstats"><span class="qs">Diff <strong>${c.diff}</strong></span><span class="qs">ATK <strong>${esc(c.atk)}</strong></span>${c.thresh?`<span class="qs">Thresh <strong>${esc(c.thresh)}</strong></span>`:''}</div>`;
-    if (c.atkName||c.dmg) h += `<div class="atk-line"><strong>${esc(c.atkName||'Attack')}</strong>${c.dmg?' — '+esc(c.dmg):''}</div>`;
-
-    // Features
-    if (c.feats && c.feats.length) {
-      const expanded = expandedFeats.has(c.id);
-      h += `<button class="feat-toggle${expanded?' open':''}" onclick="toggleFeats(${c.id})"><span class="arrow">▶</span> Features (${c.feats.length})</button>`;
-      h += `<div class="feat-chips">`;
-      c.feats.forEach(f => { const [fname] = f.split('|'); h += `<span class="fchip">${esc(fname)}</span>`; });
-      h += `</div>`;
-      h += `<div class="feat-blocks${expanded?'':' hidden-feats'}">`;
-      c.feats.forEach(f => {
-        const [fname, fnote] = f.split('|');
-        const fd = FEATURES[fname];
-        if (fd) {
-          const cls = fd.t==='Passive'?'passive':fd.t==='Action'?'action':fd.t==='Reaction'?'reaction':'fear';
-          h += `<div class="fblock ${cls}"><div class="fblock-head"><span class="ftype">${fd.t}</span><span class="fname">${esc(fname)}</span>${fd.cost?`<span class="fcost">${esc(fd.cost)}</span>`:''}</div><div class="ftext">${esc(fd.tx)}</div>${fnote?`<div class="fnote">${esc(fnote)}</div>`:''}</div>`;
-        } else {
-          h += `<div class="fblock action"><div class="fblock-head"><span class="ftype">Feature</span><span class="fname">${esc(fname)}</span></div><div class="ftext">No data — add to FEATURES in tracker-data.js</div></div>`;
+      function renderFear() {
+        const el = document.getElementById('fear-tokens');
+        el.innerHTML = '';
+        for (let i = 0; i < 12; i++) {
+          const d = document.createElement('div');
+          d.className = 'ft' + (i < S.fear ? ' lit' : '');
+          d.onclick = () => {
+            S.fear = i < S.fear ? i : i + 1;
+            renderFear();
+            document.getElementById('fear-val').textContent = S.fear;
+          };
+          el.appendChild(d);
         }
-      });
-      h += `</div>`;
-    }
-  }
+        document.getElementById('fear-val').textContent = S.fear;
+      }
 
-  // Conditions
-  h += `<div class="conditions">${['Hidden','Restrained','Vulnerable'].map(cd => {
-    const k = cd.toLowerCase();
-    return `<button class="cond ${k}${c.conds[k]?' on':''}" onclick="toggleCond(${c.id},'${k}')">${cd}</button>`;
-  }).join('')}</div>`;
+      function renderList(id, list) {
+        const el = document.getElementById(id);
+        if (!list.length) {
+          el.innerHTML = '<div class="empty">None added yet.</div>';
+          return;
+        }
+        el.innerHTML = '';
+        list.forEach((c) => el.appendChild(makeCard(c)));
+      }
 
-  // Notes
-  h += `<textarea class="notes-ta" placeholder="Notes…" onchange="setNotes(${c.id},this.value)">${esc(c.notes)}</textarea>`;
+      function makeCard(c) {
+        const div = document.createElement('div');
+        const defeated = !c.isPC && c.hp >= c.maxHP;
+        div.className =
+          'card' +
+          (c.isPC ? ' pc-card' : '') +
+          (c.spotlit ? ' spotlit' : '') +
+          (defeated ? ' defeated' : '');
 
-  // Footer
-  h += `<div class="card-foot"><button class="cf-btn spot${c.spotlit?' on':''}" onclick="toggleSpot(${c.id})">${c.spotlit?'★ Spotlit':'☆ Spotlight'}</button>`;
-  if (!c.isPC) h += `<button class="cf-btn" onclick="quickHP(${c.id},-1)">HP−</button><button class="cf-btn" onclick="quickHP(${c.id},1)">HP+</button>`;
-  h += `<button class="cf-btn rm" onclick="removeC(${c.id})">✕</button></div>`;
+        // Top
+        let h = `<div class="card-top"><div class="cname">${esc(c.name)}</div><div class="badges">`;
+        if (!c.isPC)
+          h += `<span class="badge type">${esc(c.type)}</span><span class="badge">T${c.tier}</span>`;
+        h += `</div></div>`;
 
-  if (defeated) h += `<div class="defeated-label">Defeated</div>`;
-  div.innerHTML = h;
-  return div;
-}
+        // HP
+        const hpLeft = c.maxHP - c.hp;
+        h += `<div class="stat-row"><span class="stat-lbl">HP</span><div class="dots">`;
+        for (let i = 0; i < c.maxHP; i++)
+          h += `<div class="dot hp${i < c.hp ? ' on' : ''}" onclick="toggleDot(${c.id},'hp',${i})"></div>`;
+        h += `</div><span class="stat-aside">${hpLeft}/${c.maxHP}</span></div>`;
 
-// ══ INTERACTIONS ══════════════════════════════════════════════════════════════
-function adj(k, d) {
-  if (k==='fear')  { S.fear = Math.max(0, Math.min(12, S.fear+d)); }
-  if (k==='round') {
-    const prev = S.round;
-    S.round = Math.max(1, S.round+d);
-    if (S.round > prev) {
-      S.creatures.forEach(c => c.spotlit=false);
-      expandedFeats.clear();
-      const flash = document.getElementById('round-flash');
-      flash.classList.add('show');
-      setTimeout(() => flash.classList.remove('show'), 1800);
-    }
-  }
-  render();
-}
+        // Stress
+        if (c.maxStr > 0) {
+          h += `<div class="stat-row"><span class="stat-lbl">Stress</span><div class="dots">`;
+          for (let i = 0; i < c.maxStr; i++)
+            h += `<div class="dot str${i < c.str ? ' on' : ''}" onclick="toggleDot(${c.id},'str',${i})"></div>`;
+          h += `</div><span class="stat-aside">${c.str}/${c.maxStr}</span></div>`;
+        }
 
-function toggleDot(id, key, i) {
-  const c = S.creatures.find(x => x.id===id);
-  if (!c) return;
-  if (key==='hp')  c.hp      = c.hp  > i ? i : i+1;
-  if (key==='str') c.str     = c.str > i ? i : i+1;
-  if (key==='arm') c.armUsed = c.armUsed > i ? i : i+1;
-  render();
-}
-function toggleCond(id,k)  { const c=S.creatures.find(x=>x.id===id); if(c){c.conds[k]=!c.conds[k];render();} }
-function toggleSpot(id)    { const c=S.creatures.find(x=>x.id===id); if(c){c.spotlit=!c.spotlit;render();} }
-function toggleFeats(id)   { expandedFeats.has(id)?expandedFeats.delete(id):expandedFeats.add(id); render(); }
-function quickHP(id,d)     { const c=S.creatures.find(x=>x.id===id); if(c){c.hp=Math.max(0,Math.min(c.maxHP,c.hp+d));render();} }
-function removeC(id)       { S.creatures=S.creatures.filter(x=>x.id!==id); expandedFeats.delete(id); render(); }
-function setNotes(id,v)    { const c=S.creatures.find(x=>x.id===id); if(c)c.notes=v; }
+        // Armor (PC only)
+        if (c.isPC && c.armor > 0) {
+          h += `<div class="stat-row"><span class="stat-lbl">Armor</span><div class="dots">`;
+          for (let i = 0; i < c.armor; i++)
+            h += `<div class="dot arm${i < c.armUsed ? ' on' : ''}" onclick="toggleDot(${c.id},'arm',${i})"></div>`;
+          h += `</div></div>`;
+        }
 
-function doReset() {
-  if (!confirm('Reset encounter? HP, Stress, Armor, conditions, Fear, and round clear. Creatures stay.')) return;
-  S.fear=0; S.round=1;
-  S.creatures.forEach(c => { c.hp=0;c.str=0;c.armUsed=0;c.spotlit=false;c.conds={hidden:false,restrained:false,vulnerable:false};c.notes=''; });
-  expandedFeats.clear();
-  render();
-}
+        // Quick stats
+        if (c.isPC) {
+          h += `<div class="qstats"><span class="qs">Evasion <strong>${c.evasion}</strong></span></div>`;
+        } else {
+          h += `<div class="qstats"><span class="qs">Diff <strong>${c.diff}</strong></span><span class="qs">ATK <strong>${esc(c.atk)}</strong></span>${c.thresh ? `<span class="qs">Thresh <strong>${esc(c.thresh)}</strong></span>` : ''}</div>`;
+          if (c.atkName || c.dmg)
+            h += `<div class="atk-line"><strong>${esc(c.atkName || 'Attack')}</strong>${c.dmg ? ' — ' + esc(c.dmg) : ''}</div>`;
 
-function mkCreature(overrides) {
-  return { id:S.uid++, isPC:false, name:'', type:'Standard', tier:1, diff:11, maxHP:6, hp:0, maxStr:3, str:0,
-    atk:'+1', thresh:'', dmg:'', atkName:'', feats:[], spotlit:false,
-    conds:{hidden:false,restrained:false,vulnerable:false}, notes:'', ...overrides };
-}
+          // Features
+          if (c.feats && c.feats.length) {
+            const expanded = expandedFeats.has(c.id);
+            h += `<button class="feat-toggle${expanded ? ' open' : ''}" onclick="toggleFeats(${c.id})"><span class="arrow">▶</span> Features (${c.feats.length})</button>`;
+            h += `<div class="feat-chips">`;
+            c.feats.forEach((f) => {
+              const [fname] = f.split('|');
+              h += `<span class="fchip">${esc(fname)}</span>`;
+            });
+            h += `</div>`;
+            h += `<div class="feat-blocks${expanded ? '' : ' hidden-feats'}">`;
+            c.feats.forEach((f) => {
+              const [fname, fnote] = f.split('|');
+              const fd = FEATURES[fname];
+              if (fd) {
+                const cls =
+                  fd.t === 'Passive'
+                    ? 'passive'
+                    : fd.t === 'Action'
+                      ? 'action'
+                      : fd.t === 'Reaction'
+                        ? 'reaction'
+                        : 'fear';
+                h += `<div class="fblock ${cls}"><div class="fblock-head"><span class="ftype">${fd.t}</span><span class="fname">${esc(fname)}</span>${fd.cost ? `<span class="fcost">${esc(fd.cost)}</span>` : ''}</div><div class="ftext">${esc(fd.tx)}</div>${fnote ? `<div class="fnote">${esc(fnote)}</div>` : ''}</div>`;
+              } else {
+                h += `<div class="fblock action"><div class="fblock-head"><span class="ftype">Feature</span><span class="fname">${esc(fname)}</span></div><div class="ftext">No data — add to FEATURES in tracker-data.js</div></div>`;
+              }
+            });
+            h += `</div>`;
+          }
+        }
 
-// ══ ROSTER ════════════════════════════════════════════════════════════════════
-function saveRoster() { localStorage.setItem('dh_roster', JSON.stringify(roster)); }
+        // Conditions
+        h += `<div class="conditions">${['Hidden', 'Restrained', 'Vulnerable']
+          .map((cd) => {
+            const k = cd.toLowerCase();
+            return `<button class="cond ${k}${c.conds[k] ? ' on' : ''}" onclick="toggleCond(${c.id},'${k}')">${cd}</button>`;
+          })
+          .join('')}</div>`;
 
-function renderRosterList(containerId, showAddBtn) {
-  const el = document.getElementById(containerId);
-  if (!roster.length) { el.innerHTML = `<div class="empty" style="padding:12px 0">No characters saved yet.</div>`; return; }
-  el.innerHTML = roster.map(r => `
+        // Notes
+        h += `<textarea class="notes-ta" placeholder="Notes…" onchange="setNotes(${c.id},this.value)">${esc(c.notes)}</textarea>`;
+
+        // Footer
+        h += `<div class="card-foot"><button class="cf-btn spot${c.spotlit ? ' on' : ''}" onclick="toggleSpot(${c.id})">${c.spotlit ? '★ Spotlit' : '☆ Spotlight'}</button>`;
+        if (!c.isPC)
+          h += `<button class="cf-btn" onclick="quickHP(${c.id},-1)">HP−</button><button class="cf-btn" onclick="quickHP(${c.id},1)">HP+</button>`;
+        h += `<button class="cf-btn rm" onclick="removeC(${c.id})">✕</button></div>`;
+
+        if (defeated) h += `<div class="defeated-label">Defeated</div>`;
+        div.innerHTML = h;
+        return div;
+      }
+
+      // ══ INTERACTIONS ══════════════════════════════════════════════════════════════
+      function adj(k, d) {
+        if (k === 'fear') {
+          S.fear = Math.max(0, Math.min(12, S.fear + d));
+        }
+        if (k === 'round') {
+          const prev = S.round;
+          S.round = Math.max(1, S.round + d);
+          if (S.round > prev) {
+            S.creatures.forEach((c) => (c.spotlit = false));
+            expandedFeats.clear();
+            const flash = document.getElementById('round-flash');
+            flash.classList.add('show');
+            setTimeout(() => flash.classList.remove('show'), 1800);
+          }
+        }
+        render();
+      }
+
+      function toggleDot(id, key, i) {
+        const c = S.creatures.find((x) => x.id === id);
+        if (!c) return;
+        if (key === 'hp') c.hp = c.hp > i ? i : i + 1;
+        if (key === 'str') c.str = c.str > i ? i : i + 1;
+        if (key === 'arm') c.armUsed = c.armUsed > i ? i : i + 1;
+        render();
+      }
+      function toggleCond(id, k) {
+        const c = S.creatures.find((x) => x.id === id);
+        if (c) {
+          c.conds[k] = !c.conds[k];
+          render();
+        }
+      }
+      function toggleSpot(id) {
+        const c = S.creatures.find((x) => x.id === id);
+        if (c) {
+          c.spotlit = !c.spotlit;
+          render();
+        }
+      }
+      function toggleFeats(id) {
+        expandedFeats.has(id) ? expandedFeats.delete(id) : expandedFeats.add(id);
+        render();
+      }
+      function quickHP(id, d) {
+        const c = S.creatures.find((x) => x.id === id);
+        if (c) {
+          c.hp = Math.max(0, Math.min(c.maxHP, c.hp + d));
+          render();
+        }
+      }
+      function removeC(id) {
+        S.creatures = S.creatures.filter((x) => x.id !== id);
+        expandedFeats.delete(id);
+        render();
+      }
+      function setNotes(id, v) {
+        const c = S.creatures.find((x) => x.id === id);
+        if (c) c.notes = v;
+      }
+
+      function doReset() {
+        if (
+          !confirm(
+            'Reset encounter? HP, Stress, Armor, conditions, Fear, and round clear. Creatures stay.'
+          )
+        )
+          return;
+        S.fear = 0;
+        S.round = 1;
+        S.creatures.forEach((c) => {
+          c.hp = 0;
+          c.str = 0;
+          c.armUsed = 0;
+          c.spotlit = false;
+          c.conds = { hidden: false, restrained: false, vulnerable: false };
+          c.notes = '';
+        });
+        expandedFeats.clear();
+        render();
+      }
+
+      function mkCreature(overrides) {
+        return {
+          id: S.uid++,
+          isPC: false,
+          name: '',
+          type: 'Standard',
+          tier: 1,
+          diff: 11,
+          maxHP: 6,
+          hp: 0,
+          maxStr: 3,
+          str: 0,
+          atk: '+1',
+          thresh: '',
+          dmg: '',
+          atkName: '',
+          feats: [],
+          spotlit: false,
+          conds: { hidden: false, restrained: false, vulnerable: false },
+          notes: '',
+          ...overrides,
+        };
+      }
+
+      // ══ ROSTER ════════════════════════════════════════════════════════════════════
+      function saveRoster() {
+        localStorage.setItem('dh_roster', JSON.stringify(roster));
+      }
+
+      function renderRosterList(containerId, showAddBtn) {
+        const el = document.getElementById(containerId);
+        if (!roster.length) {
+          el.innerHTML = `<div class="empty" style="padding:12px 0">No characters saved yet.</div>`;
+          return;
+        }
+        el.innerHTML = roster
+          .map(
+            (r) => `
     <div class="roster-row">
       <div>
         <div class="roster-name">${esc(r.name)}</div>
         <div class="roster-stats">HP ${r.maxHP} · Stress ${r.maxStr} · Evasion ${r.evasion} · Armor ${r.armor}</div>
       </div>
-      ${showAddBtn
-        ? `<button class="roster-add-btn" onclick="addPCFromRoster('${r.id}')">+ Add</button>`
-        : `<button class="roster-del-btn" onclick="deleteRosterEntry('${r.id}')">✕</button>`}
-    </div>`).join('');
-}
+      ${
+        showAddBtn
+          ? `<button class="roster-add-btn" onclick="addPCFromRoster('${r.id}')">+ Add</button>`
+          : `<button class="roster-del-btn" onclick="deleteRosterEntry('${r.id}')">✕</button>`
+      }
+    </div>`
+          )
+          .join('');
+      }
 
-function saveRosterEntry() {
-  const name = document.getElementById('r-name').value.trim();
-  if (!name) return;
-  roster.push({ id:'r_'+Date.now(), name,
-    maxHP: +document.getElementById('r-hp').value||6,
-    maxStr:+document.getElementById('r-str').value||6,
-    evasion:+document.getElementById('r-ev').value||10,
-    armor: +document.getElementById('r-arm').value||0 });
-  saveRoster();
-  document.getElementById('r-name').value='';
-  renderRosterList('roster-list', false);
-}
+      function saveRosterEntry() {
+        const name = document.getElementById('r-name').value.trim();
+        if (!name) return;
+        roster.push({
+          id: 'r_' + Date.now(),
+          name,
+          maxHP: +document.getElementById('r-hp').value || 6,
+          maxStr: +document.getElementById('r-str').value || 6,
+          evasion: +document.getElementById('r-ev').value || 10,
+          armor: +document.getElementById('r-arm').value || 0,
+        });
+        saveRoster();
+        document.getElementById('r-name').value = '';
+        renderRosterList('roster-list', false);
+      }
 
-function deleteRosterEntry(id) {
-  roster = roster.filter(r => r.id!==id);
-  saveRoster();
-  renderRosterList('roster-list', false);
-}
+      function deleteRosterEntry(id) {
+        roster = roster.filter((r) => r.id !== id);
+        saveRoster();
+        renderRosterList('roster-list', false);
+      }
 
-function addPCFromRoster(id) {
-  const r = roster.find(x => x.id===id);
-  if (!r) return;
-  S.creatures.push(mkCreature({ isPC:true, name:r.name, maxHP:r.maxHP, maxStr:r.maxStr, evasion:r.evasion, armor:r.armor, armUsed:0 }));
-  closeAll(); render();
-}
+      function addPCFromRoster(id) {
+        const r = roster.find((x) => x.id === id);
+        if (!r) return;
+        S.creatures.push(
+          mkCreature({
+            isPC: true,
+            name: r.name,
+            maxHP: r.maxHP,
+            maxStr: r.maxStr,
+            evasion: r.evasion,
+            armor: r.armor,
+            armUsed: 0,
+          })
+        );
+        closeAll();
+        render();
+      }
 
-// ══ MODALS ════════════════════════════════════════════════════════════════════
-function closeAll() {
-  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
-  selectedPreset = null;
-}
+      // ══ MODALS ════════════════════════════════════════════════════════════════════
+      function closeAll() {
+        document.querySelectorAll('.overlay').forEach((o) => o.classList.remove('show'));
+        selectedPreset = null;
+      }
 
-function openRoster() {
-  renderRosterList('roster-list', false);
-  document.getElementById('ov-roster').classList.add('show');
-}
+      function openRoster() {
+        renderRosterList('roster-list', false);
+        document.getElementById('ov-roster').classList.add('show');
+      }
 
-function openAddPC() {
-  renderRosterList('pc-roster-list', true);
-  document.getElementById('ov-pc').classList.add('show');
-  setTimeout(() => document.getElementById('pc-name').focus(), 60);
-}
+      function openAddPC() {
+        renderRosterList('pc-roster-list', true);
+        document.getElementById('ov-pc').classList.add('show');
+        setTimeout(() => document.getElementById('pc-name').focus(), 60);
+      }
 
-function addCustomPC() {
-  const name = document.getElementById('pc-name').value.trim();
-  if (!name) return;
-  S.creatures.push(mkCreature({ isPC:true, name,
-    maxHP: +document.getElementById('pc-hp').value||6,
-    maxStr:+document.getElementById('pc-str').value||6,
-    evasion:+document.getElementById('pc-ev').value||10,
-    armor: +document.getElementById('pc-arm').value||0, armUsed:0 }));
-  document.getElementById('pc-name').value='';
-  closeAll(); render();
-}
+      function addCustomPC() {
+        const name = document.getElementById('pc-name').value.trim();
+        if (!name) return;
+        S.creatures.push(
+          mkCreature({
+            isPC: true,
+            name,
+            maxHP: +document.getElementById('pc-hp').value || 6,
+            maxStr: +document.getElementById('pc-str').value || 6,
+            evasion: +document.getElementById('pc-ev').value || 10,
+            armor: +document.getElementById('pc-arm').value || 0,
+            armUsed: 0,
+          })
+        );
+        document.getElementById('pc-name').value = '';
+        closeAll();
+        render();
+      }
 
-// ── Adversary picker ──
-function buildAdvPicker() {
-  const el = document.getElementById('adv-picker');
-  el.innerHTML = Object.entries(PRESETS).map(([name, p]) =>
-    `<div class="adv-row${selectedAdversaries.has(name)?' selected':''}" onclick="togglePreset('${esc(name)}');" id="pr-${esc(name).replace(/\s/g,'_')}">
+      // ── Adversary picker ──
+      function buildAdvPicker() {
+        const el = document.getElementById('adv-picker');
+        el.innerHTML = Object.entries(PRESETS)
+          .map(
+            ([name, p]) =>
+              `<div class="adv-row${selectedAdversaries.has(name) ? ' selected' : ''}" onclick="togglePreset('${esc(name)}');" id="pr-${esc(name).replace(/\s/g, '_')}">
       <div class="adv-row-name">${esc(name)}</div>
       <div class="adv-row-badge-group"><span class="badge type">${p.type}</span><span class="badge">T${p.tier}</span></div>
       <div class="adv-row-stats">HP ${p.hp} · Diff ${p.diff}</div>
-    </div>`).join('');
-  updateAdvCount();
-}
+    </div>`
+          )
+          .join('');
+        updateAdvCount();
+      }
 
-function updateAdvCount() {
-  document.getElementById('adv-count').textContent = selectedAdversaries.size;
-  const btn = document.getElementById('adv-add-btn');
-  if (selectedAdversaries.size > 0) {
-    btn.textContent = `Add ${selectedAdversaries.size} to Encounter`;
-  } else {
-    btn.textContent = 'Add to Encounter';
-  }
-}
+      function updateAdvCount() {
+        document.getElementById('adv-count').textContent = selectedAdversaries.size;
+        const btn = document.getElementById('adv-add-btn');
+        if (selectedAdversaries.size > 0) {
+          btn.textContent = `Add ${selectedAdversaries.size} to Encounter`;
+        } else {
+          btn.textContent = 'Add to Encounter';
+        }
+      }
 
-function filterAdvList() {
-  const q = document.getElementById('adv-search').value.toLowerCase();
-  document.querySelectorAll('#adv-picker .adv-row').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-}
+      function filterAdvList() {
+        const q = document.getElementById('adv-search').value.toLowerCase();
+        document.querySelectorAll('#adv-picker .adv-row').forEach((row) => {
+          row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      }
 
-function togglePreset(name) {
-  if (selectedAdversaries.has(name)) {
-    selectedAdversaries.delete(name);
-  } else {
-    selectedAdversaries.add(name);
-  }
-  buildAdvPicker();
-  if (selectedAdversaries.size > 0) {
-    loadPresetToForm(name);
-  }
-}
+      function togglePreset(name) {
+        if (selectedAdversaries.has(name)) {
+          selectedAdversaries.delete(name);
+        } else {
+          selectedAdversaries.add(name);
+        }
+        buildAdvPicker();
+        if (selectedAdversaries.size > 0) {
+          loadPresetToForm(name);
+        }
+      }
 
-function loadPresetToForm(name) {
-  const p = PRESETS[name];
-  document.getElementById('a-name').value     = name;
-  document.getElementById('a-type').value     = p.type;
-  document.getElementById('a-tier').value     = String(p.tier);
-  document.getElementById('a-diff').value     = p.diff;
-  document.getElementById('a-hp').value       = p.hp;
-  document.getElementById('a-str').value      = p.str;
-  document.getElementById('a-atk').value      = p.atk;
-  document.getElementById('a-thresh').value   = p.thresh;
-  document.getElementById('a-dmg').value      = p.dmg;
-  document.getElementById('a-atkname').value  = p.atkName;
-  document.getElementById('a-feats').value    = p.feats.join(', ');
-}
+      function loadPresetToForm(name) {
+        const p = PRESETS[name];
+        document.getElementById('a-name').value = name;
+        document.getElementById('a-type').value = p.type;
+        document.getElementById('a-tier').value = String(p.tier);
+        document.getElementById('a-diff').value = p.diff;
+        document.getElementById('a-hp').value = p.hp;
+        document.getElementById('a-str').value = p.str;
+        document.getElementById('a-atk').value = p.atk;
+        document.getElementById('a-thresh').value = p.thresh;
+        document.getElementById('a-dmg').value = p.dmg;
+        document.getElementById('a-atkname').value = p.atkName;
+        document.getElementById('a-feats').value = p.feats.join(', ');
+      }
 
-function openAddAdv() {
-  selectedAdversaries.clear();
-  buildAdvPicker();
-  clearAdvForm();
-  document.getElementById('adv-search').value = '';
-  document.getElementById('ov-adv').classList.add('show');
-  setTimeout(() => document.getElementById('adv-search').focus(), 60);
-}
+      function openAddAdv() {
+        selectedAdversaries.clear();
+        buildAdvPicker();
+        clearAdvForm();
+        document.getElementById('adv-search').value = '';
+        document.getElementById('ov-adv').classList.add('show');
+        setTimeout(() => document.getElementById('adv-search').focus(), 60);
+      }
 
-function clearAdvForm() {
-  ['a-name','a-thresh','a-dmg','a-atkname','a-feats'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('a-type').value='Solo';
-  document.getElementById('a-tier').value='3';
-  document.getElementById('a-diff').value='17';
-  document.getElementById('a-hp').value='10';
-  document.getElementById('a-str').value='4';
-  document.getElementById('a-atk').value='+3';
-}
+      function clearAdvForm() {
+        ['a-name', 'a-thresh', 'a-dmg', 'a-atkname', 'a-feats'].forEach(
+          (id) => (document.getElementById(id).value = '')
+        );
+        document.getElementById('a-type').value = 'Solo';
+        document.getElementById('a-tier').value = '3';
+        document.getElementById('a-diff').value = '17';
+        document.getElementById('a-hp').value = '10';
+        document.getElementById('a-str').value = '4';
+        document.getElementById('a-atk').value = '+3';
+      }
 
-function addAdversary() {
-  if (selectedAdversaries.size === 0) {
-    // Add single custom adversary
-    const name = document.getElementById('a-name').value.trim();
-    if (!name) return;
-    const featsRaw = document.getElementById('a-feats').value;
-    const feats = featsRaw ? featsRaw.split(',').map(f=>f.trim()).filter(Boolean) : [];
-    S.creatures.push(mkCreature({
-      name,
-      type:    document.getElementById('a-type').value,
-      tier:    +document.getElementById('a-tier').value,
-      diff:    +document.getElementById('a-diff').value||14,
-      maxHP:   +document.getElementById('a-hp').value||6,
-      maxStr:  +document.getElementById('a-str').value||3,
-      atk:     document.getElementById('a-atk').value,
-      thresh:  document.getElementById('a-thresh').value,
-      dmg:     document.getElementById('a-dmg').value,
-      atkName: document.getElementById('a-atkname').value,
-      feats,
-    }));
-  } else {
-    // Add all selected adversaries with customizations
-    const type = document.getElementById('a-type').value;
-    const tier = +document.getElementById('a-tier').value;
-    const diff = +document.getElementById('a-diff').value||14;
-    const maxHP = +document.getElementById('a-hp').value||6;
-    const maxStr = +document.getElementById('a-str').value||3;
-    const atk = document.getElementById('a-atk').value;
-    const thresh = document.getElementById('a-thresh').value;
-    const dmg = document.getElementById('a-dmg').value;
-    const atkName = document.getElementById('a-atkname').value;
-    const featsRaw = document.getElementById('a-feats').value;
-    const feats = featsRaw ? featsRaw.split(',').map(f=>f.trim()).filter(Boolean) : [];
-    
-    selectedAdversaries.forEach(presetName => {
-      const p = PRESETS[presetName];
-      // Apply customizations: if field differs from preset, use custom value
-      S.creatures.push(mkCreature({
-        name: presetName,
-        type:    (type !== 'Solo' ? type : p.type),
-        tier:    (tier !== 3 ? tier : p.tier),
-        diff:    (diff !== 14 ? diff : p.diff),
-        maxHP:   (maxHP !== 6 ? maxHP : p.hp),
-        maxStr:  (maxStr !== 3 ? maxStr : p.str),
-        atk:     (atk !== '+3' ? atk : p.atk),
-        thresh:  (thresh || p.thresh),
-        dmg:     (dmg || p.dmg),
-        atkName: (atkName || p.atkName),
-        feats:   (feats.length ? feats : p.feats),
-      }));
-    });
-  }
-  closeAll(); render();
-}
+      function addAdversary() {
+        if (selectedAdversaries.size === 0) {
+          // Add single custom adversary
+          const name = document.getElementById('a-name').value.trim();
+          if (!name) return;
+          const featsRaw = document.getElementById('a-feats').value;
+          const feats = featsRaw
+            ? featsRaw
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
+            : [];
+          S.creatures.push(
+            mkCreature({
+              name,
+              type: document.getElementById('a-type').value,
+              tier: +document.getElementById('a-tier').value,
+              diff: +document.getElementById('a-diff').value || 14,
+              maxHP: +document.getElementById('a-hp').value || 6,
+              maxStr: +document.getElementById('a-str').value || 3,
+              atk: document.getElementById('a-atk').value,
+              thresh: document.getElementById('a-thresh').value,
+              dmg: document.getElementById('a-dmg').value,
+              atkName: document.getElementById('a-atkname').value,
+              feats,
+            })
+          );
+        } else {
+          // Add all selected adversaries with customizations
+          const type = document.getElementById('a-type').value;
+          const tier = +document.getElementById('a-tier').value;
+          const diff = +document.getElementById('a-diff').value || 14;
+          const maxHP = +document.getElementById('a-hp').value || 6;
+          const maxStr = +document.getElementById('a-str').value || 3;
+          const atk = document.getElementById('a-atk').value;
+          const thresh = document.getElementById('a-thresh').value;
+          const dmg = document.getElementById('a-dmg').value;
+          const atkName = document.getElementById('a-atkname').value;
+          const featsRaw = document.getElementById('a-feats').value;
+          const feats = featsRaw
+            ? featsRaw
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
+            : [];
 
-// ══ UTILS ═════════════════════════════════════════════════════════════════════
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+          selectedAdversaries.forEach((presetName) => {
+            const p = PRESETS[presetName];
+            // Apply customizations: if field differs from preset, use custom value
+            S.creatures.push(
+              mkCreature({
+                name: presetName,
+                type: type !== 'Solo' ? type : p.type,
+                tier: tier !== 3 ? tier : p.tier,
+                diff: diff !== 14 ? diff : p.diff,
+                maxHP: maxHP !== 6 ? maxHP : p.hp,
+                maxStr: maxStr !== 3 ? maxStr : p.str,
+                atk: atk !== '+3' ? atk : p.atk,
+                thresh: thresh || p.thresh,
+                dmg: dmg || p.dmg,
+                atkName: atkName || p.atkName,
+                feats: feats.length ? feats : p.feats,
+              })
+            );
+          });
+        }
+        closeAll();
+        render();
+      }
 
-document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o)closeAll(); }));
+      // ══ UTILS ═════════════════════════════════════════════════════════════════════
+      function esc(s) {
+        return String(s || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
 
-document.addEventListener('click', e => {
-  const themeMenu = document.getElementById('theme-menu');
-  const themeBtn = document.querySelector('.theme-toggle-btn');
-  if (!e.target.closest('#theme-menu') && e.target !== themeBtn) {
-    closeThemeMenu();
-  }
-});
+      document.querySelectorAll('.overlay').forEach((o) =>
+        o.addEventListener('click', (e) => {
+          if (e.target === o) closeAll();
+        })
+      );
 
-initTheme();
-render();
-</script>
-</body>
+      document.addEventListener('click', (e) => {
+        const themeMenu = document.getElementById('theme-menu');
+        const themeBtn = document.querySelector('.theme-toggle-btn');
+        if (!e.target.closest('#theme-menu') && e.target !== themeBtn) {
+          closeThemeMenu();
+        }
+      });
+
+      initTheme();
+      render();
+    </script>
+  </body>
 </html>

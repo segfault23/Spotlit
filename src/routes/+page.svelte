@@ -18,16 +18,18 @@
   <div class="pc-strip">
     <span class="col-title pc-strip-label">Party</span>
     <div class="pc-cards">
-      {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
+      {#each $encounter.creatures.filter((c) => c.isPC) as creature (creature.id)}
         <PCCompactCard {creature} />
       {:else}
-        <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center">No PCs added yet.</span>
+        <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center"
+          >No PCs added yet.</span
+        >
       {/each}
     </div>
   </div>
 
   <div class="adv-grid">
-    {#each $encounter.creatures.filter(c => !c.isPC) as creature (creature.id)}
+    {#each $encounter.creatures.filter((c) => !c.isPC) as creature (creature.id)}
       <CreatureCard {creature} />
     {:else}
       <div class="empty" style="grid-column:1/-1">No adversaries yet.</div>

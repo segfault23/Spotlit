@@ -1,9 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import {
-  listEncounters,
-  listCustomCreatures,
-  listCustomFeatures,
-} from '$lib/server/user.js';
+import { listEncounters, listCustomCreatures, listCustomFeatures } from '$lib/server/user.js';
 
 export const prerender = false;
 

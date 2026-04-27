@@ -13,13 +13,13 @@
 <div class="stat-row">
   <span class="stat-lbl">{LABELS[type]}</span>
   <div class="dots">
-    {#each Array(max) as _, i}
+    {#each Array(max) as _, i (i)}
       <div
         class="dot {type}{i < current ? ' on' : ''}"
         role="button"
         tabindex="0"
         onclick={() => handleClick(i)}
-        onkeydown={e => e.key === 'Enter' && handleClick(i)}
+        onkeydown={(e) => e.key === 'Enter' && handleClick(i)}
       ></div>
     {/each}
   </div>

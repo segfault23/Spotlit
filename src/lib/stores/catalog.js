@@ -10,4 +10,4 @@ export const featuresByName = writable({});
 
 // Map keyed by display name → preset stat object. Identical shape to the
 // previous PRESETS dict.
-export const presetsByName  = writable({});
+export const presetsByName = writable({});

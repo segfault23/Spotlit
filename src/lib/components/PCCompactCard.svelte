@@ -10,7 +10,7 @@
 {#if expanded}
   <div class="pc-expanded">
     <CreatureCard {creature} />
-    <button class="pc-collapse-btn" onclick={() => expanded = false}>▲ Collapse</button>
+    <button class="pc-collapse-btn" onclick={() => (expanded = false)}>▲ Collapse</button>
   </div>
 {:else}
   <div
@@ -21,44 +21,71 @@
     <button
       class="cf-btn spot pc-spot"
       class:on={creature.spotlit}
-      onclick={e => { e.stopPropagation(); encounter.toggleSpot(creature.id); }}
-      title="Spotlight"
-    >{creature.spotlit ? '★' : '☆'}</button>
+      onclick={(e) => {
+        e.stopPropagation();
+        encounter.toggleSpot(creature.id);
+      }}
+      title="Spotlight">{creature.spotlit ? '★' : '☆'}</button
+    >
 
     <span
       class="cname pc-cname"
       role="button"
       tabindex="0"
-      onclick={() => expanded = true}
-      onkeydown={e => e.key === 'Enter' && (expanded = true)}
-      title={creature.name}
-    >{creature.name}</span>
+      onclick={() => (expanded = true)}
+      onkeydown={(e) => e.key === 'Enter' && (expanded = true)}
+      title={creature.name}>{creature.name}</span
+    >
 
     <div class="pc-tracks">
-      <DotTrack type="hp"  max={creature.maxHP}  current={creature.hp}  creatureId={creature.id} showAside={false} />
+      <DotTrack
+        type="hp"
+        max={creature.maxHP}
+        current={creature.hp}
+        creatureId={creature.id}
+        showAside={false}
+      />
       {#if creature.maxStr > 0}
-        <DotTrack type="str" max={creature.maxStr} current={creature.str} creatureId={creature.id} showAside={false} />
+        <DotTrack
+          type="str"
+          max={creature.maxStr}
+          current={creature.str}
+          creatureId={creature.id}
+          showAside={false}
+        />
       {/if}
       {#if creature.armor > 0}
-        <DotTrack type="arm" max={creature.armor} current={creature.armUsed || 0} creatureId={creature.id} showAside={false} />
+        <DotTrack
+          type="arm"
+          max={creature.armor}
+          current={creature.armUsed || 0}
+          creatureId={creature.id}
+          showAside={false}
+        />
       {/if}
     </div>
 
     <div class="pc-conds">
-      {#each [['H', 'hidden'], ['R', 'restrained'], ['V', 'vulnerable']] as [abbr, k]}
+      {#each [['H', 'hidden'], ['R', 'restrained'], ['V', 'vulnerable']] as [abbr, k] (k)}
         <button
           class="pc-cond {k}"
           class:on={creature.conds[k]}
-          onclick={e => { e.stopPropagation(); encounter.toggleCond(creature.id, k); }}
-          title={k.charAt(0).toUpperCase() + k.slice(1)}
-        >{abbr}</button>
+          onclick={(e) => {
+            e.stopPropagation();
+            encounter.toggleCond(creature.id, k);
+          }}
+          title={k.charAt(0).toUpperCase() + k.slice(1)}>{abbr}</button
+        >
       {/each}
     </div>
 
     <button
       class="cf-btn rm"
-      onclick={e => { e.stopPropagation(); encounter.removeCreature(creature.id); }}
-      title="Remove"
-    >✕</button>
+      onclick={(e) => {
+        e.stopPropagation();
+        encounter.removeCreature(creature.id);
+      }}
+      title="Remove">✕</button
+    >
   </div>
 {/if}

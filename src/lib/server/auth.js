@@ -18,7 +18,7 @@ export async function getClientSecret() {
     new DescribeUserPoolClientCommand({
       UserPoolId: env.COGNITO_USER_POOL_ID,
       ClientId: env.COGNITO_CLIENT_ID,
-    }),
+    })
   );
   _clientSecret = UserPoolClient.ClientSecret;
   return _clientSecret;
@@ -55,7 +55,7 @@ export async function exchangeCode(code, redirectUri) {
 export async function signState() {
   const secret = await getClientSecret();
   const nonce = crypto.randomBytes(12).toString('base64url');
-  const exp   = String(Math.floor(Date.now() / 1000) + 600); // 10 min
+  const exp = String(Math.floor(Date.now() / 1000) + 600); // 10 min
   const payload = `${nonce}.${exp}`;
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
   return `${payload}.${sig}`;
@@ -69,8 +69,11 @@ export async function verifyState(state) {
   if (!nonce || !exp || !sig) return false;
   if (Number(exp) < Math.floor(Date.now() / 1000)) return false;
 
-  const secret   = await getClientSecret();
-  const expected = crypto.createHmac('sha256', secret).update(`${nonce}.${exp}`).digest('base64url');
+  const secret = await getClientSecret();
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${nonce}.${exp}`)
+    .digest('base64url');
 
   const sigBuf = Buffer.from(sig);
   const expBuf = Buffer.from(expected);

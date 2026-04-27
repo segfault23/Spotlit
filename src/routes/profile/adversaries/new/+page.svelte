@@ -20,5 +20,7 @@
     text-decoration: none;
     margin-bottom: 14px;
   }
-  .ed-back:hover { color: var(--text); }
+  .ed-back:hover {
+    color: var(--text);
+  }
 </style>

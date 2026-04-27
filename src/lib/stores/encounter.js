@@ -2,12 +2,23 @@ import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
 const DEFAULT_CREATURE = {
-  isPC: false, name: '', type: 'Standard', tier: 1, diff: 11,
-  maxHP: 6, hp: 0, maxStr: 3, str: 0, atk: '+1',
-  thresh: '', dmg: '', atkName: '', feats: [],
+  isPC: false,
+  name: '',
+  type: 'Standard',
+  tier: 1,
+  diff: 11,
+  maxHP: 6,
+  hp: 0,
+  maxStr: 3,
+  str: 0,
+  atk: '+1',
+  thresh: '',
+  dmg: '',
+  atkName: '',
+  feats: [],
   spotlit: false,
   conds: { hidden: false, restrained: false, vulnerable: false },
-  notes: ''
+  notes: '',
 };
 
 // 'idle' | 'saving' | 'saved' | 'error'
@@ -17,7 +28,9 @@ export const saveStatus = writable('idle');
 // Used to skip redundant autosaves after load() / a no-op update.
 function snapKey(s) {
   return JSON.stringify({
-    f: s.fear, r: s.round, u: s.uid,
+    f: s.fear,
+    r: s.round,
+    u: s.uid,
     n: s.encounterName,
     c: s.creatures,
     e: s.expandedFeats,
@@ -26,7 +39,7 @@ function snapKey(s) {
 
 async function persist(state, currentEncounterId) {
   const method = currentEncounterId ? 'PUT' : 'POST';
-  const path   = currentEncounterId
+  const path = currentEncounterId
     ? `/api/encounters/${encodeURIComponent(currentEncounterId)}`
     : '/api/encounters';
 
@@ -47,7 +60,9 @@ async function persist(state, currentEncounterId) {
 
 function createEncounterStore() {
   const store = writable({
-    fear: 0, round: 1, uid: 1,
+    fear: 0,
+    round: 1,
+    uid: 1,
     encounterName: '',
     creatures: [],
     expandedFeats: [],
@@ -58,14 +73,14 @@ function createEncounterStore() {
 
   // ── Autosave ─────────────────────────────────────────────────────────────
   let autosaveEnabled = false;
-  let autosaveTimer   = null;
-  let inflight        = null;
-  let lastSavedKey    = '';
+  let autosaveTimer = null;
+  let inflight = null;
+  let lastSavedKey = '';
 
   function flashStatus(state, ms = 1500) {
     saveStatus.set(state);
     setTimeout(() => {
-      saveStatus.update(cur => cur === state ? 'idle' : cur);
+      saveStatus.update((cur) => (cur === state ? 'idle' : cur));
     }, ms);
   }
 
@@ -75,7 +90,7 @@ function createEncounterStore() {
     saveStatus.set('saving');
     try {
       const newId = await persist(state, currentEncounterId);
-      if (!currentEncounterId) update(s => ({ ...s, currentEncounterId: newId }));
+      if (!currentEncounterId) update((s) => ({ ...s, currentEncounterId: newId }));
       lastSavedKey = snapKey(get(store));
       flashStatus('saved');
     } catch (e) {
@@ -99,10 +114,16 @@ function createEncounterStore() {
 
       // Serialize: wait for any in-flight save before starting another
       if (inflight) {
-        try { await inflight; } catch {}
+        try {
+          await inflight;
+        } catch {}
       }
-      inflight = doSave().finally(() => { inflight = null; });
-      try { await inflight; } catch {}
+      inflight = doSave().finally(() => {
+        inflight = null;
+      });
+      try {
+        await inflight;
+      } catch {}
 
       // If state changed during save, schedule another pass
       if (snapKey(get(store)) !== lastSavedKey) scheduleAutosave();
@@ -110,7 +131,7 @@ function createEncounterStore() {
   }
 
   if (browser) {
-    store.subscribe(s => {
+    store.subscribe((s) => {
       if (!autosaveEnabled) return;
       if (snapKey(s) === lastSavedKey) return;
       scheduleAutosave();
@@ -120,7 +141,9 @@ function createEncounterStore() {
   return {
     subscribe,
 
-    enableAutosave() { autosaveEnabled = true; },
+    enableAutosave() {
+      autosaveEnabled = true;
+    },
     disableAutosave() {
       autosaveEnabled = false;
       clearTimeout(autosaveTimer);
@@ -128,7 +151,7 @@ function createEncounterStore() {
 
     adj(key, delta) {
       let roundAdvanced = false;
-      update(s => {
+      update((s) => {
         if (key === 'fear') {
           return { ...s, fear: Math.max(0, Math.min(12, s.fear + delta)) };
         }
@@ -137,8 +160,10 @@ function createEncounterStore() {
           if (newRound > s.round) {
             roundAdvanced = true;
             return {
-              ...s, round: newRound, expandedFeats: [],
-              creatures: s.creatures.map(c => ({ ...c, spotlit: false }))
+              ...s,
+              round: newRound,
+              expandedFeats: [],
+              creatures: s.creatures.map((c) => ({ ...c, spotlit: false })),
             };
           }
           return { ...s, round: newRound };
@@ -149,107 +174,113 @@ function createEncounterStore() {
     },
 
     toggleDot(id, key, i) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.map(c => {
+        creatures: s.creatures.map((c) => {
           if (c.id !== id) return c;
-          if (key === 'hp')  return { ...c, hp: c.hp > i ? i : i + 1 };
+          if (key === 'hp') return { ...c, hp: c.hp > i ? i : i + 1 };
           if (key === 'str') {
             const newStr = c.str > i ? i : i + 1;
             return { ...c, str: newStr, conds: { ...c.conds, vulnerable: newStr >= c.maxStr } };
           }
           if (key === 'arm') return { ...c, armUsed: (c.armUsed || 0) > i ? i : i + 1 };
           return c;
-        })
+        }),
       }));
     },
 
     toggleCond(id, k) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.map(c =>
+        creatures: s.creatures.map((c) =>
           c.id === id ? { ...c, conds: { ...c.conds, [k]: !c.conds[k] } } : c
-        )
+        ),
       }));
     },
 
     toggleSpot(id) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.map(c =>
-          c.id === id ? { ...c, spotlit: !c.spotlit } : c
-        )
+        creatures: s.creatures.map((c) => (c.id === id ? { ...c, spotlit: !c.spotlit } : c)),
       }));
     },
 
     toggleFeats(id) {
-      update(s => {
+      update((s) => {
         const expanded = s.expandedFeats.includes(id);
         return {
           ...s,
           expandedFeats: expanded
-            ? s.expandedFeats.filter(x => x !== id)
-            : [...s.expandedFeats, id]
+            ? s.expandedFeats.filter((x) => x !== id)
+            : [...s.expandedFeats, id],
         };
       });
     },
 
     quickHP(id, delta) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.map(c =>
+        creatures: s.creatures.map((c) =>
           c.id === id ? { ...c, hp: Math.max(0, Math.min(c.maxHP, c.hp + delta)) } : c
-        )
+        ),
       }));
     },
 
     removeCreature(id) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.filter(c => c.id !== id),
-        expandedFeats: s.expandedFeats.filter(x => x !== id)
+        creatures: s.creatures.filter((c) => c.id !== id),
+        expandedFeats: s.expandedFeats.filter((x) => x !== id),
       }));
     },
 
     setNotes(id, value) {
-      update(s => ({
+      update((s) => ({
         ...s,
-        creatures: s.creatures.map(c =>
-          c.id === id ? { ...c, notes: value } : c
-        )
+        creatures: s.creatures.map((c) => (c.id === id ? { ...c, notes: value } : c)),
       }));
     },
 
     addCreature(overrides = {}) {
-      update(s => ({
+      update((s) => ({
         ...s,
         uid: s.uid + 1,
-        creatures: [...s.creatures, { ...DEFAULT_CREATURE, ...overrides, id: s.uid }]
+        creatures: [...s.creatures, { ...DEFAULT_CREATURE, ...overrides, id: s.uid }],
       }));
     },
 
     setEncounterName(name) {
-      update(s => ({ ...s, encounterName: name }));
+      update((s) => ({ ...s, encounterName: name }));
     },
 
     reset() {
-      update(s => ({
+      update((s) => ({
         ...s,
-        fear: 0, round: 1, expandedFeats: [],
-        creatures: s.creatures.map(c => ({
-          ...c, hp: 0, str: 0, armUsed: 0, spotlit: false,
+        fear: 0,
+        round: 1,
+        expandedFeats: [],
+        creatures: s.creatures.map((c) => ({
+          ...c,
+          hp: 0,
+          str: 0,
+          armUsed: 0,
+          spotlit: false,
           conds: { hidden: false, restrained: false, vulnerable: false },
-          notes: ''
-        }))
+          notes: '',
+        })),
       }));
     },
 
     new() {
       clearTimeout(autosaveTimer);
-      update(s => ({
+      update((s) => ({
         ...s,
-        fear: 0, round: 1, uid: 1, encounterName: '',
-        creatures: [], expandedFeats: [],
+        fear: 0,
+        round: 1,
+        uid: 1,
+        encounterName: '',
+        creatures: [],
+        expandedFeats: [],
         currentEncounterId: null,
       }));
       lastSavedKey = snapKey(get(store));
@@ -258,8 +289,14 @@ function createEncounterStore() {
     // Manual save (still exposed in case anything wants to force a save)
     async save() {
       clearTimeout(autosaveTimer);
-      if (inflight) { try { await inflight; } catch {} }
-      inflight = doSave().finally(() => { inflight = null; });
+      if (inflight) {
+        try {
+          await inflight;
+        } catch {}
+      }
+      inflight = doSave().finally(() => {
+        inflight = null;
+      });
       return inflight;
     },
 

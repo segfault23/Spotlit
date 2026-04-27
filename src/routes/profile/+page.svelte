@@ -6,7 +6,7 @@
   let { data } = $props();
 
   // Tab state — read from URL ?tab=... so links from editors land in the right place.
-  let activeTab = $derived(($page.url.searchParams.get('tab')) || 'encounters');
+  let activeTab = $derived($page.url.searchParams.get('tab') || 'encounters');
 
   function setTab(t) {
     const u = new URL($page.url);
@@ -15,7 +15,11 @@
   }
 
   function fmtDate(ts) {
-    return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(ts).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   // ── Encounters ────────────────────────────────────────────────────────
@@ -42,8 +46,11 @@
   }
   async function duplicateAdversary(c) {
     const copy = { ...c, name: `${c.name} (copy)` };
-    delete copy.pk; delete copy.sk; delete copy.slug;
-    delete copy.createdAt; delete copy.updatedAt;
+    delete copy.pk;
+    delete copy.sk;
+    delete copy.slug;
+    delete copy.createdAt;
+    delete copy.updatedAt;
     const res = await fetch('/api/creatures', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -57,7 +64,12 @@
 
   // ── Custom features ───────────────────────────────────────────────────
   async function deleteFeature(slug) {
-    if (!confirm('Delete this custom feature? Adversaries that reference it by name will show "no data".')) return;
+    if (
+      !confirm(
+        'Delete this custom feature? Adversaries that reference it by name will show "no data".'
+      )
+    )
+      return;
     await fetch(`/api/features/${encodeURIComponent(slug)}`, { method: 'DELETE' });
     await invalidateAll();
   }
@@ -85,10 +97,18 @@
   </header>
 
   <div class="tab-strip">
-    <button class="tab" class:active={activeTab === 'encounters'} onclick={() => setTab('encounters')}>
+    <button
+      class="tab"
+      class:active={activeTab === 'encounters'}
+      onclick={() => setTab('encounters')}
+    >
       📂 Encounters <span class="tab-count">{data.encounters.length}</span>
     </button>
-    <button class="tab" class:active={activeTab === 'adversaries'} onclick={() => setTab('adversaries')}>
+    <button
+      class="tab"
+      class:active={activeTab === 'adversaries'}
+      onclick={() => setTab('adversaries')}
+    >
       👹 Adversaries <span class="tab-count">{data.customCreatures.length}</span>
     </button>
     <button class="tab" class:active={activeTab === 'features'} onclick={() => setTab('features')}>
@@ -97,15 +117,12 @@
   </div>
 
   <main class="tab-content">
-
     {#if activeTab === 'encounters'}
       <div class="tab-head">
         <h2>Saved Encounters</h2>
       </div>
       {#if data.encounters.length === 0}
-        <div class="empty-block">
-          No saved encounters yet. Build one and it'll auto-save here.
-        </div>
+        <div class="empty-block">No saved encounters yet. Build one and it'll auto-save here.</div>
       {:else}
         <ul class="enc-rows">
           {#each data.encounters as enc (enc.id)}
@@ -116,7 +133,9 @@
               </div>
               <div class="enc-actions">
                 <button class="btn-p" onclick={() => loadEncounter(enc.id)}>Load</button>
-                <button class="btn-c btn-danger" onclick={() => deleteEncounter(enc.id)}>Delete</button>
+                <button class="btn-c btn-danger" onclick={() => deleteEncounter(enc.id)}
+                  >Delete</button
+                >
               </div>
             </li>
           {/each}
@@ -139,7 +158,9 @@
           {#each data.customCreatures as c (c.slug)}
             <div class="lib-card">
               <div class="lib-head">
-                <a class="lib-name" href="/profile/adversaries/{encodeURIComponent(c.slug)}">{c.name}</a>
+                <a class="lib-name" href="/profile/adversaries/{encodeURIComponent(c.slug)}"
+                  >{c.name}</a
+                >
                 <div class="lib-badges">
                   <span class="badge type">{c.type}</span>
                   <span class="badge">T{c.tier}</span>
@@ -152,7 +173,7 @@
               </div>
               {#if c.feats?.length}
                 <div class="lib-chips">
-                  {#each c.feats as feat}
+                  {#each c.feats as feat, i (i)}
                     <span class="lib-chip">{feat.split('|')[0]}</span>
                   {/each}
                 </div>
@@ -160,7 +181,9 @@
               <div class="lib-foot">
                 <a class="btn-c" href="/profile/adversaries/{encodeURIComponent(c.slug)}">Edit</a>
                 <button class="btn-c" onclick={() => duplicateAdversary(c)}>Duplicate</button>
-                <button class="btn-c btn-danger" onclick={() => deleteAdversary(c.slug)}>Delete</button>
+                <button class="btn-c btn-danger" onclick={() => deleteAdversary(c.slug)}
+                  >Delete</button
+                >
               </div>
             </div>
           {/each}
@@ -184,21 +207,24 @@
             <div class="lib-card feat-card">
               <div class="lib-head">
                 <span class="ftype-mini t-{(f.type ?? 'feature').toLowerCase()}">{f.type}</span>
-                <a class="lib-name" href="/profile/features/{encodeURIComponent(f.slug)}">{f.name}</a>
+                <a class="lib-name" href="/profile/features/{encodeURIComponent(f.slug)}"
+                  >{f.name}</a
+                >
               </div>
               {#if f.cost}<div class="feat-cost">{f.cost}</div>{/if}
               <div class="feat-body">{f.body}</div>
               <div class="lib-foot">
                 <a class="btn-c" href="/profile/features/{encodeURIComponent(f.slug)}">Edit</a>
                 <button class="btn-c" onclick={() => duplicateFeature(f)}>Duplicate</button>
-                <button class="btn-c btn-danger" onclick={() => deleteFeature(f.slug)}>Delete</button>
+                <button class="btn-c btn-danger" onclick={() => deleteFeature(f.slug)}
+                  >Delete</button
+                >
               </div>
             </div>
           {/each}
         </div>
       {/if}
     {/if}
-
   </main>
 </div>
 
@@ -221,10 +247,20 @@
     text-decoration: none;
     font-size: 0.85rem;
   }
-  .back-link:hover { color: var(--text); }
-  .profile-user { text-align: right; }
-  .profile-name { font-weight: 600; font-size: 0.9rem; }
-  .profile-email { color: var(--text-dim); font-size: 0.75rem; }
+  .back-link:hover {
+    color: var(--text);
+  }
+  .profile-user {
+    text-align: right;
+  }
+  .profile-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .profile-email {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
 
   .tab-strip {
     display: flex;
@@ -246,7 +282,9 @@
     gap: 8px;
     font-family: inherit;
   }
-  .tab:hover { color: var(--text); }
+  .tab:hover {
+    color: var(--text);
+  }
   .tab.active {
     color: var(--text);
     border-bottom-color: var(--accent, #b080ff);
@@ -286,12 +324,15 @@
     text-decoration: none;
     font-size: 0.9rem;
   }
-  .empty-cta:hover { text-decoration: underline; }
+  .empty-cta:hover {
+    text-decoration: underline;
+  }
 
   /* encounters list */
   .enc-rows {
     list-style: none;
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -309,10 +350,24 @@
     border-color: var(--accent, #b080ff);
     background: color-mix(in srgb, var(--accent, #b080ff) 10%, var(--surface2));
   }
-  .enc-meta { flex: 1; min-width: 0; }
-  .enc-name { font-weight: 600; font-size: 0.95rem; }
-  .enc-sub { color: var(--text-dim); font-size: 0.75rem; margin-top: 3px; }
-  .enc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .enc-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .enc-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .enc-sub {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    margin-top: 3px;
+  }
+  .enc-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
 
   /* card grids */
   .card-grid {
@@ -350,7 +405,9 @@
     white-space: nowrap;
     line-height: 1.2;
   }
-  .lib-name:hover { color: var(--accent, #b080ff); }
+  .lib-name:hover {
+    color: var(--accent, #b080ff);
+  }
   .lib-badges {
     display: flex;
     gap: 3px;
@@ -362,7 +419,9 @@
     font-size: 0.75rem;
     color: var(--text-dim);
   }
-  .lib-stats strong { color: var(--text); }
+  .lib-stats strong {
+    color: var(--text);
+  }
   .lib-chips {
     display: flex;
     flex-wrap: wrap;
@@ -382,7 +441,12 @@
     margin-top: auto;
     padding-top: 4px;
   }
-  .lib-foot > * { flex: 1; font-size: 0.75rem; padding: 5px 8px; text-align: center; }
+  .lib-foot > * {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 5px 8px;
+    text-align: center;
+  }
 
   .ftype-mini {
     display: inline-block;
@@ -397,10 +461,22 @@
     border: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .ftype-mini.t-passive  { color: var(--feat-passive,  #6ec38c); border-color: currentColor; }
-  .ftype-mini.t-action   { color: var(--feat-action,   #d8a040); border-color: currentColor; }
-  .ftype-mini.t-reaction { color: var(--feat-reaction, #5aafdd); border-color: currentColor; }
-  .ftype-mini.t-fear     { color: var(--feat-fear,     #d64040); border-color: currentColor; }
+  .ftype-mini.t-passive {
+    color: var(--feat-passive, #6ec38c);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-action {
+    color: var(--feat-action, #d8a040);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-reaction {
+    color: var(--feat-reaction, #5aafdd);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-fear {
+    color: var(--feat-fear, #d64040);
+    border-color: currentColor;
+  }
 
   .feat-cost {
     font-family: var(--font-mono);

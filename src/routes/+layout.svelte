@@ -31,8 +31,12 @@
 
   // Seed the catalog stores so any descendant route (/, /profile, ...) sees
   // the merged pre-made + custom catalogue.
-  $effect(() => { featuresByName.set(data.featuresByName ?? {}); });
-  $effect(() => { presetsByName.set(data.presetsByName ?? {}); });
+  $effect(() => {
+    featuresByName.set(data.featuresByName ?? {});
+  });
+  $effect(() => {
+    presetsByName.set(data.presetsByName ?? {});
+  });
 </script>
 
 {@render children()}

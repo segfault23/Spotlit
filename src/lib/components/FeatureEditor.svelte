@@ -10,33 +10,39 @@
 
   const TYPES = ['Passive', 'Action', 'Reaction', 'Fear'];
 
-  let name   = $state(initial?.name ?? '');
-  let type   = $state(initial?.type ?? 'Action');
-  let cost   = $state(initial?.cost ?? '');
-  let body   = $state(initial?.body ?? '');
+  let name = $state(initial?.name ?? '');
+  let type = $state(initial?.type ?? 'Action');
+  let cost = $state(initial?.cost ?? '');
+  let body = $state(initial?.body ?? '');
   let saving = $state(false);
-  let err    = $state('');
+  let err = $state('');
 
   let cls = $derived(
-    type === 'Passive'   ? 'passive'  :
-    type === 'Reaction'  ? 'reaction' :
-    type === 'Fear'      ? 'fear'     :
-    'action'
+    type === 'Passive'
+      ? 'passive'
+      : type === 'Reaction'
+        ? 'reaction'
+        : type === 'Fear'
+          ? 'fear'
+          : 'action'
   );
 
   let dirty = $derived(
     name !== (initial?.name ?? '') ||
-    type !== (initial?.type ?? 'Action') ||
-    cost !== (initial?.cost ?? '') ||
-    body !== (initial?.body ?? '')
+      type !== (initial?.type ?? 'Action') ||
+      cost !== (initial?.cost ?? '') ||
+      body !== (initial?.body ?? '')
   );
 
   async function save() {
-    if (!name.trim()) { err = 'Name is required.'; return; }
+    if (!name.trim()) {
+      err = 'Name is required.';
+      return;
+    }
     err = '';
     saving = true;
     try {
-      const path   = slug ? `/api/features/${encodeURIComponent(slug)}` : '/api/features';
+      const path = slug ? `/api/features/${encodeURIComponent(slug)}` : '/api/features';
       const method = slug ? 'PUT' : 'POST';
       const res = await fetch(path, {
         method,
@@ -57,7 +63,12 @@
 
   async function del() {
     if (!slug) return;
-    if (!confirm('Delete this feature? Adversaries that reference it by name will show a "no data" placeholder.')) return;
+    if (
+      !confirm(
+        'Delete this feature? Adversaries that reference it by name will show a "no data" placeholder.'
+      )
+    )
+      return;
     saving = true;
     await fetch(`/api/features/${encodeURIComponent(slug)}`, { method: 'DELETE' });
     await invalidateAll();
@@ -84,7 +95,7 @@
   <div class="fg">
     <span class="lbl">Type</span>
     <div class="type-row">
-      {#each TYPES as t}
+      {#each TYPES as t (t)}
         <label class="type-radio">
           <input type="radio" name="ftype-{slug ?? 'new'}" value={t} bind:group={type} />
           <span class="type-pill {t.toLowerCase()}" class:active={type === t}>{t}</span>
@@ -139,7 +150,8 @@
     font-family: var(--font-head);
     font-size: 1.4rem;
   }
-  .lbl, .lbl-sm {
+  .lbl,
+  .lbl-sm {
     display: block;
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -148,8 +160,15 @@
     margin-bottom: 4px;
     font-weight: 600;
   }
-  .lbl-sm { font-size: 0.65rem; }
-  .dim { color: var(--text-dim); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .lbl-sm {
+    font-size: 0.65rem;
+  }
+  .dim {
+    color: var(--text-dim);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
 
   .type-row {
     display: flex;
@@ -175,10 +194,18 @@
     color: var(--text-dim);
     transition: all 0.1s;
   }
-  .type-pill.passive  { color: var(--feat-passive,  #6ec38c); }
-  .type-pill.action   { color: var(--feat-action,   #d8a040); }
-  .type-pill.reaction { color: var(--feat-reaction, #5aafdd); }
-  .type-pill.fear     { color: var(--feat-fear,     #d64040); }
+  .type-pill.passive {
+    color: var(--feat-passive, #6ec38c);
+  }
+  .type-pill.action {
+    color: var(--feat-action, #d8a040);
+  }
+  .type-pill.reaction {
+    color: var(--feat-reaction, #5aafdd);
+  }
+  .type-pill.fear {
+    color: var(--feat-fear, #d64040);
+  }
   .type-pill.active {
     background: color-mix(in srgb, currentColor 22%, var(--surface2));
     border-color: currentColor;
@@ -206,7 +233,9 @@
     margin-top: 8px;
     align-items: center;
   }
-  .ed-bar .btn-p { margin-left: auto; }
+  .ed-bar .btn-p {
+    margin-left: auto;
+  }
   .btn-danger {
     color: var(--feat-fear);
   }

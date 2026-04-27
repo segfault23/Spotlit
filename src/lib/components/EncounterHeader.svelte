@@ -4,13 +4,13 @@
   import { activeModal } from '$lib/stores/modal.js';
   import { user } from '$lib/stores/user.js';
 
-  let settingsOpen   = $state(false);
-  let showFlash      = $state(false);
+  let settingsOpen = $state(false);
+  let showFlash = $state(false);
   let flashTimeout;
 
   // Encounter list (loaded when settings menu is opened, while logged in)
-  let savedEncounters    = $state([]);
-  let encountersLoading  = $state(false);
+  let savedEncounters = $state([]);
+  let encountersLoading = $state(false);
 
   function handleFearToken(i) {
     const s = $encounter;
@@ -39,13 +39,20 @@
   }
 
   function handleReset() {
-    if (confirm('Reset encounter? HP, Stress, Armor, conditions, Fear, and round clear. Creatures stay.')) {
+    if (
+      confirm(
+        'Reset encounter? HP, Stress, Armor, conditions, Fear, and round clear. Creatures stay.'
+      )
+    ) {
       encounter.reset();
     }
   }
 
   async function loadEncounterList() {
-    if (!$user) { savedEncounters = []; return; }
+    if (!$user) {
+      savedEncounters = [];
+      return;
+    }
     encountersLoading = true;
     try {
       const res = await fetch('/api/encounters');
@@ -74,7 +81,7 @@
     e.stopPropagation();
     if (!confirm('Delete this saved encounter?')) return;
     await fetch(`/api/encounters/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    savedEncounters = savedEncounters.filter(enc => enc.id !== id);
+    savedEncounters = savedEncounters.filter((enc) => enc.id !== id);
     // If we just deleted the encounter we're currently editing, clear its id
     if ($encounter.currentEncounterId === id) {
       encounter.new();
@@ -90,10 +97,13 @@
   }
 
   let saveLabel = $derived(
-    $saveStatus === 'saving' ? 'Saving…' :
-    $saveStatus === 'saved'  ? '✓ Saved' :
-    $saveStatus === 'error'  ? '⚠ Save failed' :
-    ''
+    $saveStatus === 'saving'
+      ? 'Saving…'
+      : $saveStatus === 'saved'
+        ? '✓ Saved'
+        : $saveStatus === 'error'
+          ? '⚠ Save failed'
+          : ''
   );
 </script>
 
@@ -107,7 +117,7 @@
     type="text"
     placeholder="Name this encounter…"
     value={$encounter.encounterName}
-    oninput={e => encounter.setEncounterName(e.currentTarget.value)}
+    oninput={(e) => encounter.setEncounterName(e.currentTarget.value)}
   />
 
   {#if $user && saveLabel}
@@ -119,14 +129,14 @@
     <span class="hg-label" style="color:var(--fear)">Fear</span>
     <button class="icon-btn" onclick={() => encounter.adj('fear', -1)}>−</button>
     <div id="fear-tokens">
-      {#each Array(12) as _, i}
+      {#each Array(12) as _, i (i)}
         <div
           class="ft"
           class:lit={i < $encounter.fear}
           role="button"
           tabindex="0"
           onclick={() => handleFearToken(i)}
-          onkeydown={e => e.key === 'Enter' && handleFearToken(i)}
+          onkeydown={(e) => e.key === 'Enter' && handleFearToken(i)}
         ></div>
       {/each}
     </div>
@@ -155,12 +165,11 @@
       class="hdr-btn settings-btn"
       class:open={settingsOpen}
       onclick={toggleSettings}
-      title="Settings"
-    >⚙</button>
+      title="Settings">⚙</button
+    >
 
     {#if settingsOpen}
-      <div class="settings-menu" onclick={e => e.stopPropagation()}>
-
+      <div class="settings-menu" onclick={(e) => e.stopPropagation()}>
         <!-- Top: user / sign-in -->
         <div class="settings-user">
           {#if $user}
@@ -190,7 +199,9 @@
             {#if encountersLoading}
               <div class="settings-empty">Loading…</div>
             {:else if savedEncounters.length === 0}
-              <div class="settings-empty">No saved encounters yet — start one and it'll auto-save here.</div>
+              <div class="settings-empty">
+                No saved encounters yet — start one and it'll auto-save here.
+              </div>
             {:else}
               <div class="enc-list">
                 {#each savedEncounters as enc (enc.id)}
@@ -200,15 +211,15 @@
                     role="button"
                     tabindex="0"
                     onclick={() => handleLoadEncounter(enc.id)}
-                    onkeydown={e => e.key === 'Enter' && handleLoadEncounter(enc.id)}
+                    onkeydown={(e) => e.key === 'Enter' && handleLoadEncounter(enc.id)}
                   >
                     <span class="enc-name">{enc.name || 'Untitled'}</span>
                     <span class="enc-date">{fmtDate(enc.updatedAt)}</span>
                     <button
                       class="enc-del"
-                      onclick={e => handleDeleteEncounter(enc.id, e)}
-                      title="Delete"
-                    >✕</button>
+                      onclick={(e) => handleDeleteEncounter(enc.id, e)}
+                      title="Delete">✕</button
+                    >
                   </div>
                 {/each}
               </div>
@@ -220,17 +231,17 @@
         <div class="settings-section">
           <h4 class="settings-h">🎨 Theme</h4>
           <div class="theme-grid">
-            {#each Object.entries(THEMES) as [key, themeData]}
+            {#each Object.entries(THEMES) as [key, themeData] (key)}
               <div
                 class="theme-card"
                 class:active={$theme === key}
                 role="button"
                 tabindex="0"
                 onclick={() => setTheme(key)}
-                onkeydown={e => e.key === 'Enter' && setTheme(key)}
+                onkeydown={(e) => e.key === 'Enter' && setTheme(key)}
               >
                 <div class="theme-swatches">
-                  {#each themeData.swatches as swatch}
+                  {#each themeData.swatches as swatch, si (si)}
                     <div class="theme-swatch" style="background:{swatch}"></div>
                   {/each}
                 </div>
@@ -255,9 +266,16 @@
     border-radius: 3px;
     transition: opacity 0.2s;
   }
-  .save-indicator.save-saving { color: var(--text-dim); }
-  .save-indicator.save-saved  { color: var(--accent, #6ec38c); }
-  .save-indicator.save-error  { color: var(--feat-fear); background: color-mix(in srgb, var(--feat-fear) 15%, transparent); }
+  .save-indicator.save-saving {
+    color: var(--text-dim);
+  }
+  .save-indicator.save-saved {
+    color: var(--accent, #6ec38c);
+  }
+  .save-indicator.save-error {
+    color: var(--feat-fear);
+    background: color-mix(in srgb, var(--feat-fear) 15%, transparent);
+  }
 
   /* settings menu trigger */
   .settings-btn {
@@ -436,7 +454,9 @@
     border-radius: 3px;
     cursor: pointer;
     background: var(--surface2);
-    transition: filter 0.1s, border-color 0.1s;
+    transition:
+      filter 0.1s,
+      border-color 0.1s;
     font-size: 0.78rem;
   }
   .theme-card:hover {

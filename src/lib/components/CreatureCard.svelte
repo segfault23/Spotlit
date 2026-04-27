@@ -11,12 +11,7 @@
   const CONDITIONS = ['Hidden', 'Restrained', 'Vulnerable'];
 </script>
 
-<div
-  class="card"
-  class:pc-card={creature.isPC}
-  class:spotlit={creature.spotlit}
-  class:defeated
->
+<div class="card" class:pc-card={creature.isPC} class:spotlit={creature.spotlit} class:defeated>
   <!-- Top row: name + badges -->
   <div class="card-top">
     <div class="cname">{creature.name}</div>
@@ -38,7 +33,13 @@
 
   <!-- Armor (PC only) -->
   {#if creature.isPC && creature.armor > 0}
-    <DotTrack type="arm" max={creature.armor} current={creature.armUsed || 0} creatureId={creature.id} showAside={false} />
+    <DotTrack
+      type="arm"
+      max={creature.armor}
+      current={creature.armUsed || 0}
+      creatureId={creature.id}
+      showAside={false}
+    />
   {/if}
 
   <!-- Quick stats -->
@@ -70,13 +71,13 @@
         <span class="arrow">▶</span> Features ({creature.feats.length})
       </button>
       <div class="feat-chips">
-        {#each creature.feats as feat}
+        {#each creature.feats as feat, i (i)}
           <span class="fchip">{feat.split('|')[0]}</span>
         {/each}
       </div>
       {#if expanded}
         <div class="feat-blocks">
-          {#each creature.feats as feat}
+          {#each creature.feats as feat, i (i)}
             <FeatureBlock {feat} />
           {/each}
         </div>
@@ -86,13 +87,13 @@
 
   <!-- Conditions -->
   <div class="conditions">
-    {#each CONDITIONS as cond}
+    {#each CONDITIONS as cond (cond)}
       {@const k = cond.toLowerCase()}
       <button
         class="cond {k}"
         class:on={creature.conds[k]}
-        onclick={() => encounter.toggleCond(creature.id, k)}
-      >{cond}</button>
+        onclick={() => encounter.toggleCond(creature.id, k)}>{cond}</button
+      >
     {/each}
   </div>
 
@@ -101,7 +102,7 @@
     class="notes-ta"
     placeholder="Notes…"
     value={creature.notes}
-    onchange={e => encounter.setNotes(creature.id, e.currentTarget.value)}
+    onchange={(e) => encounter.setNotes(creature.id, e.currentTarget.value)}
   ></textarea>
 
   <!-- Footer -->
@@ -110,7 +111,8 @@
       class="cf-btn spot"
       class:on={creature.spotlit}
       onclick={() => encounter.toggleSpot(creature.id)}
-    >{creature.spotlit ? '★ Spotlit' : '☆ Spotlight'}</button>
+      >{creature.spotlit ? '★ Spotlit' : '☆ Spotlight'}</button
+    >
 
     {#if !creature.isPC}
       <button class="cf-btn" onclick={() => encounter.quickHP(creature.id, -1)}>HP−</button>

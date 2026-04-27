@@ -30,11 +30,12 @@
 
   let selectedCount = $derived(selectedAdversaries.size);
   let addCount = $derived(
-    selectedCount === 0 ? 0 :
-    [...selectedAdversaries].reduce((sum, name) => sum + getQty(name), 0)
+    selectedCount === 0 ? 0 : [...selectedAdversaries].reduce((sum, name) => sum + getQty(name), 0)
   );
 
-  function getQty(name) { return quantities[name] ?? 1; }
+  function getQty(name) {
+    return quantities[name] ?? 1;
+  }
   function adjQty(name, delta, e) {
     e.stopPropagation();
     quantities = { ...quantities, [name]: Math.max(1, Math.min(20, getQty(name) + delta)) };
@@ -51,16 +52,22 @@
     const p = $presetsByName[presetName];
     return {
       name: presetName,
-      type: p.type, tier: p.tier, diff: p.diff,
-      maxHP: p.hp, maxStr: p.str,
-      atk: p.atk, thresh: p.thresh, dmg: p.dmg, atkName: p.atkName,
+      type: p.type,
+      tier: p.tier,
+      diff: p.diff,
+      maxHP: p.hp,
+      maxStr: p.str,
+      atk: p.atk,
+      thresh: p.thresh,
+      dmg: p.dmg,
+      atkName: p.atkName,
       feats: p.feats,
     };
   }
 
   function addAdversary() {
     if (selectedCount === 0) return;
-    selectedAdversaries.forEach(presetName => {
+    selectedAdversaries.forEach((presetName) => {
       const qty = getQty(presetName);
       for (let i = 0; i < qty; i++) {
         encounter.addCreature(buildFromPreset(presetName));
@@ -75,8 +82,8 @@
   role="dialog"
   aria-modal="true"
   tabindex="-1"
-  onclick={e => e.target === e.currentTarget && closeModal()}
-  onkeydown={e => e.key === 'Escape' && closeModal()}
+  onclick={(e) => e.target === e.currentTarget && closeModal()}
+  onkeydown={(e) => e.key === 'Escape' && closeModal()}
 >
   <div class="modal modal-lg">
     <div class="modal-title-row">
@@ -92,7 +99,6 @@
     />
 
     <div class="modal-scroll-body">
-
       {#if $user && filteredCustom.length > 0}
         <p class="sect-title">★ My Custom Adversaries</p>
         <div class="adv-list">
@@ -104,7 +110,7 @@
               role="button"
               tabindex="0"
               onclick={() => togglePreset(name)}
-              onkeydown={e => e.key === 'Enter' && togglePreset(name)}
+              onkeydown={(e) => e.key === 'Enter' && togglePreset(name)}
             >
               <div class="adv-row-name">{name}</div>
               <div class="adv-row-badge-group">
@@ -113,10 +119,10 @@
               </div>
               <div class="adv-row-stats">HP {p.hp} · Diff {p.diff}</div>
               {#if selected}
-                <div class="adv-row-qty" onclick={e => e.stopPropagation()} role="presentation">
-                  <button class="adv-row-qty-btn" onclick={e => adjQty(name, -1, e)}>−</button>
+                <div class="adv-row-qty" onclick={(e) => e.stopPropagation()} role="presentation">
+                  <button class="adv-row-qty-btn" onclick={(e) => adjQty(name, -1, e)}>−</button>
                   <span class="adv-row-qty-val">×{getQty(name)}</span>
-                  <button class="adv-row-qty-btn" onclick={e => adjQty(name, 1, e)}>+</button>
+                  <button class="adv-row-qty-btn" onclick={(e) => adjQty(name, 1, e)}>+</button>
                 </div>
               {/if}
             </div>
@@ -135,7 +141,7 @@
             role="button"
             tabindex="0"
             onclick={() => togglePreset(name)}
-            onkeydown={e => e.key === 'Enter' && togglePreset(name)}
+            onkeydown={(e) => e.key === 'Enter' && togglePreset(name)}
           >
             <div class="adv-row-name">{name}</div>
             <div class="adv-row-badge-group">
@@ -144,10 +150,10 @@
             </div>
             <div class="adv-row-stats">HP {p.hp} · Diff {p.diff}</div>
             {#if selected}
-              <div class="adv-row-qty" onclick={e => e.stopPropagation()} role="presentation">
-                <button class="adv-row-qty-btn" onclick={e => adjQty(name, -1, e)}>−</button>
+              <div class="adv-row-qty" onclick={(e) => e.stopPropagation()} role="presentation">
+                <button class="adv-row-qty-btn" onclick={(e) => adjQty(name, -1, e)}>−</button>
                 <span class="adv-row-qty-val">×{getQty(name)}</span>
-                <button class="adv-row-qty-btn" onclick={e => adjQty(name, 1, e)}>+</button>
+                <button class="adv-row-qty-btn" onclick={(e) => adjQty(name, 1, e)}>+</button>
               </div>
             {/if}
           </div>
@@ -162,15 +168,16 @@
           <a href="/auth/login">Sign in</a> to build your own.
         {/if}
       </div>
-
     </div>
 
     <div class="modal-foot">
       <button class="btn-c" onclick={closeModal}>Cancel</button>
       <button class="btn-p" onclick={addAdversary} disabled={addCount === 0}>
-        {addCount === 0 ? 'Select to add' :
-         addCount === 1 ? 'Add to Encounter' :
-         `Add ${addCount} to Encounter`}
+        {addCount === 0
+          ? 'Select to add'
+          : addCount === 1
+            ? 'Add to Encounter'
+            : `Add ${addCount} to Encounter`}
       </button>
     </div>
   </div>
@@ -183,7 +190,9 @@
     gap: 8px;
     margin-bottom: 6px;
   }
-  .modal-title { flex: 1; }
+  .modal-title {
+    flex: 1;
+  }
   .sel-pill {
     font-family: var(--font-mono);
     font-size: 0.7rem;
@@ -193,7 +202,9 @@
     border-radius: 3px;
     border: 1px solid var(--border);
   }
-  .modal-search { margin-bottom: 4px; }
+  .modal-search {
+    margin-bottom: 4px;
+  }
   .adv-row.custom {
     border-left: 2px solid var(--accent, #b080ff);
   }
@@ -212,5 +223,7 @@
     text-decoration: none;
     margin-left: 4px;
   }
-  .profile-cta a:hover { text-decoration: underline; }
+  .profile-cta a:hover {
+    text-decoration: underline;
+  }
 </style>

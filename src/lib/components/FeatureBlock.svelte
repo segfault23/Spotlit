@@ -3,14 +3,20 @@
 
   let { feat } = $props();
 
-  let fname    = $derived(feat.split('|')[0]);
-  let fnote    = $derived(feat.split('|')[1]);
-  let fd       = $derived($featuresByName[fname]);
-  let cls      = $derived(!fd ? 'action'
-    : fd.t === 'Passive'   ? 'passive'
-    : fd.t === 'Action'    ? 'action'
-    : fd.t === 'Reaction'  ? 'reaction'
-    : 'fear');
+  let fname = $derived(feat.split('|')[0]);
+  let fnote = $derived(feat.split('|')[1]);
+  let fd = $derived($featuresByName[fname]);
+  let cls = $derived(
+    !fd
+      ? 'action'
+      : fd.t === 'Passive'
+        ? 'passive'
+        : fd.t === 'Action'
+          ? 'action'
+          : fd.t === 'Reaction'
+            ? 'reaction'
+            : 'fear'
+  );
   let typeLabel = $derived(fd ? fd.t : 'Feature');
 </script>
 

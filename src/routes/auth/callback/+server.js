@@ -3,10 +3,10 @@ import { exchangeCode, verifyState } from '$lib/server/auth.js';
 import { cookieDefaults } from '../../../hooks.server.js';
 
 export async function GET({ url, cookies }) {
-  const code  = url.searchParams.get('code');
+  const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
 
-  if (!code || !await verifyState(state)) {
+  if (!code || !(await verifyState(state))) {
     error(400, 'Invalid OAuth state');
   }
 

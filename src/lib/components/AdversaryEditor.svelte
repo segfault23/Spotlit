@@ -2,43 +2,55 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { featuresByName } from '$lib/stores/catalog.js';
   import FeatureEditor from './FeatureEditor.svelte';
-  import FeatureBlock from './FeatureBlock.svelte';
 
   // initial: an existing creature item, or null for new
   // slug: URL slug (presence => editing existing)
   let { initial = null, slug = null } = $props();
 
-  const TYPES = ['Bruiser','Horde','Leader','Minion','Ranged','Skulk','Social','Solo','Standard','Support'];
+  const TYPES = [
+    'Bruiser',
+    'Horde',
+    'Leader',
+    'Minion',
+    'Ranged',
+    'Skulk',
+    'Social',
+    'Solo',
+    'Standard',
+    'Support',
+  ];
   const FEAT_TYPES = ['Passive', 'Action', 'Reaction', 'Fear'];
 
-  let name     = $state(initial?.name ?? '');
-  let type     = $state(initial?.type ?? 'Solo');
-  let tier     = $state(initial?.tier ?? 3);
-  let diff     = $state(initial?.diff ?? 17);
-  let atk      = $state(initial?.atk ?? '+3');
-  let maxHP    = $state(initial?.maxHP ?? initial?.hp ?? 10);
-  let maxStr   = $state(initial?.maxStr ?? initial?.str ?? 4);
-  let thresh   = $state(initial?.thresh ?? '');
-  let dmg      = $state(initial?.dmg ?? '');
-  let atkName  = $state(initial?.atkName ?? '');
-  let feats    = $state([...(initial?.feats ?? [])]); // array of "Name" or "Name|note"
+  let name = $state(initial?.name ?? '');
+  let type = $state(initial?.type ?? 'Solo');
+  let tier = $state(initial?.tier ?? 3);
+  let diff = $state(initial?.diff ?? 17);
+  let atk = $state(initial?.atk ?? '+3');
+  let maxHP = $state(initial?.maxHP ?? initial?.hp ?? 10);
+  let maxStr = $state(initial?.maxStr ?? initial?.str ?? 4);
+  let thresh = $state(initial?.thresh ?? '');
+  let dmg = $state(initial?.dmg ?? '');
+  let atkName = $state(initial?.atkName ?? '');
+  let feats = $state([...(initial?.feats ?? [])]); // array of "Name" or "Name|note"
 
   let saving = $state(false);
-  let err    = $state('');
+  let err = $state('');
 
   // Feature picker state
   let pickerQuery = $state('');
-  let pickerType  = $state('');
+  let pickerType = $state('');
   let createFeatureOpen = $state(false);
 
   // Available features = merged catalog minus those already attached
-  let attachedNames = $derived(new Set(feats.map(f => f.split('|')[0])));
+  let attachedNames = $derived(new Set(feats.map((f) => f.split('|')[0])));
   let pickerResults = $derived.by(() => {
     const q = pickerQuery.trim().toLowerCase();
     return Object.entries($featuresByName)
       .filter(([n]) => !attachedNames.has(n))
       .filter(([, fd]) => !pickerType || (fd?.t ?? '') === pickerType)
-      .filter(([n, fd]) => !q || n.toLowerCase().includes(q) || (fd?.t ?? '').toLowerCase().includes(q))
+      .filter(
+        ([n, fd]) => !q || n.toLowerCase().includes(q) || (fd?.t ?? '').toLowerCase().includes(q)
+      )
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(0, 80);
   });
@@ -91,7 +103,10 @@
   }
 
   async function save() {
-    if (!name.trim()) { err = 'Name is required.'; return; }
+    if (!name.trim()) {
+      err = 'Name is required.';
+      return;
+    }
     err = '';
     saving = true;
     try {
@@ -103,10 +118,12 @@
         atk,
         maxHP: Number(maxHP) || 6,
         maxStr: Number(maxStr) || 0,
-        thresh, dmg, atkName,
+        thresh,
+        dmg,
+        atkName,
         feats,
       };
-      const path   = slug ? `/api/creatures/${encodeURIComponent(slug)}` : '/api/creatures';
+      const path = slug ? `/api/creatures/${encodeURIComponent(slug)}` : '/api/creatures';
       const method = slug ? 'PUT' : 'POST';
       const res = await fetch(path, {
         method,
@@ -125,7 +142,12 @@
 
   async function del() {
     if (!slug) return;
-    if (!confirm('Delete this adversary from your library? Encounters that already include it keep their copy.')) return;
+    if (
+      !confirm(
+        'Delete this adversary from your library? Encounters that already include it keep their copy.'
+      )
+    )
+      return;
     saving = true;
     await fetch(`/api/creatures/${encodeURIComponent(slug)}`, { method: 'DELETE' });
     await invalidateAll();
@@ -153,7 +175,7 @@
         <div class="fg">
           <label for="ae-type">Type</label>
           <select id="ae-type" bind:value={type}>
-            {#each TYPES as t}<option>{t}</option>{/each}
+            {#each TYPES as t (t)}<option>{t}</option>{/each}
           </select>
         </div>
         <div class="fg">
@@ -168,18 +190,57 @@
       </div>
 
       <div class="fgrow3">
-        <div class="fg"><label for="ae-diff">Difficulty</label><input id="ae-diff" type="number" bind:value={diff} /></div>
-        <div class="fg"><label for="ae-atk">ATK Mod</label><input id="ae-atk" type="text" bind:value={atk} /></div>
-        <div class="fg"><label for="ae-hp">Max HP</label><input id="ae-hp" type="number" min="1" bind:value={maxHP} /></div>
+        <div class="fg">
+          <label for="ae-diff">Difficulty</label><input
+            id="ae-diff"
+            type="number"
+            bind:value={diff}
+          />
+        </div>
+        <div class="fg">
+          <label for="ae-atk">ATK Mod</label><input id="ae-atk" type="text" bind:value={atk} />
+        </div>
+        <div class="fg">
+          <label for="ae-hp">Max HP</label><input
+            id="ae-hp"
+            type="number"
+            min="1"
+            bind:value={maxHP}
+          />
+        </div>
       </div>
 
       <div class="fgrow">
-        <div class="fg"><label for="ae-str">Max Stress</label><input id="ae-str" type="number" min="0" bind:value={maxStr} /></div>
-        <div class="fg"><label for="ae-thresh">Thresholds (Major / Severe)</label><input id="ae-thresh" type="text" placeholder="20 / 32" bind:value={thresh} /></div>
+        <div class="fg">
+          <label for="ae-str">Max Stress</label><input
+            id="ae-str"
+            type="number"
+            min="0"
+            bind:value={maxStr}
+          />
+        </div>
+        <div class="fg">
+          <label for="ae-thresh">Thresholds (Major / Severe)</label><input
+            id="ae-thresh"
+            type="text"
+            placeholder="20 / 32"
+            bind:value={thresh}
+          />
+        </div>
       </div>
 
-      <div class="fg"><label for="ae-dmg">Damage</label><input id="ae-dmg" type="text" placeholder="3d12+5 phy" bind:value={dmg} /></div>
-      <div class="fg"><label for="ae-atkname">Standard Attack <span class="dim">(name · range)</span></label><input id="ae-atkname" type="text" placeholder="Bone Crush · Melee" bind:value={atkName} /></div>
+      <div class="fg">
+        <label for="ae-dmg">Damage</label><input
+          id="ae-dmg"
+          type="text"
+          placeholder="3d12+5 phy"
+          bind:value={dmg}
+        />
+      </div>
+      <div class="fg">
+        <label for="ae-atkname">Standard Attack <span class="dim">(name · range)</span></label
+        ><input id="ae-atkname" type="text" placeholder="Bone Crush · Melee" bind:value={atkName} />
+      </div>
     </div>
 
     <!-- Right: features -->
@@ -196,16 +257,33 @@
           {@const fd = $featuresByName[fname]}
           <div class="attached-row">
             <div class="attached-controls">
-              <button class="ord-btn" onclick={() => moveFeature(idx, -1)} disabled={idx === 0} title="Move up">▲</button>
-              <button class="ord-btn" onclick={() => moveFeature(idx, +1)} disabled={idx === feats.length - 1} title="Move down">▼</button>
+              <button
+                class="ord-btn"
+                onclick={() => moveFeature(idx, -1)}
+                disabled={idx === 0}
+                title="Move up">▲</button
+              >
+              <button
+                class="ord-btn"
+                onclick={() => moveFeature(idx, +1)}
+                disabled={idx === feats.length - 1}
+                title="Move down">▼</button
+              >
             </div>
             <div class="attached-body">
               <div class="attached-head">
-                <span class="ftype-mini t-{(fd?.t ?? 'feature').toLowerCase()}">{fd?.t ?? 'Unknown'}</span>
+                <span class="ftype-mini t-{(fd?.t ?? 'feature').toLowerCase()}"
+                  >{fd?.t ?? 'Unknown'}</span
+                >
                 <span class="attached-name">{fname}</span>
                 {#if fd?.custom}<span class="custom-pip" title="Your custom feature">★</span>{/if}
-                {#if !fd}<span class="missing-pip" title="No catalog entry — will show as 'no data' when rendered">⚠</span>{/if}
-                <button class="detach-btn" onclick={() => detachFeature(idx)} title="Remove">✕</button>
+                {#if !fd}<span
+                    class="missing-pip"
+                    title="No catalog entry — will show as 'no data' when rendered">⚠</span
+                  >{/if}
+                <button class="detach-btn" onclick={() => detachFeature(idx)} title="Remove"
+                  >✕</button
+                >
               </div>
               {#if fd?.tx}
                 <div class="attached-tx">{fd.tx}</div>
@@ -215,7 +293,7 @@
                 type="text"
                 placeholder="Optional note (e.g. recharges on 5–6)"
                 value={fnote}
-                oninput={e => setNote(idx, e.currentTarget.value)}
+                oninput={(e) => setNote(idx, e.currentTarget.value)}
               />
             </div>
           </div>
@@ -230,14 +308,14 @@
         <button
           class="type-filter-btn"
           class:active={pickerType === ''}
-          onclick={() => pickerType = ''}
-        >All</button>
-        {#each FEAT_TYPES as ft}
+          onclick={() => (pickerType = '')}>All</button
+        >
+        {#each FEAT_TYPES as ft (ft)}
           <button
             class="type-filter-btn t-{ft.toLowerCase()}"
             class:active={pickerType === ft}
-            onclick={() => pickerType = ft}
-          >{ft}</button>
+            onclick={() => (pickerType = ft)}>{ft}</button
+          >
         {/each}
       </div>
 
@@ -256,7 +334,9 @@
           </button>
         {:else}
           <div class="picker-empty">
-            {pickerQuery || pickerType ? 'No matches.' : 'Type to search, or create a new feature below.'}
+            {pickerQuery || pickerType
+              ? 'No matches.'
+              : 'Type to search, or create a new feature below.'}
           </div>
         {/each}
       </div>
@@ -285,15 +365,12 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    onclick={e => e.target === e.currentTarget && (createFeatureOpen = false)}
-    onkeydown={e => e.key === 'Escape' && (createFeatureOpen = false)}
+    onclick={(e) => e.target === e.currentTarget && (createFeatureOpen = false)}
+    onkeydown={(e) => e.key === 'Escape' && (createFeatureOpen = false)}
   >
     <div class="modal modal-md">
       <div class="modal-title">New Feature</div>
-      <FeatureEditor
-        afterSave={onFeatureCreated}
-        afterCancel={() => (createFeatureOpen = false)}
-      />
+      <FeatureEditor afterSave={onFeatureCreated} afterCancel={() => (createFeatureOpen = false)} />
     </div>
   </div>
 {/if}
@@ -318,7 +395,12 @@
     margin-bottom: 4px;
     font-weight: 600;
   }
-  .dim { color: var(--text-dim); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .dim {
+    color: var(--text-dim);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
 
   .ed-grid {
     display: grid;
@@ -327,10 +409,16 @@
     align-items: start;
   }
   @media (max-width: 900px) {
-    .ed-grid { grid-template-columns: 1fr; }
+    .ed-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .col { display: flex; flex-direction: column; gap: 10px; }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
   .empty-feats {
     color: var(--text-dim);
@@ -370,10 +458,21 @@
     font-size: 0.65rem;
     line-height: 1;
   }
-  .ord-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .ord-btn:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
+  .ord-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .ord-btn:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
 
-  .attached-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .attached-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
   .attached-head {
     display: flex;
     align-items: center;
@@ -408,10 +507,22 @@
     color: var(--text-dim);
     border: 1px solid var(--border);
   }
-  .ftype-mini.t-passive  { color: var(--feat-passive,  #6ec38c); border-color: currentColor; }
-  .ftype-mini.t-action   { color: var(--feat-action,   #d8a040); border-color: currentColor; }
-  .ftype-mini.t-reaction { color: var(--feat-reaction, #5aafdd); border-color: currentColor; }
-  .ftype-mini.t-fear     { color: var(--feat-fear,     #d64040); border-color: currentColor; }
+  .ftype-mini.t-passive {
+    color: var(--feat-passive, #6ec38c);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-action {
+    color: var(--feat-action, #d8a040);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-reaction {
+    color: var(--feat-reaction, #5aafdd);
+    border-color: currentColor;
+  }
+  .ftype-mini.t-fear {
+    color: var(--feat-fear, #d64040);
+    border-color: currentColor;
+  }
 
   .custom-pip {
     color: var(--accent, #b080ff);
@@ -433,7 +544,10 @@
     opacity: 0.5;
     line-height: 1;
   }
-  .detach-btn:hover { color: var(--feat-fear); opacity: 1; }
+  .detach-btn:hover {
+    color: var(--feat-fear);
+    opacity: 1;
+  }
 
   .note-input {
     width: 100%;
@@ -470,10 +584,18 @@
     cursor: pointer;
     transition: all 0.1s;
   }
-  .type-filter-btn.t-passive  { color: var(--feat-passive,  #6ec38c); }
-  .type-filter-btn.t-action   { color: var(--feat-action,   #d8a040); }
-  .type-filter-btn.t-reaction { color: var(--feat-reaction, #5aafdd); }
-  .type-filter-btn.t-fear     { color: var(--feat-fear,     #d64040); }
+  .type-filter-btn.t-passive {
+    color: var(--feat-passive, #6ec38c);
+  }
+  .type-filter-btn.t-action {
+    color: var(--feat-action, #d8a040);
+  }
+  .type-filter-btn.t-reaction {
+    color: var(--feat-reaction, #5aafdd);
+  }
+  .type-filter-btn.t-fear {
+    color: var(--feat-fear, #d64040);
+  }
   .type-filter-btn.active {
     background: color-mix(in srgb, currentColor 18%, var(--surface2));
     border-color: currentColor;
@@ -560,7 +682,9 @@
     padding-top: 6px;
     border-top: 1px solid var(--border);
   }
-  .ed-bar .btn-p { margin-left: auto; }
+  .ed-bar .btn-p {
+    margin-left: auto;
+  }
   .btn-danger {
     color: var(--feat-fear);
   }

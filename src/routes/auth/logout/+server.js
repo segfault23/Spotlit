@@ -2,9 +2,9 @@ import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export function GET({ cookies, url }) {
-  cookies.delete('id_token',      { path: '/' });
+  cookies.delete('id_token', { path: '/' });
   cookies.delete('refresh_token', { path: '/' });
-  cookies.delete('oauth_state',   { path: '/' });
+  cookies.delete('oauth_state', { path: '/' });
 
   const params = new URLSearchParams({
     client_id: env.COGNITO_CLIENT_ID,
