@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && cp lambda.js build/lambda.js",
+    "build": "vite build && cp lambda.mjs build/lambda.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
