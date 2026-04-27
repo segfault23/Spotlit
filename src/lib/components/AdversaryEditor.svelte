@@ -4,40 +4,47 @@
   import FeatureEditor from './FeatureEditor.svelte';
   import FeatureBlock from './FeatureBlock.svelte';
 
-  // initial: an existing creature item, or null for new
-  // slug: URL slug (presence => editing existing)
   let { initial = null, slug = null } = $props();
 
-  const TYPES = ['Bruiser','Horde','Leader','Minion','Ranged','Skulk','Social','Solo','Standard','Support'];
-  const FEAT_TYPES = ['Passive', 'Action', 'Reaction', 'Fear'];
+  const TYPES      = ['Bruiser','Horde','Leader','Minion','Ranged','Skulk','Social','Solo','Standard','Support'];
+  const ATK_RANGES = ['Melee', 'Very Close', 'Close', 'Far', 'Very Far'];
+  const DMG_TYPES  = ['phy', 'mag'];
 
-  let name     = $state(initial?.name ?? '');
-  let type     = $state(initial?.type ?? 'Solo');
-  let tier     = $state(initial?.tier ?? 3);
-  let diff     = $state(initial?.diff ?? 17);
-  let atk      = $state(initial?.atk ?? '+3');
-  let maxHP    = $state(initial?.maxHP ?? initial?.hp ?? 10);
-  let maxStr   = $state(initial?.maxStr ?? initial?.str ?? 4);
-  let thresh   = $state(initial?.thresh ?? '');
-  let dmg      = $state(initial?.dmg ?? '');
-  let atkName  = $state(initial?.atkName ?? '');
-  let feats    = $state([...(initial?.feats ?? [])]); // array of "Name" or "Name|note"
+  let name   = $state(initial?.name ?? '');
+  let type   = $state(initial?.type ?? 'Solo');
+  let tier   = $state(initial?.tier ?? 3);
+  let diff   = $state(initial?.diff ?? 17);
+  let atk    = $state(initial?.atk ?? '+3');
+  let maxHP  = $state(initial?.maxHP ?? initial?.hp ?? 10);
+  let maxStr = $state(initial?.maxStr ?? initial?.str ?? 4);
+  let thresh = $state(initial?.thresh ?? '');
+  let feats  = $state([...(initial?.feats ?? [])]);
+
+  // Split "Bone Crush · Melee" into name + range
+  const _atkStr     = initial?.atkName ?? '';
+  const _atkDotIdx  = _atkStr.lastIndexOf(' · ');
+  const _atkRangeParsed = _atkDotIdx >= 0 ? _atkStr.slice(_atkDotIdx + 3) : '';
+  let atkNameBase  = $state(_atkDotIdx >= 0 ? _atkStr.slice(0, _atkDotIdx) : _atkStr);
+  let atkNameRange = $state(ATK_RANGES.includes(_atkRangeParsed) ? _atkRangeParsed : 'Melee');
+
+  // Split "3d12+5 phy" into expression + type
+  const _dmgStr   = initial?.dmg ?? '';
+  const _dmgParts = _dmgStr.split(' ');
+  const _dmgLast  = _dmgParts[_dmgParts.length - 1];
+  let dmgBase = $state(DMG_TYPES.includes(_dmgLast) ? _dmgParts.slice(0, -1).join(' ') : _dmgStr);
+  let dmgType = $state(DMG_TYPES.includes(_dmgLast) ? _dmgLast : 'phy');
 
   let saving = $state(false);
   let err    = $state('');
 
-  // Feature picker state
-  let pickerQuery = $state('');
-  let pickerType  = $state('');
+  let pickerQuery       = $state('');
   let createFeatureOpen = $state(false);
 
-  // Available features = merged catalog minus those already attached
   let attachedNames = $derived(new Set(feats.map(f => f.split('|')[0])));
   let pickerResults = $derived.by(() => {
     const q = pickerQuery.trim().toLowerCase();
     return Object.entries($featuresByName)
       .filter(([n]) => !attachedNames.has(n))
-      .filter(([, fd]) => !pickerType || (fd?.t ?? '') === pickerType)
       .filter(([n, fd]) => !q || n.toLowerCase().includes(q) || (fd?.t ?? '').toLowerCase().includes(q))
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(0, 80);
@@ -64,28 +71,31 @@
     feats = next;
   }
 
+  function computeAtkName() {
+    return atkNameBase.trim() ? `${atkNameBase.trim()} · ${atkNameRange}` : '';
+  }
+  function computeDmg() {
+    return dmgBase.trim() ? `${dmgBase.trim()} ${dmgType}` : '';
+  }
+
   function onFeatureCreated({ name: newName }) {
     createFeatureOpen = false;
-    if (newName && !attachedNames.has(newName)) {
-      feats = [...feats, newName];
-    }
+    if (newName && !attachedNames.has(newName)) feats = [...feats, newName];
   }
 
   function looksDirty() {
-    if (!initial) {
-      return name.trim().length > 0;
-    }
+    if (!initial) return name.trim().length > 0;
     return (
-      name !== initial.name ||
-      type !== initial.type ||
-      Number(tier) !== Number(initial.tier) ||
-      Number(diff) !== Number(initial.diff) ||
-      atk !== initial.atk ||
-      Number(maxHP) !== Number(initial.maxHP ?? initial.hp) ||
+      name   !== initial.name ||
+      type   !== initial.type ||
+      Number(tier)   !== Number(initial.tier) ||
+      Number(diff)   !== Number(initial.diff) ||
+      atk    !== initial.atk ||
+      Number(maxHP)  !== Number(initial.maxHP ?? initial.hp) ||
       Number(maxStr) !== Number(initial.maxStr ?? initial.str) ||
       thresh !== (initial.thresh ?? '') ||
-      dmg !== (initial.dmg ?? '') ||
-      atkName !== (initial.atkName ?? '') ||
+      computeDmg()     !== (initial.dmg     ?? '') ||
+      computeAtkName() !== (initial.atkName ?? '') ||
       JSON.stringify(feats) !== JSON.stringify(initial.feats ?? [])
     );
   }
@@ -103,7 +113,9 @@
         atk,
         maxHP: Number(maxHP) || 6,
         maxStr: Number(maxStr) || 0,
-        thresh, dmg, atkName,
+        thresh,
+        dmg:     computeDmg(),
+        atkName: computeAtkName(),
         feats,
       };
       const path   = slug ? `/api/creatures/${encodeURIComponent(slug)}` : '/api/creatures';
@@ -178,8 +190,25 @@
         <div class="fg"><label for="ae-thresh">Thresholds (Major / Severe)</label><input id="ae-thresh" type="text" placeholder="20 / 32" bind:value={thresh} /></div>
       </div>
 
-      <div class="fg"><label for="ae-dmg">Damage</label><input id="ae-dmg" type="text" placeholder="3d12+5 phy" bind:value={dmg} /></div>
-      <div class="fg"><label for="ae-atkname">Standard Attack <span class="dim">(name · range)</span></label><input id="ae-atkname" type="text" placeholder="Bone Crush · Melee" bind:value={atkName} /></div>
+      <div class="fg">
+        <label>Damage</label>
+        <div class="split-row">
+          <input type="text" placeholder="3d12+5" bind:value={dmgBase} />
+          <select bind:value={dmgType}>
+            {#each DMG_TYPES as t}<option>{t}</option>{/each}
+          </select>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Standard Attack</label>
+        <div class="split-row">
+          <input type="text" placeholder="Bone Crush" bind:value={atkNameBase} />
+          <select bind:value={atkNameRange}>
+            {#each ATK_RANGES as r}<option>{r}</option>{/each}
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Right: features -->
@@ -225,26 +254,10 @@
       <hr class="divider-soft" />
 
       <span class="lbl">Add Feature</span>
-
-      <div class="type-filters">
-        <button
-          class="type-filter-btn"
-          class:active={pickerType === ''}
-          onclick={() => pickerType = ''}
-        >All</button>
-        {#each FEAT_TYPES as ft}
-          <button
-            class="type-filter-btn t-{ft.toLowerCase()}"
-            class:active={pickerType === ft}
-            onclick={() => pickerType = ft}
-          >{ft}</button>
-        {/each}
-      </div>
-
       <input
         class="picker-search"
         type="text"
-        placeholder="Search features…"
+        placeholder="Search feature catalog…"
         bind:value={pickerQuery}
       />
       <div class="picker-results">
@@ -256,7 +269,7 @@
           </button>
         {:else}
           <div class="picker-empty">
-            {pickerQuery || pickerType ? 'No matches.' : 'Type to search, or create a new feature below.'}
+            {pickerQuery ? 'No matches.' : 'Type to search, or create a new feature below.'}
           </div>
         {/each}
       </div>
@@ -318,7 +331,6 @@
     margin-bottom: 4px;
     font-weight: 600;
   }
-  .dim { color: var(--text-dim); font-weight: 400; text-transform: none; letter-spacing: 0; }
 
   .ed-grid {
     display: grid;
@@ -331,6 +343,18 @@
   }
 
   .col { display: flex; flex-direction: column; gap: 10px; }
+
+  .split-row {
+    display: flex;
+    gap: 6px;
+  }
+  .split-row input {
+    flex: 1;
+    min-width: 0;
+  }
+  .split-row select {
+    flex-shrink: 0;
+  }
 
   .empty-feats {
     color: var(--text-dim);
@@ -452,37 +476,6 @@
     margin: 4px 0;
   }
 
-  .type-filters {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-  .type-filter-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 3px 10px;
-    border-radius: 3px;
-    font-size: 0.72rem;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: all 0.1s;
-  }
-  .type-filter-btn.t-passive  { color: var(--feat-passive,  #6ec38c); }
-  .type-filter-btn.t-action   { color: var(--feat-action,   #d8a040); }
-  .type-filter-btn.t-reaction { color: var(--feat-reaction, #5aafdd); }
-  .type-filter-btn.t-fear     { color: var(--feat-fear,     #d64040); }
-  .type-filter-btn.active {
-    background: color-mix(in srgb, currentColor 18%, var(--surface2));
-    border-color: currentColor;
-  }
-  .type-filter-btn:hover:not(.active) {
-    border-color: var(--text-dim);
-    color: var(--text);
-  }
-
   .picker-search {
     width: 100%;
     background: var(--surface2);
@@ -561,9 +554,7 @@
     border-top: 1px solid var(--border);
   }
   .ed-bar .btn-p { margin-left: auto; }
-  .btn-danger {
-    color: var(--feat-fear);
-  }
+  .btn-danger { color: var(--feat-fear); }
   .btn-danger:hover {
     background: color-mix(in srgb, var(--feat-fear) 18%, var(--surface2));
   }
