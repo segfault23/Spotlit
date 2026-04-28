@@ -7,6 +7,7 @@ import { Construct } from 'constructs';
 
 export class CertStack extends Stack {
   public readonly certificate: ICertificate;
+  public readonly webAcl: CfnWebACL;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, {
@@ -29,7 +30,7 @@ export class CertStack extends Stack {
 
     this.certificate = cert;
 
-    const webAcl = new CfnWebACL(this, 'SpotlitWebACL', {
+    this.webAcl = new CfnWebACL(this, 'SpotlitWebACL', {
       defaultAction: { allow: {} },
       scope: 'CLOUDFRONT',
       visibilityConfig: {
@@ -45,7 +46,7 @@ export class CertStack extends Stack {
     });
 
     new CfnOutput(this, 'WebAclArn', {
-      value: webAcl.attrArn,
+      value: this.webAcl.attrArn,
     });
 
     new CfnOutput(this, 'NameServers', {

@@ -15,13 +15,14 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
-import { Distribution, OriginProtocolPolicy, CachePolicy, ViewerProtocolPolicy, OriginRequestPolicy } from 'aws-cdk-lib/aws-cloudfront';
+import { CachePolicy, Distribution, OriginProtocolPolicy, OriginRequestPolicy, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { HttpOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { HostedZone, ARecord, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 
 export interface SpotlitCdkStackProps extends StackProps {
   certificateArn: string;
+  webAclArn: string;
 }
 
 export class SpotlitCdkStack extends Stack {
@@ -89,8 +90,6 @@ export class SpotlitCdkStack extends Stack {
     });
 
     const appUrl = this.node.tryGetContext('appUrl') as string | undefined;
-    const webAclArn = this.node.tryGetContext('webAclArn');
-
     const callbackUrl = appUrl ? `${appUrl}/auth/callback` : 'https://localhost:5173/auth/callback';
     const logoutUrl   = appUrl ?? 'https://localhost:5173';
 
@@ -174,7 +173,7 @@ export class SpotlitCdkStack extends Stack {
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
-      webAclId: webAclArn, // 👈 comes from us-east-1 stack
+      webAclId: props.webAclArn,
     });
 
     const zone = HostedZone.fromLookup(this, 'Zone', {
