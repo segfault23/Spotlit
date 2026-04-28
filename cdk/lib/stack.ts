@@ -22,7 +22,6 @@ import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 
 export interface SpotlitCdkStackProps extends StackProps {
   certificateArn: string;
-  webAclArn: string;
 }
 
 export class SpotlitCdkStack extends Stack {
@@ -173,12 +172,11 @@ export class SpotlitCdkStack extends Stack {
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
-      webAclId: props.webAclArn,
     });
 
-    // Retain the old distribution so CloudFormation does not attempt to delete it
-    // when the logical ID changes in the next deploy (deletion would fail due to
-    // the WAF pricing plan subscription attached via the console).
+    // Retain so CloudFormation does not attempt to delete this distribution when
+    // the logical ID changes in the next deploy. Deletion would fail due to the
+    // WAF pricing plan subscription attached via the console.
     (distribution.node.defaultChild as CfnResource).cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
 
     const zone = HostedZone.fromLookup(this, 'Zone', {

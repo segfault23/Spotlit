@@ -12,6 +12,5 @@ const certStack = new CertStack(app, 'CertStack', {
 new SpotlitCdkStack(app, 'SpotlitCdkStack', {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   certificateArn: certStack.certificate.certificateArn,
-  webAclArn: certStack.webAcl.attrArn,
   crossRegionReferences: true,
 });
