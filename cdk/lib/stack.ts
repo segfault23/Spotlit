@@ -2,7 +2,7 @@ import { join } from 'path';
 import { Construct } from 'constructs';
 import { Code, Function, FunctionUrlAuthType, HttpMethod, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnDeletionPolicy, CfnOutput, CfnResource, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import {
   AccountRecovery,
   OAuthScope,
@@ -175,6 +175,11 @@ export class SpotlitCdkStack extends Stack {
       certificate: cert,
       webAclId: props.webAclArn,
     });
+
+    // Retain the old distribution so CloudFormation does not attempt to delete it
+    // when the logical ID changes in the next deploy (deletion would fail due to
+    // the WAF pricing plan subscription attached via the console).
+    (distribution.node.defaultChild as CfnResource).cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
 
     const zone = HostedZone.fromLookup(this, 'Zone', {
       domainName: 'spotlit.online',
