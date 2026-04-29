@@ -2,7 +2,7 @@ import { join } from 'path';
 import { Construct } from 'constructs';
 import { Code, Function, FunctionUrlAuthType, HttpMethod, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnDeletionPolicy, CfnOutput, CfnResource, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import {
   AccountRecovery,
   OAuthScope,
@@ -172,9 +172,12 @@ export class SpotlitCdkStack extends Stack {
       },
       domainNames: ['spotlit.online'],
       certificate: cert,
-      // Locked by CloudFront pricing plan subscription — must match exactly.
       webAclId: 'arn:aws:wafv2:us-east-1:277707120040:global/webacl/CreatedByCloudFront-c25aef4c/e871b5f3-bf1d-4ab2-a1bd-4ae5cf8f8a8c',
     });
+
+    // RETAIN so CloudFormation does not attempt to delete this distribution
+    // when the logical ID changes in the next deploy.
+    (distribution.node.defaultChild as CfnResource).cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
 
     const zone = HostedZone.fromLookup(this, 'Zone', {
       domainName: 'spotlit.online',
@@ -182,15 +185,13 @@ export class SpotlitCdkStack extends Stack {
 
     new ARecord(this, 'AliasRecord', {
       zone,
-      target: RecordTarget.fromAlias(
-        new CloudFrontTarget(distribution)
-      ),
+      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
     });
 
     // ── Outputs ───────────────────────────────────────────────────────────────
     new CfnOutput(this, 'FunctionUrl', {
       value: url.url,
-      description: 'Spotlit app URL — use this as appUrl context on second deploy',
+      description: 'Spotlit app URL',
     });
     new CfnOutput(this, 'ContentTableName', {
       value: contentTable.tableName,
