@@ -5,6 +5,11 @@
 //   Encounter       pk=USER#<sub>  sk=ENCOUNTER#<iso>#<uuid8>
 //   Roster          pk=USER#<sub>  sk=PROFILE#ROSTER
 //   Custom creature pk=USER#<sub>  sk=CUSTOM_CREATURE#<slug>
+//   Campaign        pk=USER#<sub>  sk=CAMPAIGN#<iso>#<uuid8>
+//                   gsi1pk=JOINCODE#<code>  gsi1sk=META
+//   Character       pk=USER#<sub>  sk=CHARACTER#<iso>#<uuid8>
+//                   gsi1pk=CAMPAIGN#<code>  gsi1sk=<name>  (only when in a campaign)
+//   Custom item     pk=USER#<sub>  sk=CUSTOM_ITEM#<slug>
 
 import { env } from '$env/dynamic/private';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -211,3 +216,223 @@ export async function deleteCustomFeature(sub, slug) {
     Key: { pk: `USER#${sub}`, sk: `CUSTOM_FEATURE#${slug}` },
   }));
 }
+
+// ── Campaigns ─────────────────────────────────────────────────────────────────
+
+function genJoinCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+export async function listCampaigns(gmSub) {
+  const r = await ddb.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'pk = :pk AND begins_with(sk, :pfx)',
+      ExpressionAttributeValues: { ':pk': `USER#${gmSub}`, ':pfx': 'CAMPAIGN#' },
+      ScanIndexForward: false,
+    })
+  );
+  return r.Items ?? [];
+}
+
+export async function getCampaign(gmSub, id) {
+  const r = await ddb.send(
+    new GetCommand({ TableName: TABLE, Key: { pk: `USER#${gmSub}`, sk: id } })
+  );
+  return r.Item ?? null;
+}
+
+export async function getCampaignByJoinCode(code) {
+  const r = await ddb.send(
+    new QueryCommand({
+      TableName: TABLE,
+      IndexName: 'gsi1',
+      KeyConditionExpression: 'gsi1pk = :p AND gsi1sk = :s',
+      ExpressionAttributeValues: { ':p': `JOINCODE#${code}`, ':s': 'META' },
+      Limit: 1,
+    })
+  );
+  return r.Items?.[0] ?? null;
+}
+
+export async function putCampaign(gmSub, data, existingId = null) {
+  const now = Date.now();
+  const id = existingId ?? `CAMPAIGN#${new Date(now).toISOString()}#${randomUUID().slice(0, 8)}`;
+  const existing = existingId ? await getCampaign(gmSub, existingId) : null;
+  const joinCode = existing?.joinCode ?? genJoinCode();
+  await ddb.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        pk: `USER#${gmSub}`,
+        sk: id,
+        gsi1pk: `JOINCODE#${joinCode}`,
+        gsi1sk: 'META',
+        id,
+        gmSub,
+        joinCode,
+        name: data.name ?? 'Untitled Campaign',
+        description: data.description ?? '',
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      },
+    })
+  );
+  return { id, joinCode };
+}
+
+export async function deleteCampaign(gmSub, id) {
+  await ddb.send(
+    new DeleteCommand({ TableName: TABLE, Key: { pk: `USER#${gmSub}`, sk: id } })
+  );
+}
+
+// ── Characters ────────────────────────────────────────────────────────────────
+
+const DEFAULT_CHARACTER = {
+  name: '',
+  playerName: '',
+  class: '',
+  subclass: '',
+  level: 1,
+  ancestry: '',
+  community: '',
+  pronouns: '',
+  agility: 0, strength: 0, finesse: 0, instinct: 0, presence: 0, knowledge: 0,
+  maxHP: 6, hp: 6,
+  maxStress: 3, stress: 0,
+  maxHope: 5, hope: 5,
+  evasion: 10,
+  armorSlots: 0, armorUsed: 0,
+  gold: 0,
+  experiences: ['', '', ''],
+  features: [],
+  items: [],
+  profilePhoto: null,
+  gallery: [],
+  notes: '',
+};
+
+export async function listMyCharacters(ownerSub) {
+  const r = await ddb.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'pk = :pk AND begins_with(sk, :pfx)',
+      ExpressionAttributeValues: { ':pk': `USER#${ownerSub}`, ':pfx': 'CHARACTER#' },
+      ScanIndexForward: false,
+    })
+  );
+  return r.Items ?? [];
+}
+
+export async function listCampaignCharacters(joinCode) {
+  const r = await ddb.send(
+    new QueryCommand({
+      TableName: TABLE,
+      IndexName: 'gsi1',
+      KeyConditionExpression: 'gsi1pk = :p',
+      ExpressionAttributeValues: { ':p': `CAMPAIGN#${joinCode}` },
+      ScanIndexForward: true,
+    })
+  );
+  return r.Items ?? [];
+}
+
+export async function getCharacter(ownerSub, id) {
+  const r = await ddb.send(
+    new GetCommand({ TableName: TABLE, Key: { pk: `USER#${ownerSub}`, sk: id } })
+  );
+  return r.Item ?? null;
+}
+
+export async function getCharacterAsGm(gmSub, ownerSub, id) {
+  const item = await getCharacter(ownerSub, id);
+  if (!item) return null;
+  if (item.campaignGmSub !== gmSub) return null;
+  return item;
+}
+
+export async function putCharacter(ownerSub, data, existingId = null) {
+  const now = Date.now();
+  const id = existingId ?? `CHARACTER#${new Date(now).toISOString()}#${randomUUID().slice(0, 8)}`;
+  const existing = existingId ? await getCharacter(ownerSub, id) : null;
+
+  const char = {
+    ...DEFAULT_CHARACTER,
+    ...data,
+    pk: `USER#${ownerSub}`,
+    sk: id,
+    id,
+    ownerSub,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  if (char.campaignCode) {
+    char.gsi1pk = `CAMPAIGN#${char.campaignCode}`;
+    char.gsi1sk = char.name || '';
+  } else {
+    delete char.gsi1pk;
+    delete char.gsi1sk;
+  }
+
+  await ddb.send(new PutCommand({ TableName: TABLE, Item: char }));
+  return id;
+}
+
+export async function deleteCharacter(ownerSub, id) {
+  await ddb.send(
+    new DeleteCommand({ TableName: TABLE, Key: { pk: `USER#${ownerSub}`, sk: id } })
+  );
+}
+
+// ── Custom items ──────────────────────────────────────────────────────────────
+
+export async function listCustomItems(sub) {
+  const r = await ddb.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'pk = :pk AND begins_with(sk, :pfx)',
+      ExpressionAttributeValues: { ':pk': `USER#${sub}`, ':pfx': 'CUSTOM_ITEM#' },
+      ScanIndexForward: true,
+    })
+  );
+  return r.Items ?? [];
+}
+
+export async function getCustomItem(sub, slug) {
+  const r = await ddb.send(
+    new GetCommand({ TableName: TABLE, Key: { pk: `USER#${sub}`, sk: `CUSTOM_ITEM#${slug}` } })
+  );
+  return r.Item ?? null;
+}
+
+export async function putCustomItem(sub, item, existingSlug = null) {
+  const slug = slugify(item.name);
+  const now = Date.now();
+  if (existingSlug && existingSlug !== slug) await deleteCustomItem(sub, existingSlug);
+  const existing = existingSlug ? await getCustomItem(sub, existingSlug) : null;
+  await ddb.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        pk: `USER#${sub}`,
+        sk: `CUSTOM_ITEM#${slug}`,
+        slug,
+        ...item,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      },
+    })
+  );
+  return slug;
+}
+
+export async function deleteCustomItem(sub, slug) {
+  await ddb.send(
+    new DeleteCommand({ TableName: TABLE, Key: { pk: `USER#${sub}`, sk: `CUSTOM_ITEM#${slug}` } })
+  );
+}
+
+export { slugify };

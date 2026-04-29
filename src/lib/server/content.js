@@ -113,3 +113,35 @@ export async function putCreature(item) {
     },
   }));
 }
+
+export const listItems = () => listByEntity('item');
+
+export async function getItem(slug) {
+  assertTable();
+  const r = await ddb.send(new GetCommand({
+    TableName: TABLE,
+    Key: { pk: `ITEM#${slug}`, sk: 'META' },
+  }));
+  return r.Item ?? null;
+}
+
+export async function putItem(item) {
+  assertTable();
+  const now = Date.now();
+  const slug = item.slug;
+  if (!slug) throw new Error('item requires a slug');
+  return ddb.send(new PutCommand({
+    TableName: TABLE,
+    Item: {
+      ...item,
+      pk: `ITEM#${slug}`,
+      sk: 'META',
+      gsi1pk: 'item',
+      gsi1sk: item.name,
+      entity: 'item',
+      updatedAt: now,
+      createdAt: item.createdAt ?? now,
+      version: (item.version ?? 0) + 1,
+    },
+  }));
+}
