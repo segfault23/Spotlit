@@ -57,10 +57,11 @@ function createEncounterStore() {
   const { subscribe, update } = store;
 
   // ── Autosave ─────────────────────────────────────────────────────────────
-  let autosaveEnabled = false;
-  let autosaveTimer   = null;
-  let inflight        = null;
-  let lastSavedKey    = '';
+  let autosaveEnabled     = false;
+  let autosaveTimer       = null;
+  let inflight            = null;
+  let lastSavedKey        = '';
+  let consecutiveFailures = 0;
 
   function flashStatus(state, ms = 1500) {
     saveStatus.set(state);
@@ -77,8 +78,10 @@ function createEncounterStore() {
       const newId = await persist(state, currentEncounterId);
       if (!currentEncounterId) update(s => ({ ...s, currentEncounterId: newId }));
       lastSavedKey = snapKey(get(store));
+      consecutiveFailures = 0;
       flashStatus('saved');
     } catch (e) {
+      consecutiveFailures++;
       console.error('Autosave failed', e);
       flashStatus('error', 3000);
       throw e;
@@ -87,6 +90,7 @@ function createEncounterStore() {
 
   function scheduleAutosave() {
     if (!autosaveEnabled) return;
+    if (consecutiveFailures >= 3) return;
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(async () => {
       const cur = get(store);
@@ -113,6 +117,7 @@ function createEncounterStore() {
     store.subscribe(s => {
       if (!autosaveEnabled) return;
       if (snapKey(s) === lastSavedKey) return;
+      consecutiveFailures = 0;
       scheduleAutosave();
     });
   }
