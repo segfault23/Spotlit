@@ -119,7 +119,7 @@
     <span class="hg-label" style="color:var(--fear)">Fear</span>
     <button class="icon-btn" onclick={() => encounter.adj('fear', -1)}>−</button>
     <div id="fear-tokens">
-      {#each Array(12) as _, i}
+      {#each Array(12) as _, i (i)}
         <div
           class="ft"
           class:lit={i < $encounter.fear}
@@ -220,7 +220,7 @@
         <div class="settings-section">
           <h4 class="settings-h">🎨 Theme</h4>
           <div class="theme-grid">
-            {#each Object.entries(THEMES) as [key, themeData]}
+            {#each Object.entries(THEMES) as [key, themeData] (key)}
               <div
                 class="theme-card"
                 class:active={$theme === key}
@@ -230,7 +230,7 @@
                 onkeydown={e => e.key === 'Enter' && setTheme(key)}
               >
                 <div class="theme-swatches">
-                  {#each themeData.swatches as swatch}
+                  {#each themeData.swatches as swatch (swatch)}
                     <div class="theme-swatch" style="background:{swatch}"></div>
                   {/each}
                 </div>

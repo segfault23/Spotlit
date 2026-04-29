@@ -158,7 +158,7 @@
               </div>
               {#if c.feats?.length}
                 <div class="lib-chips">
-                  {#each c.feats as feat}
+                  {#each c.feats as feat (feat)}
                     <span class="lib-chip">{feat.split('|')[0]}</span>
                   {/each}
                 </div>

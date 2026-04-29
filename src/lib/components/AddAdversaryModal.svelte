@@ -3,6 +3,7 @@
   import { encounter } from '$lib/stores/encounter.js';
   import { closeModal } from '$lib/stores/modal.js';
   import { user } from '$lib/stores/user.js';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let searchQuery = $state('');
   let selectedAdversaries = $state(new Set());
@@ -41,7 +42,7 @@
   }
 
   function togglePreset(name) {
-    const next = new Set(selectedAdversaries);
+    const next = new SvelteSet(selectedAdversaries);
     if (next.has(name)) next.delete(name);
     else next.add(name);
     selectedAdversaries = next;

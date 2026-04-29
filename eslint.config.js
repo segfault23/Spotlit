@@ -25,6 +25,6 @@ export default [
   },
   {
     // Old standalone tracker files not part of the SvelteKit app
-    ignores: ['build/', '.svelte-kit/', 'dist/', 'tracker-data.js', 'Combat Tracker.html'],
+    ignores: ['build/', '.svelte-kit/', 'dist/', 'tracker-data.js', 'Combat Tracker.html', 'cdk/cdk.out/'],
   },
 ];

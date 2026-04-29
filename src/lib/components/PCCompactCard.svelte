@@ -45,7 +45,7 @@
     </div>
 
     <div class="pc-conds">
-      {#each [['H', 'hidden'], ['R', 'restrained'], ['V', 'vulnerable']] as [abbr, k]}
+      {#each [['H', 'hidden'], ['R', 'restrained'], ['V', 'vulnerable']] as [abbr, k] (abbr)}
         <button
           class="pc-cond {k}"
           class:on={creature.conds[k]}

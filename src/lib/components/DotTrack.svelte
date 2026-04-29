@@ -13,7 +13,7 @@
 <div class="stat-row">
   <span class="stat-lbl">{LABELS[type]}</span>
   <div class="dots">
-    {#each Array(max) as _, i}
+    {#each Array(max) as _, i (i)}
       <div
         class="dot {type}{i < current ? ' on' : ''}"
         role="button"

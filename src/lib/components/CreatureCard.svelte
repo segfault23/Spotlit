@@ -70,13 +70,13 @@
         <span class="arrow">▶</span> Features ({creature.feats.length})
       </button>
       <div class="feat-chips">
-        {#each creature.feats as feat}
+        {#each creature.feats as feat (feat)}
           <span class="fchip">{feat.split('|')[0]}</span>
         {/each}
       </div>
       {#if expanded}
         <div class="feat-blocks">
-          {#each creature.feats as feat}
+          {#each creature.feats as feat (feat)}
             <FeatureBlock {feat} />
           {/each}
         </div>
@@ -86,7 +86,7 @@
 
   <!-- Conditions -->
   <div class="conditions">
-    {#each CONDITIONS as cond}
+    {#each CONDITIONS as cond (cond)}
       {@const k = cond.toLowerCase()}
       <button
         class="cond {k}"

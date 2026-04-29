@@ -86,7 +86,7 @@
       <div class="fg">
         <span class="lbl">Type</span>
         <div class="type-row">
-          {#each TYPES as t}
+          {#each TYPES as t (t)}
             <label class="type-radio">
               <input type="radio" name="ftype-{slug ?? 'new'}" value={t} bind:group={type} />
               <span class="type-pill {t.toLowerCase()}" class:active={type === t}>{t}</span>

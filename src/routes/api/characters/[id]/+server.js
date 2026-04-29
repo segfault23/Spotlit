@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { getCharacter, putCharacter, deleteCharacter, getCampaignByJoinCode } from '$lib/server/user.js';
+import { getCharacter, putCharacter, deleteCharacter } from '$lib/server/user.js';
 
 export async function GET({ locals, params }) {
   if (!locals.user) error(401, 'Unauthorized');
