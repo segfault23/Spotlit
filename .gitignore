@@ -13,3 +13,4 @@ cdk/lib/*.d.ts
 cdk/test/*.js
 cdk/test/*.d.ts
 cdk/cdk.context.json
+.vscode/
