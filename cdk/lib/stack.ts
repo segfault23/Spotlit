@@ -159,7 +159,7 @@ export class SpotlitCdkStack extends Stack {
     const distribution = new Distribution(this, 'SpotlitDistributionV2', {
       defaultBehavior: {
         origin: lambdaOrigin,
-        originRequestPolicy: OriginRequestPolicy.ALL_VIEWER,
+        originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
