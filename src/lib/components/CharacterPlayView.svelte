@@ -18,11 +18,15 @@
   let saveTimer;
   let saveStatus = $state('idle');
 
+  function b64(str) {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
   async function persist() {
     if (!charId) return;
     saveStatus = 'saving';
     try {
-      const res = await fetch(`/api/characters/${encodeURIComponent(charId)}`, {
+      const res = await fetch(`/api/characters/${b64(charId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hp, stress, hope, armorUsed }),
@@ -49,7 +53,7 @@
 
 <div class="play-wrap">
   <header class="play-head">
-    <a class="back-link" href="/characters/{encodeURIComponent(charId ?? '')}">← Sheet</a>
+    <a class="back-link" href="/characters/{charId ? b64(charId) : ''}">← Sheet</a>
     <div class="play-identity">
       <div class="play-name">{name}</div>
       {#if charClass}<div class="play-class">{charClass} · Level {level}</div>{/if}

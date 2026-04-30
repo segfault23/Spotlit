@@ -6,5 +6,5 @@
 <CharacterSheet
   campaign={data.campaign}
   isGmCreating={true}
-  backHref="/campaigns/{encodeURIComponent(data.campaign.id)}"
+  backHref="/campaigns/{data.campaign.joinCode}"
 />

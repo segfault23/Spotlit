@@ -1,19 +1,19 @@
 import { error, json } from '@sveltejs/kit';
-import { getCampaign, listCampaignCharacters, putCharacter } from '$lib/server/user.js';
+import { getCampaignByCode, listCampaignCharacters, putCharacter } from '$lib/server/user.js';
 
-// GM lists all characters in their campaign
+// params.id is the joinCode (6-char URL-safe)
+
 export async function GET({ locals, params }) {
   if (!locals.user) error(401, 'Unauthorized');
-  const campaign = await getCampaign(locals.user.sub, params.id);
+  const campaign = await getCampaignByCode(params.id, locals.user.sub);
   if (!campaign) error(404, 'Campaign not found');
   const characters = await listCampaignCharacters(campaign.joinCode);
   return json({ characters });
 }
 
-// GM creates a character on behalf of a player
 export async function POST({ locals, params, request }) {
   if (!locals.user) error(401, 'Unauthorized');
-  const campaign = await getCampaign(locals.user.sub, params.id);
+  const campaign = await getCampaignByCode(params.id, locals.user.sub);
   if (!campaign) error(404, 'Campaign not found');
   const data = await request.json();
   const id = await putCharacter(locals.user.sub, {

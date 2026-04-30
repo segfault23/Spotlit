@@ -45,10 +45,21 @@
   let gold       = $state(initial?.gold       ?? 0);
 
   // ── Content ───────────────────────────────────────────────────────────────────
-  let experiences = $state([...(initial?.experiences ?? ['', '', ''])]);
+  // Normalize experiences: support legacy string[] or new {text,modifier}[]
+  function normalizeExp(raw) {
+    return (raw ?? ['', '', '']).map(e =>
+      typeof e === 'string' ? { text: e, modifier: 0 } : e
+    );
+  }
+  let experiences = $state(normalizeExp(initial?.experiences));
   let features    = $state([...(initial?.features    ?? [])]);
   let items       = $state([...(initial?.items       ?? [])]);
   let notes       = $state(initial?.notes ?? '');
+  let thresholds  = $state({
+    minor:  initial?.thresholds?.minor  ?? 0,
+    major:  initial?.thresholds?.major  ?? 0,
+    severe: initial?.thresholds?.severe ?? 0,
+  });
 
   // ── UI ────────────────────────────────────────────────────────────────────────
   let activeTab  = $state('identity');
@@ -123,7 +134,7 @@
       maxHP: +maxHP, hp: +hp, maxStress: +maxStress, stress: +stress,
       maxHope: +maxHope, hope: +hope, evasion: +evasion,
       armorSlots: +armorSlots, armorUsed: +armorUsed, gold: +gold,
-      experiences, features, items, notes,
+      experiences, features, items, notes, thresholds,
       ...(campaignCode ? { campaignCode, campaignGmSub: campaign?.gmSub } : {}),
     };
   }
@@ -133,14 +144,21 @@
     saveStatus = 'saving';
     try {
       let url, method;
+      const code = campaign?.joinCode ?? campaignCode;
+      function b64(str) {
+        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      }
+      function b64Ref(sub, id) {
+        return b64(sub + '|' + id);
+      }
       if (isGmCreating) {
-        url    = `/api/campaigns/${encodeURIComponent(campaign.id)}/characters`;
+        url    = `/api/campaigns/${code}/characters`;
         method = 'POST';
       } else if (isGmEditing) {
-        url    = `/api/campaigns/${encodeURIComponent(campaign.id)}/characters/${encodeURIComponent(`${ownerSub}|${charId}`)}`;
+        url    = `/api/campaigns/${code}/characters/${b64Ref(ownerSub, charId)}`;
         method = 'PUT';
       } else if (charId) {
-        url    = `/api/characters/${encodeURIComponent(charId)}`;
+        url    = `/api/characters/${b64(charId)}`;
         method = 'PUT';
       } else {
         url    = '/api/characters';
@@ -152,7 +170,10 @@
       if (!charId) {
         const { id } = await res.json();
         charId = id;
-        if (browser) history.replaceState({}, '', `/characters/${encodeURIComponent(id)}`);
+        if (browser) {
+          const encoded = btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+          history.replaceState({}, '', `/characters/${encoded}`);
+        }
       }
       saveStatus = 'saved';
       setTimeout(() => { if (saveStatus === 'saved') saveStatus = 'idle'; }, 2000);
@@ -223,56 +244,81 @@
       <div class="section-label" style="margin-top:14px">Resources</div>
       <div class="resources-list">
         <!-- HP -->
-        <div class="res-row">
-          <span class="res-label">HP</span>
-          <div class="res-track">
-            <button class="res-btn" onclick={() => { hp = Math.max(0, hp - 1); touch(); }}>−</button>
-            <span class="res-cur">{hp}</span>
-            <span class="res-sep">/</span>
-            <input class="res-max-inp" type="number" min="1" bind:value={maxHP} oninput={touch} />
-            <button class="res-btn" onclick={() => { hp = Math.min(maxHP, hp + 1); touch(); }}>+</button>
+        <div class="res-block">
+          <div class="res-head">
+            <span class="res-label">HP</span>
+            <span class="res-fraction">{hp} / <input class="res-max-inp" type="number" min="1" bind:value={maxHP} oninput={touch} /></span>
+          </div>
+          <div class="dot-track">
+            {#each Array.from({length: maxHP}, (_, i) => i) as i (i)}
+              <button class="dot {i < hp ? 'filled' : ''}" onclick={() => { hp = i < hp ? i : i + 1; touch(); }}></button>
+            {/each}
           </div>
         </div>
         <!-- Stress -->
-        <div class="res-row">
-          <span class="res-label">Stress</span>
-          <div class="res-track">
-            <button class="res-btn" onclick={() => { stress = Math.max(0, stress - 1); touch(); }}>−</button>
-            <span class="res-cur">{stress}</span>
-            <span class="res-sep">/</span>
-            <input class="res-max-inp" type="number" min="1" bind:value={maxStress} oninput={touch} />
-            <button class="res-btn" onclick={() => { stress = Math.min(maxStress, stress + 1); touch(); }}>+</button>
+        <div class="res-block">
+          <div class="res-head">
+            <span class="res-label">Stress</span>
+            <span class="res-fraction">{stress} / <input class="res-max-inp" type="number" min="1" bind:value={maxStress} oninput={touch} /></span>
+          </div>
+          <div class="dot-track">
+            {#each Array.from({length: maxStress}, (_, i) => i) as i (i)}
+              <button class="dot stress-dot {i < stress ? 'filled' : ''}" onclick={() => { stress = i < stress ? i : i + 1; touch(); }}></button>
+            {/each}
           </div>
         </div>
         <!-- Hope -->
-        <div class="res-row">
-          <span class="res-label">Hope</span>
-          <div class="res-track">
-            <button class="res-btn" onclick={() => { hope = Math.max(0, hope - 1); touch(); }}>−</button>
-            <span class="res-cur hope-cur">{hope}</span>
-            <span class="res-sep">/</span>
-            <input class="res-max-inp" type="number" min="1" bind:value={maxHope} oninput={touch} />
-            <button class="res-btn" onclick={() => { hope = Math.min(maxHope, hope + 1); touch(); }}>+</button>
+        <div class="res-block">
+          <div class="res-head">
+            <span class="res-label hope-label">Hope</span>
+            <span class="res-fraction">{hope} / <input class="res-max-inp" type="number" min="1" bind:value={maxHope} oninput={touch} /></span>
+          </div>
+          <div class="dot-track">
+            {#each Array.from({length: maxHope}, (_, i) => i) as i (i)}
+              <button class="dot hope-dot {i < hope ? 'filled' : ''}" onclick={() => { hope = i < hope ? i : i + 1; touch(); }}></button>
+            {/each}
           </div>
         </div>
         <!-- Armor -->
-        <div class="res-row">
-          <span class="res-label">Armor</span>
-          <div class="res-track">
-            <button class="res-btn" onclick={() => { armorUsed = Math.max(0, armorUsed - 1); touch(); }}>−</button>
-            <span class="res-cur">{armorUsed}</span>
-            <span class="res-sep">/</span>
-            <input class="res-max-inp" type="number" min="0" bind:value={armorSlots} oninput={touch} />
-            <button class="res-btn" onclick={() => { armorUsed = Math.min(armorSlots, armorUsed + 1); touch(); }}>+</button>
+        <div class="res-block">
+          <div class="res-head">
+            <span class="res-label">Armor</span>
+            <span class="res-fraction">{armorUsed} / <input class="res-max-inp" type="number" min="0" bind:value={armorSlots} oninput={touch} /></span>
           </div>
+          {#if armorSlots > 0}
+          <div class="dot-track">
+            {#each Array.from({length: armorSlots}, (_, i) => i) as i (i)}
+              <button class="dot armor-dot {i < armorUsed ? 'filled' : ''}" onclick={() => { armorUsed = i < armorUsed ? i : i + 1; touch(); }}></button>
+            {/each}
+          </div>
+          {/if}
         </div>
         <!-- Gold -->
-        <div class="res-row">
-          <span class="res-label">Gold</span>
-          <div class="res-track">
-            <button class="res-btn" onclick={() => { gold = Math.max(0, gold - 1); touch(); }}>−</button>
-            <span class="res-cur">{gold}</span>
-            <button class="res-btn" onclick={() => { gold += 1; touch(); }}>+</button>
+        <div class="res-block">
+          <div class="res-head">
+            <span class="res-label">Gold</span>
+            <div class="gold-track">
+              <button class="res-btn" onclick={() => { gold = Math.max(0, gold - 1); touch(); }}>−</button>
+              <span class="gold-val">{gold}</span>
+              <button class="res-btn" onclick={() => { gold += 1; touch(); }}>+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Damage Thresholds -->
+        <div class="section-label" style="margin-top:10px">Thresholds</div>
+        <div class="threshold-grid">
+          <div class="threshold-cell">
+            <div class="threshold-lbl">Minor</div>
+            <input class="threshold-inp" type="number" min="0" bind:value={thresholds.minor} oninput={touch} />
+          </div>
+          <div class="threshold-cell">
+            <div class="threshold-lbl">Major</div>
+            <input class="threshold-inp" type="number" min="0" bind:value={thresholds.major} oninput={touch} />
+          </div>
+          <div class="threshold-cell">
+            <div class="threshold-lbl">Severe</div>
+            <input class="threshold-inp" type="number" min="0" bind:value={thresholds.severe} oninput={touch} />
           </div>
         </div>
       </div>
@@ -359,12 +405,18 @@
 
         <!-- EXPERIENCES TAB -->
         {#if activeTab === 'exp'}
-          <p class="tab-hint">Three short phrases describing what your character has experienced — roll these when relevant.</p>
+          <p class="tab-hint">Three short phrases describing what your character has experienced. Add a +modifier to roll when relevant.</p>
           <div class="exp-list">
             {#each experiences as _exp, i (i)}
-              <div class="fg">
-                <label>Experience {i + 1}</label>
-                <input type="text" placeholder="e.g. Grew up in the mines" bind:value={experiences[i]}
+              <div class="exp-row">
+                <div class="exp-mod-wrap">
+                  <label class="exp-mod-label">+</label>
+                  <input class="exp-mod-inp" type="number" min="0" max="9"
+                    bind:value={experiences[i].modifier}
+                    oninput={() => { experiences = [...experiences]; touch(); }} />
+                </div>
+                <input class="exp-text-inp" type="text" placeholder="e.g. Grew up in the mines"
+                  bind:value={experiences[i].text}
                   oninput={() => { experiences = [...experiences]; touch(); }} />
               </div>
             {/each}
@@ -530,17 +582,33 @@
   .evasion-badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border2); background: var(--surface3); font-family: var(--font-head); font-size: 1.2rem; color: var(--text); }
 
   /* Resources */
-  .resources-list { display: flex; flex-direction: column; gap: 6px; }
-  .res-row { display: flex; align-items: center; gap: 6px; }
-  .res-label { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); width: 44px; flex-shrink: 0; }
-  .res-track { display: flex; align-items: center; gap: 4px; flex: 1; }
-  .res-btn { width: 22px; height: 22px; background: var(--surface3); border: 1px solid var(--border); border-radius: 3px; color: var(--text); cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .res-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .res-cur { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600; min-width: 20px; text-align: center; }
-  .hope-cur { color: var(--accent); }
-  .res-sep { color: var(--text-dim); font-size: 0.8rem; }
-  .res-max-inp { width: 32px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); font-family: var(--font-mono); font-size: 0.82rem; text-align: center; padding: 0; outline: none; }
+  .resources-list { display: flex; flex-direction: column; gap: 8px; }
+  .res-block { display: flex; flex-direction: column; gap: 3px; }
+  .res-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .res-label { font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase; color: var(--text-dim); flex-shrink: 0; }
+  .hope-label { color: var(--accent); }
+  .res-fraction { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); display: flex; align-items: center; gap: 2px; }
+  .res-max-inp { width: 28px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); font-family: var(--font-mono); font-size: 0.72rem; text-align: center; padding: 0; outline: none; }
   .res-max-inp:focus { border-bottom-color: var(--accent); }
+  /* Dot track */
+  .dot-track { display: flex; flex-wrap: wrap; gap: 3px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; padding: 0; transition: background 0.1s, border-color 0.1s; -webkit-tap-highlight-color: transparent; }
+  .dot.filled { background: var(--hp-on, #d64040); border-color: var(--hp-on, #d64040); }
+  .dot.stress-dot.filled { background: var(--stress-on, #d8a040); border-color: var(--stress-on, #d8a040); }
+  .dot.hope-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .dot.armor-dot.filled { background: var(--text-dim); border-color: var(--text-dim); }
+  .dot:hover { border-color: var(--accent); }
+  /* Gold */
+  .gold-track { display: flex; align-items: center; gap: 4px; }
+  .gold-val { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; min-width: 24px; text-align: center; }
+  .res-btn { width: 20px; height: 20px; background: var(--surface3); border: 1px solid var(--border); border-radius: 3px; color: var(--text); cursor: pointer; font-size: 0.85rem; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .res-btn:hover { border-color: var(--accent); color: var(--accent); }
+  /* Thresholds */
+  .threshold-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+  .threshold-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 4px; }
+  .threshold-lbl { font-family: var(--font-mono); font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+  .threshold-inp { width: 36px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--font-head); font-size: 1rem; font-weight: 600; text-align: center; padding: 0; outline: none; }
+  .threshold-inp:focus { border-bottom-color: var(--accent); }
 
   /* Right panel */
   .cs-right { display: flex; flex-direction: column; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -557,7 +625,14 @@
   .tab-hint { color: var(--text-dim); font-size: 0.82rem; margin: 0; line-height: 1.5; }
 
   /* Tab: experiences */
-  .exp-list { display: flex; flex-direction: column; gap: 8px; }
+  .exp-list { display: flex; flex-direction: column; gap: 10px; }
+  .exp-row { display: flex; align-items: center; gap: 8px; }
+  .exp-mod-wrap { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .exp-mod-label { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); font-weight: 700; }
+  .exp-mod-inp { width: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600; text-align: center; padding: 3px 4px; outline: none; }
+  .exp-mod-inp:focus { border-color: var(--accent); }
+  .exp-text-inp { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: 0.88rem; padding: 5px 8px; outline: none; }
+  .exp-text-inp:focus { border-color: var(--accent); }
 
   /* Tab: features */
   .empty-feats { color: var(--text-dim); font-style: italic; font-size: 0.8rem; }

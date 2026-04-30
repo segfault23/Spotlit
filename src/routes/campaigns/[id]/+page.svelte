@@ -13,25 +13,24 @@
     setTimeout(() => (copied = false), 2000);
   }
 
-  async function deleteCharacter(ownerSub, charId) {
+  function charRef(char) {
+    return btoa(char.ownerSub + '|' + char.id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  async function deleteCharacter(char) {
     if (!confirm('Remove this character from the campaign?')) return;
-    // charId is the full sk (CHARACTER#...)
-    const ref = encodeURIComponent(`${ownerSub}|${charId}`);
-    await fetch(`/api/campaigns/${encodeURIComponent(campaign.id)}/characters/${ref}`, {
-      method: 'DELETE',
-    });
+    await fetch(`/api/campaigns/${campaign.joinCode}/characters/${charRef(char)}`, { method: 'DELETE' });
     await invalidateAll();
   }
 
   async function deleteCampaign() {
     if (!confirm('Delete this campaign? Characters will remain but lose their campaign link.')) return;
-    await fetch(`/api/campaigns/${encodeURIComponent(campaign.id)}`, { method: 'DELETE' });
+    await fetch(`/api/campaigns/${campaign.joinCode}`, { method: 'DELETE' });
     goto('/profile?tab=campaigns');
   }
 
   function editCharHref(char) {
-    const ref = encodeURIComponent(`${char.ownerSub}|${char.id}`);
-    return `/campaigns/${encodeURIComponent(campaign.id)}/characters/${ref}`;
+    return `/campaigns/${campaign.joinCode}/characters/${charRef(char)}`;
   }
 
   function fmtLevel(c) {
@@ -67,7 +66,7 @@
 
   <div class="section-head">
     <h2>Characters ({characters.length})</h2>
-    <a class="btn-p" href="/campaigns/{encodeURIComponent(campaign.id)}/characters/new">
+    <a class="btn-p" href="/campaigns/{campaign.joinCode}/characters/new">
       + Add Character
     </a>
   </div>
@@ -111,7 +110,7 @@
           </div>
           <div class="char-foot">
             <a class="btn-c" href={editCharHref(char)}>Edit Sheet</a>
-            <button class="btn-c btn-danger" onclick={() => deleteCharacter(char.ownerSub, char.id)}>
+            <button class="btn-c btn-danger" onclick={() => deleteCharacter(char)}>
               Remove
             </button>
           </div>

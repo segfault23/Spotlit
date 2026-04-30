@@ -5,7 +5,8 @@ export const prerender = false;
 
 export async function load({ locals, params }) {
   if (!locals.user) redirect(302, '/auth/login');
-  const character = await getCharacter(locals.user.sub, params.id);
+  const charSk = Buffer.from(params.id, 'base64url').toString('utf8');
+  const character = await getCharacter(locals.user.sub, charSk);
   if (!character) error(404, 'Character not found');
   return { character };
 }

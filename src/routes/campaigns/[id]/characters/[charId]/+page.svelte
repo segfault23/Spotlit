@@ -8,5 +8,5 @@
   campaign={data.campaign}
   ownerSub={data.ownerSub}
   isGmEditing={true}
-  backHref="/campaigns/{encodeURIComponent(data.campaign.id)}"
+  backHref="/campaigns/{data.campaign.joinCode}"
 />

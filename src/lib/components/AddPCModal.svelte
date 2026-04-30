@@ -19,7 +19,7 @@
       const { campaigns } = await cr.json();
       const all = await Promise.all(
         campaigns.map(c =>
-          fetch(`/api/campaigns/${encodeURIComponent(c.id)}/characters`)
+          fetch(`/api/campaigns/${c.joinCode}/characters`)
             .then(r => r.ok ? r.json() : { characters: [] })
             .then(({ characters }) => characters.map(ch => ({ ...ch, _campaignName: c.name })))
         )

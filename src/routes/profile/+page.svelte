@@ -72,9 +72,9 @@
     copiedCode = code;
     setTimeout(() => { if (copiedCode === code) copiedCode = null; }, 2000);
   }
-  async function deleteCampaign(id) {
+  async function deleteCampaign(code) {
     if (!confirm('Delete this campaign?')) return;
-    await fetch(`/api/campaigns/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await fetch(`/api/campaigns/${code}`, { method: 'DELETE' });
     await invalidateAll();
   }
 
@@ -236,7 +236,7 @@
           {#each data.campaigns as c (c.id)}
             <div class="lib-card camp-card">
               <div class="lib-head">
-                <a class="lib-name" href="/campaigns/{encodeURIComponent(c.id)}">{c.name}</a>
+                <a class="lib-name" href="/campaigns/{c.joinCode}">{c.name}</a>
               </div>
               {#if c.description}<div class="camp-desc">{c.description}</div>{/if}
               <div class="camp-code-row">
@@ -246,8 +246,8 @@
                 </button>
               </div>
               <div class="lib-foot">
-                <a class="btn-c" href="/campaigns/{encodeURIComponent(c.id)}">Open</a>
-                <button class="btn-c btn-danger" onclick={() => deleteCampaign(c.id)}>Delete</button>
+                <a class="btn-c" href="/campaigns/{c.joinCode}">Open</a>
+                <button class="btn-c btn-danger" onclick={() => deleteCampaign(c.joinCode)}>Delete</button>
               </div>
             </div>
           {/each}

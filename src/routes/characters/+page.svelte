@@ -3,9 +3,13 @@
 
   let { data } = $props();
 
+  function b64(str) {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
   async function deleteCharacter(char) {
     if (!confirm(`Delete ${char.name || 'this character'}? This cannot be undone.`)) return;
-    await fetch(`/api/characters/${encodeURIComponent(char.id)}`, { method: 'DELETE' });
+    await fetch(`/api/characters/${b64(char.id)}`, { method: 'DELETE' });
     await invalidateAll();
   }
 
@@ -40,7 +44,7 @@
               {/if}
             </div>
             <div class="char-identity">
-              <a class="char-name" href="/characters/{encodeURIComponent(char.id)}">{char.name || 'Unnamed'}</a>
+              <a class="char-name" href="/characters/{b64(char.id)}">{char.name || 'Unnamed'}</a>
               <div class="char-class">{fmtLevel(char)}</div>
               {#if char.ancestry}
                 <div class="char-sub">{[char.ancestry, char.community].filter(Boolean).join(' · ')}</div>
@@ -71,8 +75,8 @@
           </div>
 
           <div class="char-foot">
-            <a class="btn-c" href="/characters/{encodeURIComponent(char.id)}">Edit Sheet</a>
-            <a class="btn-p" href="/characters/{encodeURIComponent(char.id)}/play">Play</a>
+            <a class="btn-c" href="/characters/{b64(char.id)}">Edit Sheet</a>
+            <a class="btn-p" href="/characters/{b64(char.id)}/play">Play</a>
             <button class="btn-c btn-danger" onclick={() => deleteCharacter(char)}>Delete</button>
           </div>
         </div>

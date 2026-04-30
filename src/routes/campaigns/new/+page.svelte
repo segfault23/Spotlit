@@ -17,8 +17,8 @@
         body: JSON.stringify({ name: name.trim(), description: description.trim() }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
-      const { id } = await res.json();
-      goto(`/campaigns/${encodeURIComponent(id)}`);
+      const { joinCode } = await res.json();
+      goto(`/campaigns/${joinCode}`);
     } catch (e) {
       err = `Failed to create campaign: ${e.message}`;
       saving = false;

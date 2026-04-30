@@ -1,18 +1,26 @@
 import { error, json } from '@sveltejs/kit';
-import { getCampaign, getCharacterAsGm, putCharacter, deleteCharacter } from '$lib/server/user.js';
+import { getCampaignByCode, getCharacterAsGm, putCharacter, deleteCharacter } from '$lib/server/user.js';
+
+// params.id     = campaign joinCode (6-char URL-safe)
+// params.charId = base64url( ownerSub + "|" + characterSk )
+function decodeCharRef(enc) {
+  const decoded = Buffer.from(enc, 'base64url').toString('utf8');
+  const idx = decoded.indexOf('|');
+  if (idx < 0) return null;
+  return { ownerSub: decoded.slice(0, idx), charId: decoded.slice(idx + 1) };
+}
 
 async function resolveCampaignAndChar({ locals, params }) {
   if (!locals.user) error(401, 'Unauthorized');
-  const campaign = await getCampaign(locals.user.sub, params.id);
+  const campaign = await getCampaignByCode(params.id, locals.user.sub);
   if (!campaign) error(404, 'Campaign not found');
 
-  // charId encodes ownerSub and character id: "<ownerSub>|<charId>"
-  const [ownerSub, charId] = params.charId.split('|');
-  if (!ownerSub || !charId) error(400, 'Invalid charId');
+  const ref = decodeCharRef(params.charId);
+  if (!ref) error(400, 'Invalid character reference');
 
-  const char = await getCharacterAsGm(locals.user.sub, ownerSub, charId);
+  const char = await getCharacterAsGm(locals.user.sub, ref.ownerSub, ref.charId);
   if (!char) error(404, 'Character not found');
-  return { campaign, char, ownerSub, charId };
+  return { campaign, char, ownerSub: ref.ownerSub, charId: ref.charId };
 }
 
 export async function GET({ locals, params }) {

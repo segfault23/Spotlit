@@ -243,6 +243,12 @@ export async function getCampaign(gmSub, id) {
   return r.Item ?? null;
 }
 
+export async function getCampaignByCode(code, gmSub) {
+  const item = await getCampaignByJoinCode(code);
+  if (!item || item.gmSub !== gmSub) return null;
+  return item;
+}
+
 export async function getCampaignByJoinCode(code) {
   const r = await ddb.send(
     new QueryCommand({
@@ -306,8 +312,9 @@ const DEFAULT_CHARACTER = {
   evasion: 10,
   armorSlots: 0, armorUsed: 0,
   gold: 0,
-  experiences: ['', '', ''],
+  experiences: [{ text: '', modifier: 0 }, { text: '', modifier: 0 }, { text: '', modifier: 0 }],
   features: [],
+  thresholds: { minor: 0, major: 0, severe: 0 },
   items: [],
   profilePhoto: null,
   gallery: [],
