@@ -23,6 +23,13 @@ if (env.COGNITO_USER_POOL_ID && env.COGNITO_CLIENT_ID) {
 export async function handle({ event, resolve }) {
   event.locals.user = null;
 
+  // Local dev: DEV_USER=sub:email:name skips all Cognito auth
+  if (env.DEV_USER) {
+    const [sub, email = 'dev@local', name = 'Dev User'] = env.DEV_USER.split(':');
+    event.locals.user = { sub, email, name };
+    return resolve(event);
+  }
+
   if (!verifier) return resolve(event);
 
   const idToken = event.cookies.get('id_token');
