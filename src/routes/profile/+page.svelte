@@ -65,6 +65,19 @@
     await fetch(`/api/features/${encodeURIComponent(slug)}`, { method: 'DELETE' });
     await invalidateAll();
   }
+  // ── Campaigns ─────────────────────────────────────────────────────────
+  let copiedCode = $state(null);
+  function copyJoinLink(code) {
+    navigator.clipboard.writeText(`${location.origin}/join/${code}`);
+    copiedCode = code;
+    setTimeout(() => { if (copiedCode === code) copiedCode = null; }, 2000);
+  }
+  async function deleteCampaign(id) {
+    if (!confirm('Delete this campaign?')) return;
+    await fetch(`/api/campaigns/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await invalidateAll();
+  }
+
   async function duplicateFeature(f) {
     const copy = { name: `${f.name} (copy)`, type: f.type, cost: f.cost, body: f.body };
     const res = await fetch('/api/features', {
@@ -97,6 +110,9 @@
     </button>
     <button class="tab" class:active={activeTab === 'features'} onclick={() => setTab('features')}>
       ✨ Features <span class="tab-count">{data.customFeatures.length}</span>
+    </button>
+    <button class="tab" class:active={activeTab === 'campaigns'} onclick={() => setTab('campaigns')}>
+      ⚔️ Campaigns <span class="tab-count">{data.campaigns?.length ?? 0}</span>
     </button>
   </div>
 
@@ -198,6 +214,40 @@
                 <a class="btn-c" href="/profile/features/{encodeURIComponent(f.slug)}">Edit</a>
                 <button class="btn-c" onclick={() => duplicateFeature(f)}>Duplicate</button>
                 <button class="btn-c btn-danger" onclick={() => deleteFeature(f.slug)}>Delete</button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    {/if}
+
+    {#if activeTab === 'campaigns'}
+      <div class="tab-head">
+        <h2>My Campaigns</h2>
+        <a class="btn-p" href="/campaigns/new">+ New Campaign</a>
+      </div>
+      {#if !data.campaigns?.length}
+        <div class="empty-block">
+          No campaigns yet.
+          <br /><a class="empty-cta" href="/campaigns/new">Create your first campaign →</a>
+        </div>
+      {:else}
+        <div class="card-grid">
+          {#each data.campaigns as c (c.id)}
+            <div class="lib-card camp-card">
+              <div class="lib-head">
+                <a class="lib-name" href="/campaigns/{encodeURIComponent(c.id)}">{c.name}</a>
+              </div>
+              {#if c.description}<div class="camp-desc">{c.description}</div>{/if}
+              <div class="camp-code-row">
+                <code class="camp-code">{c.joinCode}</code>
+                <button class="btn-c" onclick={() => copyJoinLink(c.joinCode)}>
+                  {copiedCode === c.joinCode ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+              <div class="lib-foot">
+                <a class="btn-c" href="/campaigns/{encodeURIComponent(c.id)}">Open</a>
+                <button class="btn-c btn-danger" onclick={() => deleteCampaign(c.id)}>Delete</button>
               </div>
             </div>
           {/each}
@@ -428,4 +478,9 @@
   .btn-danger:hover {
     background: color-mix(in srgb, var(--feat-fear) 18%, var(--surface2));
   }
+
+  .camp-card { gap: 10px; }
+  .camp-desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; }
+  .camp-code-row { display: flex; align-items: center; gap: 8px; }
+  .camp-code { font-family: var(--font-mono); font-size: 1rem; font-weight: 600; letter-spacing: 0.12em; color: var(--accent); padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; }
 </style>
