@@ -1,4 +1,5 @@
 <script>
+  import { browser } from '$app/environment';
   import EncounterHeader from '$lib/components/EncounterHeader.svelte';
   import CreatureCard from '$lib/components/CreatureCard.svelte';
   import PCCompactCard from '$lib/components/PCCompactCard.svelte';
@@ -8,8 +9,12 @@
   import { encounter } from '$lib/stores/encounter.js';
   import { activeModal } from '$lib/stores/modal.js';
 
-  // Catalogue stores are seeded in +layout.svelte from layout data
-  // so any descendant route sees the same merged pre-made + custom catalogue.
+  // Lock viewport scroll while on the encounter page; restore on navigate away
+  $effect(() => {
+    if (!browser) return;
+    document.documentElement.classList.add('no-scroll');
+    return () => document.documentElement.classList.remove('no-scroll');
+  });
 </script>
 
 <EncounterHeader />
