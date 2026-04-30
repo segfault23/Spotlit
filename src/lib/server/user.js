@@ -356,8 +356,14 @@ export async function getCharacter(ownerSub, id) {
 export async function getCharacterAsGm(gmSub, ownerSub, id) {
   const item = await getCharacter(ownerSub, id);
   if (!item) return null;
-  if (item.campaignGmSub !== gmSub) return null;
-  return item;
+  // Primary check: stored campaignGmSub
+  if (item.campaignGmSub === gmSub) return item;
+  // Fallback: verify ownership via campaign lookup (handles stripped campaignGmSub)
+  if (item.campaignCode) {
+    const campaign = await getCampaignByCode(item.campaignCode, gmSub);
+    if (campaign) return item;
+  }
+  return null;
 }
 
 export async function putCharacter(ownerSub, data, existingId = null) {
@@ -372,6 +378,9 @@ export async function putCharacter(ownerSub, data, existingId = null) {
     sk: id,
     id,
     ownerSub,
+    // Preserve campaign link from existing record when not in payload
+    campaignCode:   data.campaignCode   ?? existing?.campaignCode,
+    campaignGmSub:  data.campaignGmSub  ?? existing?.campaignGmSub,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };

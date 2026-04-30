@@ -7,6 +7,7 @@
   initial={data.character}
   campaign={data.campaign}
   ownerSub={data.ownerSub}
+  campaignCode={data.campaign.joinCode}
   isGmEditing={true}
   backHref="/campaigns/{data.campaign.joinCode}"
 />
