@@ -113,7 +113,7 @@ export class SpotlitCdkStack extends Stack {
 
     // ── Lambda ────────────────────────────────────────────────────────────────
     const fn = new Function(this, 'SpotlitApp', {
-      runtime: Runtime.NODEJS_20_X,
+      runtime: Runtime.NODEJS_24_X,
       handler: 'lambda.handler',
       code: Code.fromAsset(svelteKitBuildPath),
       timeout: Duration.seconds(30),
