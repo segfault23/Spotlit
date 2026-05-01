@@ -34,7 +34,7 @@
 
   // ── Resources ─────────────────────────────────────────────────────────────────
   let maxHP      = $state(initial?.maxHP      ?? 6);
-  let hp         = $state(initial?.hp         ?? 6);
+  let hp         = $state(initial?.hp         ?? 0);
   let maxStress  = $state(initial?.maxStress  ?? 3);
   let stress     = $state(initial?.stress     ?? 0);
   let maxHope    = $state(initial?.maxHope    ?? 5);
