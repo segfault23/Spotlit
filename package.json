@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && cp lambda.mjs build/lambda.mjs && npm run postinstall",
+    "build": "vite build && cp lambda.mjs build/lambda.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "pld": "cd build && npm install --omit=dev --omit=optional --no-audit --no-fund --silent"
