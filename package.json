@@ -8,7 +8,7 @@
     "build": "vite build && cp lambda.mjs build/lambda.mjs && npm run postinstall",
     "preview": "vite preview",
     "lint": "eslint .",
-    "postinstall": "cd build && npm install --omit=dev --omit=optional --no-audit --no-fund --silent"
+    "pld": "cd build && npm install --omit=dev --omit=optional --no-audit --no-fund --silent"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
