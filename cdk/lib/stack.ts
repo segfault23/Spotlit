@@ -91,6 +91,7 @@ export class SpotlitCdkStack extends Stack {
     const appUrl = this.node.tryGetContext('appUrl') as string | undefined;
     const callbackUrl = appUrl ? `${appUrl}/auth/callback` : 'https://localhost:5173/auth/callback';
     const logoutUrl   = appUrl ?? 'https://localhost:5173';
+    const playerUrl   = appUrl ? appUrl.replace('https://', 'https://player.') : null;
 
     const userPoolClient = userPool.addClient('SpotlitAppClient', {
       userPoolClientName: 'SpotlitAppClient',
@@ -98,8 +99,8 @@ export class SpotlitCdkStack extends Stack {
       oAuth: {
         flows: { authorizationCodeGrant: true },
         scopes: [OAuthScope.OPENID, OAuthScope.EMAIL, OAuthScope.PROFILE],
-        callbackUrls: [callbackUrl],
-        logoutUrls: [logoutUrl],
+        callbackUrls: [callbackUrl, ...(playerUrl ? [`${playerUrl}/auth/callback`] : [])],
+        logoutUrls: [logoutUrl, ...(playerUrl ? [playerUrl] : [])],
       },
       supportedIdentityProviders: [
         UserPoolClientIdentityProvider.COGNITO,
@@ -171,7 +172,7 @@ export class SpotlitCdkStack extends Stack {
           viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         },
       },
-      domainNames: ['spotlit.online'],
+      domainNames: ['spotlit.online', 'player.spotlit.online'],
       certificate: cert,
     });
 
@@ -181,6 +182,12 @@ export class SpotlitCdkStack extends Stack {
 
     new ARecord(this, 'AliasRecord', {
       zone,
+      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+    });
+
+    new ARecord(this, 'PlayerAliasRecord', {
+      zone,
+      recordName: 'player',
       target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
     });
 
