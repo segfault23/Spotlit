@@ -3,12 +3,14 @@ import { env } from '$env/dynamic/private';
 import { refreshTokens } from '$lib/server/auth.js';
 
 const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const cookieDomain = isLambda ? '.spotlit.online' : undefined;
 
 export const cookieDefaults = {
   httpOnly: true,
   secure: isLambda,
   sameSite: 'lax',
   path: '/',
+  ...(cookieDomain ? { domain: cookieDomain } : {}),
 };
 
 let verifier = null;
@@ -81,6 +83,7 @@ function userFromPayload(payload) {
 }
 
 function clearAuthCookies(cookies) {
-  cookies.delete('id_token', { path: '/' });
-  cookies.delete('refresh_token', { path: '/' });
+  const opts = { path: '/', ...(cookieDomain ? { domain: cookieDomain } : {}) };
+  cookies.delete('id_token', opts);
+  cookies.delete('refresh_token', opts);
 }
