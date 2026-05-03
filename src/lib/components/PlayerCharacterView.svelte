@@ -50,6 +50,7 @@
   let saveStatus = $state('idle');
   let playTimer;
   let notesTimer;
+  let showConditionToggles = $state(false);
 
   const TABS = [
     { id: 'play',      label: 'Play',      icon: '⚔' },
@@ -166,26 +167,53 @@
         {/each}
       </div>
 
-      <!-- Conditions Display -->
-      {#if conditions.hidden || conditions.restrained || conditions.vulnerable}
-        <div class="conditions-bar">
-          {#if conditions.vulnerable}
-            <button class="condition-badge vulnerable" onclick={() => toggleCondition('vulnerable')}>
-              ⚠ Vulnerable
-            </button>
+      <!-- Conditions Display and Control -->
+      <div class="conditions-section">
+        {#if conditions.hidden || conditions.restrained || conditions.vulnerable}
+          <div class="conditions-bar">
+            {#if conditions.vulnerable}
+              <button class="condition-badge vulnerable" onclick={() => toggleCondition('vulnerable')}>
+                ⚠ Vulnerable
+              </button>
+            {/if}
+            {#if conditions.hidden}
+              <button class="condition-badge hidden" onclick={() => toggleCondition('hidden')}>
+                👁 Hidden
+              </button>
+            {/if}
+            {#if conditions.restrained}
+              <button class="condition-badge restrained" onclick={() => toggleCondition('restrained')}>
+                ⛓ Restrained
+              </button>
+            {/if}
+          </div>
+        {/if}
+        <button class="toggle-conditions-btn"
+                onclick={() => showConditionToggles = !showConditionToggles}
+                title="Toggle condition controls">
+          {#if showConditionToggles}
+            ▼ Conditions
+          {:else}
+            ▶ Conditions
           {/if}
-          {#if conditions.hidden}
-            <button class="condition-badge hidden" onclick={() => toggleCondition('hidden')}>
-              👁 Hidden
-            </button>
-          {/if}
-          {#if conditions.restrained}
-            <button class="condition-badge restrained" onclick={() => toggleCondition('restrained')}>
-              ⛓ Restrained
-            </button>
-          {/if}
-        </div>
-      {/if}
+        </button>
+        {#if showConditionToggles}
+          <div class="condition-toggles">
+            <label class="condition-toggle">
+              <input type="checkbox" bind:checked={conditions.vulnerable} onchange={touch} />
+              <span>⚠ Vulnerable</span>
+            </label>
+            <label class="condition-toggle">
+              <input type="checkbox" bind:checked={conditions.hidden} onchange={touch} />
+              <span>👁 Hidden</span>
+            </label>
+            <label class="condition-toggle">
+              <input type="checkbox" bind:checked={conditions.restrained} onchange={touch} />
+              <span>⛓ Restrained</span>
+            </label>
+          </div>
+        {/if}
+      </div>
 
       <div class="play-grid">
         <!-- HP -->
@@ -595,12 +623,16 @@
     color: var(--text-dim);
   }
 
-  /* ── Play tab: conditions bar ────────────────────────────────────────────── */
+  /* ── Play tab: conditions section ────────────────────────────────────────── */
+  .conditions-section {
+    margin-bottom: 14px;
+  }
+
   .conditions-bar {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
 
   .condition-badge {
@@ -637,6 +669,48 @@
     border: 1px solid #d4a744;
   }
   .condition-badge.restrained:active { opacity: 0.7; }
+
+  .toggle-conditions-btn {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .toggle-conditions-btn:active { opacity: 0.6; }
+
+  .condition-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .condition-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .condition-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .condition-toggle span {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
 
   /* ── Play tab: tracker grid ──────────────────────────────────────────────── */
   .play-grid {
