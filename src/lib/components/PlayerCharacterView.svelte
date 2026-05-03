@@ -158,6 +158,7 @@
     <!-- PLAY TAB ─────────────────────────────────────────────────────────────── -->
     {#if activeTab === 'play'}
       <!-- Stats Grid for Quick Roll Access -->
+      <div class="section-hd">Stats & Traits</div>
       <div class="stats-grid">
         {#each traits as [label, val] (label)}
           <div class="stat-card">
@@ -591,36 +592,45 @@
   }
 
   .stat-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    background: linear-gradient(135deg, var(--surface2), color-mix(in srgb, var(--accent) 3%, var(--surface2)));
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 8px;
-    gap: 3px;
+    padding: 14px 8px;
+    gap: 4px;
     cursor: pointer;
-    transition: background 0.1s, border-color 0.1s;
+    transition: all 0.12s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  .stat-card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
   .stat-card:active {
-    background: color-mix(in srgb, var(--accent) 10%, var(--surface2));
-    border-color: var(--border2);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface2));
+    border-color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transform: scale(0.98);
   }
 
   .stat-mod {
     font-family: var(--font-head);
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent);
+    line-height: 1;
   }
   .stat-name {
     font-family: var(--font-mono);
-    font-size: 0.55rem;
+    font-size: 0.56rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     color: var(--text-dim);
+    font-weight: 600;
   }
 
   /* ── Play tab: conditions section ────────────────────────────────────────── */
