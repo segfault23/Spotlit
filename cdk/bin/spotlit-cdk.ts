@@ -9,7 +9,9 @@ new CertStack(app, 'CertStack');
 
 // certArn is read from the CertStack CloudFormation output in CI and
 // passed via --context certArn=<arn>. See deploy.yml.
-const certArn = app.node.tryGetContext('certArn') as string | undefined ?? '';
+// The placeholder satisfies CDK's ARN format check during CertStack-only synths.
+const certArn = app.node.tryGetContext('certArn') as string | undefined
+  ?? 'arn:aws:acm:us-east-1:000000000000:certificate/placeholder';
 
 new SpotlitCdkStack(app, 'SpotlitCdkStack', {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
