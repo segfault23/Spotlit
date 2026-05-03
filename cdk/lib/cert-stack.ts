@@ -1,5 +1,5 @@
 import { env } from 'process';
-import { Stack, StackProps, CfnOutput, Fn } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Fn, RemovalPolicy } from 'aws-cdk-lib';
 import { ICertificate, Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { HostedZone } from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
@@ -25,6 +25,7 @@ export class CertStack extends Stack {
       subjectAlternativeNames: ['*.spotlit.online'],
       validation: CertificateValidation.fromDns(zone),
     });
+    cert.applyRemovalPolicy(RemovalPolicy.RETAIN);
 
     this.certificate = cert;
 
