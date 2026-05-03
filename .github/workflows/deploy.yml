@@ -31,8 +31,31 @@ jobs:
         run: npm install
         working-directory: cdk
 
-      - name: Deploy
-        run: npx cdk deploy --all --require-approval never --context appUrl=https://spotlit.online
+      - name: Deploy CertStack (us-east-1)
+        run: npx cdk deploy CertStack --require-approval never
+        working-directory: cdk
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: us-east-1
+
+      - name: Get certificate ARN from CertStack
+        run: |
+          CERT_ARN=$(aws cloudformation describe-stacks \
+            --stack-name CertStack \
+            --region us-east-1 \
+            --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
+            --output text)
+          echo "CERT_ARN=$CERT_ARN" >> $GITHUB_ENV
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+
+      - name: Deploy SpotlitCdkStack (eu-west-2)
+        run: npx cdk deploy SpotlitCdkStack --require-approval never --context appUrl=https://spotlit.online --context certArn=$CERT_ARN
         working-directory: cdk
         env:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
