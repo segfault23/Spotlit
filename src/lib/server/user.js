@@ -311,7 +311,7 @@ const DEFAULT_CHARACTER = {
   maxHope: 5, hope: 5,
   evasion: 10,
   armorSlots: 0, armorUsed: 0,
-  gold: 0,
+  handfuls: 0, bags: 0, chests: 0,
   experiences: [{ text: '', modifier: 0 }, { text: '', modifier: 0 }, { text: '', modifier: 0 }],
   features: [],
   thresholds: { minor: 0, major: 0, severe: 0 },

@@ -42,7 +42,9 @@
   let evasion    = $state(initial?.evasion    ?? 10);
   let armorSlots = $state(initial?.armorSlots ?? 0);
   let armorUsed  = $state(initial?.armorUsed  ?? 0);
-  let gold       = $state(initial?.gold       ?? 0);
+  let handfuls   = $state(initial?.handfuls   ?? 0);
+  let bags       = $state(initial?.bags       ?? 0);
+  let chests     = $state(initial?.chests     ?? 0);
 
   // ── Content ───────────────────────────────────────────────────────────────────
   // Normalize experiences: support legacy string[] or new {text,modifier}[]
@@ -133,7 +135,8 @@
       instinct: +instinct, presence: +presence, knowledge: +knowledge,
       maxHP: +maxHP, hp: +hp, maxStress: +maxStress, stress: +stress,
       maxHope: +maxHope, hope: +hope, evasion: +evasion,
-      armorSlots: +armorSlots, armorUsed: +armorUsed, gold: +gold,
+      armorSlots: +armorSlots, armorUsed: +armorUsed,
+      handfuls: +handfuls, bags: +bags, chests: +chests,
       experiences, features, items, notes, thresholds,
       ...(campaignCode ? { campaignCode, campaignGmSub: campaign?.gmSub } : {}),
     };
@@ -293,17 +296,19 @@
           </div>
           {/if}
         </div>
-        <!-- Gold -->
+        <!-- Currency -->
+        {#each [['Handfuls', handfuls, (v) => { handfuls = v; touch(); }], ['Bags', bags, (v) => { bags = v; touch(); }], ['Chests', chests, (v) => { chests = v; touch(); }]] as [label, val, set] (label)}
         <div class="res-block">
           <div class="res-head">
-            <span class="res-label">Gold</span>
+            <span class="res-label">{label}</span>
             <div class="gold-track">
-              <button class="res-btn" onclick={() => { gold = Math.max(0, gold - 1); touch(); }}>−</button>
-              <span class="gold-val">{gold}</span>
-              <button class="res-btn" onclick={() => { gold += 1; touch(); }}>+</button>
+              <button class="res-btn" onclick={() => set(Math.max(0, val - 1))}>−</button>
+              <span class="gold-val">{val}</span>
+              <button class="res-btn" onclick={() => set(val + 1)}>+</button>
             </div>
           </div>
         </div>
+        {/each}
 
         <!-- Damage Thresholds -->
         <div class="section-label" style="margin-top:10px">Thresholds</div>
