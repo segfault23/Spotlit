@@ -319,6 +319,7 @@ const DEFAULT_CHARACTER = {
   profilePhoto: null,
   gallery: [],
   notes: '',
+  conditions: { hidden: false, restrained: false, vulnerable: false },
 };
 
 export async function listMyCharacters(ownerSub) {
