@@ -294,34 +294,6 @@
         </div>
       {/if}
 
-      <!-- Currency ───────────────────────────────────────────────────────────── -->
-      <div class="currency-row">
-        <div class="currency-item">
-          <div class="currency-lbl">Handfuls</div>
-          <div class="currency-ctrl">
-            <button class="sm-btn" onclick={() => adjHandfuls(-1)}>−</button>
-            <span class="currency-val">{handfuls}</span>
-            <button class="sm-btn" onclick={() => adjHandfuls(+1)}>+</button>
-          </div>
-        </div>
-        <div class="currency-item">
-          <div class="currency-lbl">Bags</div>
-          <div class="currency-ctrl">
-            <button class="sm-btn" onclick={() => adjBags(-1)}>−</button>
-            <span class="currency-val">{bags}</span>
-            <button class="sm-btn" onclick={() => adjBags(+1)}>+</button>
-          </div>
-        </div>
-        <div class="currency-item">
-          <div class="currency-lbl">Chests</div>
-          <div class="currency-ctrl">
-            <button class="sm-btn" onclick={() => adjChests(-1)}>−</button>
-            <span class="currency-val">{chests}</span>
-            <button class="sm-btn" onclick={() => adjChests(+1)}>+</button>
-          </div>
-        </div>
-      </div>
-
     <!-- FEATURES TAB ─────────────────────────────────────────────────────────── -->
     {:else if activeTab === 'features'}
       {#if features.length === 0}
