@@ -187,7 +187,7 @@
         </button>
       </div>
 
-      <div class="play-grid">
+      <div class="play-grid" class:has-armor={armorSlots > 0}>
         <!-- HP -->
         <div class="tracker hp-tracker">
           <div class="t-label">HP</div>
@@ -1027,6 +1027,9 @@
 
     .play-grid {
       grid-template-columns: repeat(3, 1fr);
+    }
+    .play-grid.has-armor {
+      grid-template-columns: repeat(4, 1fr);
     }
     .tracker { padding: 24px 16px; }
     .t-cur { font-size: 3rem; }
