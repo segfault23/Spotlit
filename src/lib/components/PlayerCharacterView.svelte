@@ -50,7 +50,6 @@
   let saveStatus = $state('idle');
   let playTimer;
   let notesTimer;
-  let showConditionToggles = $state(false);
 
   const TABS = [
     { id: 'play',      label: 'Play',      icon: '⚔' },
@@ -105,7 +104,11 @@
 
   // ── Tracker adjustments ───────────────────────────────────────────────────────
   function adjHP(d)       { hp        = Math.max(0, Math.min(maxHP,      hp        + d)); touch(); }
-  function adjStress(d)   { stress    = Math.max(0, Math.min(maxStress,  stress    + d)); touch(); }
+  function adjStress(d) {
+    stress = Math.max(0, Math.min(maxStress, stress + d));
+    if (stress >= maxStress) conditions.vulnerable = true;
+    touch();
+  }
   function adjHope(d)     { hope      = Math.max(0, Math.min(maxHope,    hope      + d)); touch(); }
   function adjArmor(d)    { armorUsed = Math.max(0, Math.min(armorSlots, armorUsed + d)); touch(); }
   function adjHandfuls(d) { handfuls  = Math.max(0, handfuls  + d); touch(); }
@@ -168,52 +171,20 @@
         {/each}
       </div>
 
-      <!-- Conditions Display and Control -->
-      <div class="conditions-section">
-        {#if conditions.hidden || conditions.restrained || conditions.vulnerable}
-          <div class="conditions-bar">
-            {#if conditions.vulnerable}
-              <button class="condition-badge vulnerable" onclick={() => toggleCondition('vulnerable')}>
-                ⚠ Vulnerable
-              </button>
-            {/if}
-            {#if conditions.hidden}
-              <button class="condition-badge hidden" onclick={() => toggleCondition('hidden')}>
-                👁 Hidden
-              </button>
-            {/if}
-            {#if conditions.restrained}
-              <button class="condition-badge restrained" onclick={() => toggleCondition('restrained')}>
-                ⛓ Restrained
-              </button>
-            {/if}
-          </div>
-        {/if}
-        <button class="toggle-conditions-btn"
-                onclick={() => showConditionToggles = !showConditionToggles}
-                title="Toggle condition controls">
-          {#if showConditionToggles}
-            ▼ Conditions
-          {:else}
-            ▶ Conditions
-          {/if}
+      <!-- Conditions -->
+      <div class="conditions-row">
+        <button class="cond-btn cond-vulnerable" class:active={conditions.vulnerable}
+                onclick={() => toggleCondition('vulnerable')}>
+          ⚠ Vulnerable
         </button>
-        {#if showConditionToggles}
-          <div class="condition-toggles">
-            <label class="condition-toggle">
-              <input type="checkbox" bind:checked={conditions.vulnerable} onchange={touch} />
-              <span>⚠ Vulnerable</span>
-            </label>
-            <label class="condition-toggle">
-              <input type="checkbox" bind:checked={conditions.hidden} onchange={touch} />
-              <span>👁 Hidden</span>
-            </label>
-            <label class="condition-toggle">
-              <input type="checkbox" bind:checked={conditions.restrained} onchange={touch} />
-              <span>⛓ Restrained</span>
-            </label>
-          </div>
-        {/if}
+        <button class="cond-btn cond-hidden" class:active={conditions.hidden}
+                onclick={() => toggleCondition('hidden')}>
+          ◉ Hidden
+        </button>
+        <button class="cond-btn cond-restrained" class:active={conditions.restrained}
+                onclick={() => toggleCondition('restrained')}>
+          ⛓ Restrained
+        </button>
       </div>
 
       <div class="play-grid">
@@ -605,93 +576,45 @@
     font-weight: 600;
   }
 
-  /* ── Play tab: conditions section ────────────────────────────────────────── */
-  .conditions-section {
+  /* ── Play tab: conditions row ────────────────────────────────────────────── */
+  .conditions-row {
+    display: flex;
+    gap: 6px;
     margin-bottom: 14px;
   }
 
-  .conditions-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .condition-badge {
-    padding: 8px 12px;
+  .cond-btn {
+    flex: 1;
+    padding: 9px 6px;
     border-radius: 6px;
-    border: none;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-dim);
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    transition: opacity 0.15s;
+    transition: all 0.15s;
   }
+  .cond-btn:active { opacity: 0.7; }
 
-  .condition-badge.vulnerable {
-    background: color-mix(in srgb, #d64545 25%, var(--surface2));
+  .cond-vulnerable.active {
+    background: color-mix(in srgb, #d64545 22%, var(--surface2));
     color: #d64545;
-    border: 1px solid #d64545;
+    border-color: #d64545;
   }
-  .condition-badge.vulnerable:active { opacity: 0.7; }
-
-  .condition-badge.hidden {
-    background: color-mix(in srgb, #6b7fcc 25%, var(--surface2));
+  .cond-hidden.active {
+    background: color-mix(in srgb, #6b7fcc 22%, var(--surface2));
     color: #6b7fcc;
-    border: 1px solid #6b7fcc;
+    border-color: #6b7fcc;
   }
-  .condition-badge.hidden:active { opacity: 0.7; }
-
-  .condition-badge.restrained {
-    background: color-mix(in srgb, #d4a744 25%, var(--surface2));
+  .cond-restrained.active {
+    background: color-mix(in srgb, #d4a744 22%, var(--surface2));
     color: #d4a744;
-    border: 1px solid #d4a744;
-  }
-  .condition-badge.restrained:active { opacity: 0.7; }
-
-  .toggle-conditions-btn {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--text-dim);
-    background: none;
-    border: none;
-    padding: 4px 0;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  .toggle-conditions-btn:active { opacity: 0.6; }
-
-  .condition-toggles {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px 0;
-  }
-
-  .condition-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  .condition-toggle input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-
-  .condition-toggle span {
-    font-size: 0.85rem;
-    color: var(--text);
+    border-color: #d4a744;
   }
 
   /* ── Play tab: tracker grid ──────────────────────────────────────────────── */
