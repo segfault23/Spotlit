@@ -15,7 +15,7 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
-import { AllowedMethods, CachePolicy, Distribution, OriginProtocolPolicy, OriginRequestPolicy, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
+import { AllowedMethods, CachePolicy, Distribution, Function as CfFunction, FunctionCode, FunctionEventType, OriginProtocolPolicy, OriginRequestPolicy, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { HttpOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { HostedZone, ARecord, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
@@ -157,6 +157,18 @@ export class SpotlitCdkStack extends Stack {
     });
 
     // ── CloudFront ─────────────────────────────────────────────────────────────
+    // CloudFront strips Host before forwarding to Lambda; copy it to x-forwarded-host
+    // so hooks.server.js can detect the player subdomain.
+    const addForwardedHost = new CfFunction(this, 'AddForwardedHost', {
+      code: FunctionCode.fromInline(`
+function handler(event) {
+  var req = event.request;
+  req.headers['x-forwarded-host'] = { value: req.headers['host'].value };
+  return req;
+}
+`),
+    });
+
     const distribution = new Distribution(this, 'SpotlitDistributionV2', {
       defaultBehavior: {
         origin: lambdaOrigin,
@@ -164,6 +176,10 @@ export class SpotlitCdkStack extends Stack {
         allowedMethods: AllowedMethods.ALLOW_ALL,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [{
+          function: addForwardedHost,
+          eventType: FunctionEventType.VIEWER_REQUEST,
+        }],
       },
       additionalBehaviors: {
         '/_app/immutable/*': {
