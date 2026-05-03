@@ -265,6 +265,16 @@
         </div>
       {/if}
 
+      <!-- Features ───────────────────────────────────────────────────────────── -->
+      {#if features.length > 0}
+        <div class="section-hd play-features-hd">Features</div>
+        <div class="features-list">
+          {#each features as feat (feat)}
+            <FeatureBlock {feat} />
+          {/each}
+        </div>
+      {/if}
+
     <!-- FEATURES TAB ─────────────────────────────────────────────────────────── -->
     {:else if activeTab === 'features'}
       {#if features.length === 0}
@@ -783,6 +793,7 @@
     color: var(--text-dim);
     margin-bottom: 10px;
   }
+  .play-features-hd { margin-top: 18px; }
   .currency-block { margin-bottom: 18px; }
   .empty-tab {
     color: var(--text-dim);
