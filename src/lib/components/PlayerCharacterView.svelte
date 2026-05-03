@@ -43,6 +43,7 @@
   let bags       = $state(initial?.bags       ?? 0);
   let chests     = $state(initial?.chests     ?? 0);
   let notes      = $state(initial?.notes      ?? '');
+  let conditions = $state(initial?.conditions ?? { hidden: false, restrained: false, vulnerable: false });
 
   // ── UI state ─────────────────────────────────────────────────────────────────
   let activeTab  = $state('play');
@@ -88,7 +89,12 @@
   function touch() {
     clearTimeout(playTimer);
     playTimer = setTimeout(() =>
-      persist({ hp, stress, hope, armorUsed, handfuls, bags, chests }), 800);
+      persist({ hp, stress, hope, armorUsed, handfuls, bags, chests, conditions }), 800);
+  }
+
+  function toggleCondition(cond) {
+    conditions[cond] = !conditions[cond];
+    touch();
   }
 
   function touchNotes() {
@@ -150,6 +156,37 @@
 
     <!-- PLAY TAB ─────────────────────────────────────────────────────────────── -->
     {#if activeTab === 'play'}
+      <!-- Stats Grid for Quick Roll Access -->
+      <div class="stats-grid">
+        {#each traits as [label, val] (label)}
+          <div class="stat-card">
+            <div class="stat-mod">{traitSign(val)}</div>
+            <div class="stat-name">{label}</div>
+          </div>
+        {/each}
+      </div>
+
+      <!-- Conditions Display -->
+      {#if conditions.hidden || conditions.restrained || conditions.vulnerable}
+        <div class="conditions-bar">
+          {#if conditions.vulnerable}
+            <button class="condition-badge vulnerable" onclick={() => toggleCondition('vulnerable')}>
+              ⚠ Vulnerable
+            </button>
+          {/if}
+          {#if conditions.hidden}
+            <button class="condition-badge hidden" onclick={() => toggleCondition('hidden')}>
+              👁 Hidden
+            </button>
+          {/if}
+          {#if conditions.restrained}
+            <button class="condition-badge restrained" onclick={() => toggleCondition('restrained')}>
+              ⛓ Restrained
+            </button>
+          {/if}
+        </div>
+      {/if}
+
       <div class="play-grid">
         <!-- HP -->
         <div class="tracker hp-tracker">
@@ -516,6 +553,90 @@
     overflow-y: auto;
     padding: 16px;
   }
+
+  /* ── Play tab: stats grid ────────────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    gap: 3px;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .stat-card:active {
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface2));
+    border-color: var(--border2);
+  }
+
+  .stat-mod {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-name {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  /* ── Play tab: conditions bar ────────────────────────────────────────────── */
+  .conditions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .condition-badge {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: opacity 0.15s;
+  }
+
+  .condition-badge.vulnerable {
+    background: color-mix(in srgb, #d64545 25%, var(--surface2));
+    color: #d64545;
+    border: 1px solid #d64545;
+  }
+  .condition-badge.vulnerable:active { opacity: 0.7; }
+
+  .condition-badge.hidden {
+    background: color-mix(in srgb, #6b7fcc 25%, var(--surface2));
+    color: #6b7fcc;
+    border: 1px solid #6b7fcc;
+  }
+  .condition-badge.hidden:active { opacity: 0.7; }
+
+  .condition-badge.restrained {
+    background: color-mix(in srgb, #d4a744 25%, var(--surface2));
+    color: #d4a744;
+    border: 1px solid #d4a744;
+  }
+  .condition-badge.restrained:active { opacity: 0.7; }
 
   /* ── Play tab: tracker grid ──────────────────────────────────────────────── */
   .play-grid {
@@ -922,6 +1043,8 @@
       width: 100%;
       padding: 24px 28px;
     }
+
+    .stats-grid { grid-template-columns: repeat(6, 1fr); }
 
     .play-grid {
       grid-template-columns: repeat(3, 1fr);
