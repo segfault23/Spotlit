@@ -5,13 +5,12 @@ import { CertStack } from '../lib/cert-stack';
 
 const app = new cdk.App();
 
-new CertStack(app, 'CertStack');
-
-// certArn is captured from the CertStack CloudFormation output in CI
-// and passed via --context certArn=<arn> when deploying SpotlitCdkStack.
-const certArn = app.node.tryGetContext('certArn') as string | undefined ?? '';
+const certStack = new CertStack(app, 'CertStack', {
+  crossRegionReferences: true,
+});
 
 new SpotlitCdkStack(app, 'SpotlitCdkStack', {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-  certificateArn: certArn,
+  certificateArn: certStack.certificate.certificateArn,
+  crossRegionReferences: true,
 });

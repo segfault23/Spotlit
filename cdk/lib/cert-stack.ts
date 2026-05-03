@@ -22,7 +22,7 @@ export class CertStack extends Stack {
 
     const cert = new Certificate(this, 'SpotlitCert', {
       domainName: 'spotlit.online',
-      subjectAlternativeNames: ['www.spotlit.online', 'player.spotlit.online'],
+      subjectAlternativeNames: ['*.spotlit.online'],
       validation: CertificateValidation.fromDns(zone),
     });
 
