@@ -23,6 +23,13 @@ if (env.COGNITO_USER_POOL_ID && env.COGNITO_CLIENT_ID) {
 export async function handle({ event, resolve }) {
   event.locals.user = null;
 
+  // Detect player subdomain; redirect bare / to /player
+  const host = event.request.headers.get('x-forwarded-host') ?? event.url.hostname;
+  event.locals.isPlayerDomain = host.startsWith('player.');
+  if (event.locals.isPlayerDomain && event.url.pathname === '/') {
+    return new Response(null, { status: 302, headers: { location: '/player' } });
+  }
+
   // Local dev: DEV_USER=sub:email:name skips all Cognito auth
   if (env.DEV_USER) {
     const [sub, email = 'dev@local', name = 'Dev User'] = env.DEV_USER.split(':');
