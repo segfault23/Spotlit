@@ -58,11 +58,12 @@ function transformAncestries(ancestries) {
     return ancestries.map(a => ({
         pk: `ANCESTRY#${a.name}`,
         sk: 'META',
-        entity: 'ancestry',
         name: a.name,
         description: a.description,
         abilities: a.abilities,
         updatedAt: now,
+        gsi1pk: 'ancestry',
+        gsi1sk: a.name,
     }));
 }
 
@@ -71,11 +72,12 @@ function transformCommunities(communities) {
     return communities.map(c => ({
         pk: `COMMUNITY#${c.name}`,
         sk: 'META',
-        entity: 'community',
         name: c.name,
         description: c.description,
         features: c.features,
         updatedAt: now,
+        gsi1pk: 'community',
+        gsi1sk: c.name,
     }));
 }
 
@@ -84,7 +86,6 @@ function transformSubclasses(subclasses) {
     return subclasses.map(s => ({
         pk: `SUBCLASS#${s.class}#${s.subclass}#${s.tier}`,
         sk: 'META',
-        entity: 'subclass',
         class: s.class,
         subclass: s.subclass,
         tier: s.tier,
@@ -92,6 +93,8 @@ function transformSubclasses(subclasses) {
         spellcastTrait: s.spellcast_trait ?? null,
         features: s.features,
         updatedAt: now,
+        gsi1pk: 'subclass',
+        gsi1sk: s.subclass,
     }));
 }
 
@@ -102,13 +105,14 @@ function transformDomainCards(cards) {
             // Zero-pad level so lexicographic sort == numeric sort for range queries
             pk: `DOMAIN#${c.domain_icon}#LEVEL#${padLevel(c.level)}#${c.name}`,
             sk: `META`,
-            entity: 'domainCard',
             name: c.name,
             domain: c.domain_icon,
             level: c.level,
             stressCost: c.stress_cost,
             type: c.type,
             updatedAt: now,
+            gsi1pk: 'domainCard',
+            gsi1sk: c.name,
         };
         if (c.type === 'Grimoire') {
             item.abilities = c.abilities;

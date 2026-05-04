@@ -35,6 +35,10 @@ export async function getCreature(slug) {
 // so warm Lambda instances skip DynamoDB entirely after the first request.
 let _featuresPromise  = null;
 let _creaturesPromise = null;
+let _ancestriesPromise = null;
+let _communitiesPromise = null;
+let _subclassesPromise = null;
+let _domainsPromise = null;
 
 export function listFeatures() {
   if (!_featuresPromise) {
@@ -48,6 +52,34 @@ export function listCreatures() {
     _creaturesPromise = listByEntity('creature').catch(e => { _creaturesPromise = null; throw e; });
   }
   return _creaturesPromise;
+}
+
+export function listAncestries() {
+  if (!_ancestriesPromise) {
+    _ancestriesPromise = listByEntity('ancestry').catch(e => { _ancestriesPromise = null; throw e; });
+  }
+  return _ancestriesPromise;
+}
+
+export function listCommunities() {
+  if (!_communitiesPromise) {
+    _communitiesPromise = listByEntity('community').catch(e => { _communitiesPromise = null; throw e; });
+  }
+  return _communitiesPromise;
+}
+
+export function listSubclasses() {
+  if (!_subclassesPromise) {
+    _subclassesPromise = listByEntity('subclass').catch(e => { _subclassesPromise = null; throw e; });
+  }
+  return _subclassesPromise;
+}
+
+export function listDomains() {
+  if (!_domainsPromise) {
+    _domainsPromise = listByEntity('domainCard').catch(e => { _domainsPromise = null; throw e; });
+  }
+  return _domainsPromise;
 }
 
 async function listByEntity(entity) {
