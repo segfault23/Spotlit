@@ -1,5 +1,5 @@
 <script>
-  import CharacterSheet from '$lib/components/CharacterSheet.svelte';
+  import CharacterSheet from '$lib/components/pc/CharacterSheet.svelte';
   let { data } = $props();
 </script>
 

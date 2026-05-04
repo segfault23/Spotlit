@@ -1,5 +1,5 @@
 <script>
-  import PlayerCharacterView from '$lib/components/PlayerCharacterView.svelte';
+  import PlayerCharacterView from '$lib/components/pc/PlayerCharacterView.svelte';
   let { data } = $props();
 </script>
 

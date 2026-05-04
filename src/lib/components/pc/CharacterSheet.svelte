@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
   import { featuresByName } from '$lib/stores/catalog.js';
-  import FeatureEditor from './FeatureEditor.svelte';
+  import FeatureEditor from '../FeatureEditor.svelte';
 
   let {
     initial = null,

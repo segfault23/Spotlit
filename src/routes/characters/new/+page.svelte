@@ -1,5 +1,5 @@
 <script>
-  import CharacterSheet from '$lib/components/CharacterSheet.svelte';
+  import CharacterSheet from '$lib/components/pc/CharacterSheet.svelte';
   import { page } from '$app/stores';
 
   // If joining a campaign, pass the campaign code through

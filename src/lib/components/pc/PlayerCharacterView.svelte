@@ -1,5 +1,5 @@
 <script>
-  import FeatureBlock from './FeatureBlock.svelte';
+  import FeatureBlock from '../FeatureBlock.svelte';
   import { theme, THEMES } from '$lib/stores/theme.js';
 
   let { initial } = $props();

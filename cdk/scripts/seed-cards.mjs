@@ -21,166 +21,166 @@ const STACK_NAME = 'SpotlitCdkStack';
 const REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'eu-west-2';
 
 function parseArgs() {
-  const args = process.argv.slice(2);
-  const idx = args.indexOf('--data-dir');
-  if (idx === -1 || !args[idx + 1]) {
-    console.error('Usage: node cdk/scripts/seed-cards.mjs --data-dir <path>');
-    process.exit(1);
-  }
-  return resolve(args[idx + 1]);
+    const args = process.argv.slice(2);
+    const idx = args.indexOf('--data-dir');
+    if (idx === -1 || !args[idx + 1]) {
+        console.error('Usage: node cdk/scripts/seed-cards.mjs --data-dir <path>');
+        process.exit(1);
+    }
+    return resolve(args[idx + 1]);
 }
 
 function readJson(dir, filename) {
-  const path = resolve(dir, filename);
-  try {
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch (err) {
-    console.error(`Failed to read ${path}: ${err.message}`);
-    process.exit(1);
-  }
+    const path = resolve(dir, filename);
+    try {
+        return JSON.parse(readFileSync(path, 'utf8'));
+    } catch (err) {
+        console.error(`Failed to read ${path}: ${err.message}`);
+        process.exit(1);
+    }
 }
 
 async function discoverTableName() {
-  const cf = new CloudFormationClient({ region: REGION });
-  const out = await cf.send(new DescribeStacksCommand({ StackName: STACK_NAME }));
-  const outputs = out.Stacks?.[0]?.Outputs ?? [];
-  const found = outputs.find(o => o.OutputKey === 'ContentTableName');
-  if (!found?.OutputValue) throw new Error(`Stack ${STACK_NAME} has no ContentTableName output`);
-  return found.OutputValue;
+    const cf = new CloudFormationClient({ region: REGION });
+    const out = await cf.send(new DescribeStacksCommand({ StackName: STACK_NAME }));
+    const outputs = out.Stacks?.[0]?.Outputs ?? [];
+    const found = outputs.find(o => o.OutputKey === 'ContentTableName');
+    if (!found?.OutputValue) throw new Error(`Stack ${STACK_NAME} has no ContentTableName output`);
+    return found.OutputValue;
 }
 
 function padLevel(level) {
-  return String(level).padStart(2, '0');
+    return String(level).padStart(2, '0');
 }
 
 function transformAncestries(ancestries) {
-  const now = Date.now();
-  return ancestries.map(a => ({
-    pk: 'SYSTEM',
-    sk: `ANCESTRY#${a.name}`,
-    entity: 'ancestry',
-    name: a.name,
-    description: a.description,
-    abilities: a.abilities,
-    updatedAt: now,
-  }));
+    const now = Date.now();
+    return ancestries.map(a => ({
+        pk: `ANCESTRY#${a.name}`,
+        sk: 'META',
+        entity: 'ancestry',
+        name: a.name,
+        description: a.description,
+        abilities: a.abilities,
+        updatedAt: now,
+    }));
 }
 
 function transformCommunities(communities) {
-  const now = Date.now();
-  return communities.map(c => ({
-    pk: 'SYSTEM',
-    sk: `COMMUNITY#${c.name}`,
-    entity: 'community',
-    name: c.name,
-    description: c.description,
-    features: c.features,
-    updatedAt: now,
-  }));
+    const now = Date.now();
+    return communities.map(c => ({
+        pk: `COMMUNITY#${c.name}`,
+        sk: 'META',
+        entity: 'community',
+        name: c.name,
+        description: c.description,
+        features: c.features,
+        updatedAt: now,
+    }));
 }
 
 function transformSubclasses(subclasses) {
-  const now = Date.now();
-  return subclasses.map(s => ({
-    pk: 'SYSTEM',
-    sk: `SUBCLASS#${s.class}#${s.subclass}#${s.tier}`,
-    entity: 'subclass',
-    class: s.class,
-    subclass: s.subclass,
-    tier: s.tier,
-    domains: s.domains,
-    spellcastTrait: s.spellcast_trait ?? null,
-    features: s.features,
-    updatedAt: now,
-  }));
+    const now = Date.now();
+    return subclasses.map(s => ({
+        pk: `SUBCLASS#${s.class}#${s.subclass}#${s.tier}`,
+        sk: 'META',
+        entity: 'subclass',
+        class: s.class,
+        subclass: s.subclass,
+        tier: s.tier,
+        domains: s.domains,
+        spellcastTrait: s.spellcast_trait ?? null,
+        features: s.features,
+        updatedAt: now,
+    }));
 }
 
 function transformDomainCards(cards) {
-  const now = Date.now();
-  return cards.map(c => {
-    const item = {
-      pk: 'SYSTEM',
-      // Zero-pad level so lexicographic sort == numeric sort for range queries
-      sk: `DOMAIN#${c.domain_icon}#LEVEL#${padLevel(c.level)}#${c.name}`,
-      entity: 'domainCard',
-      name: c.name,
-      domain: c.domain_icon,
-      level: c.level,
-      stressCost: c.stress_cost,
-      type: c.type,
-      updatedAt: now,
-    };
-    if (c.type === 'Grimoire') {
-      item.abilities = c.abilities;
-    } else {
-      item.text = c.text;
-    }
-    return item;
-  });
+    const now = Date.now();
+    return cards.map(c => {
+        const item = {
+            // Zero-pad level so lexicographic sort == numeric sort for range queries
+            pk: `DOMAIN#${c.domain_icon}#LEVEL#${padLevel(c.level)}#${c.name}`,
+            sk: `META`,
+            entity: 'domainCard',
+            name: c.name,
+            domain: c.domain_icon,
+            level: c.level,
+            stressCost: c.stress_cost,
+            type: c.type,
+            updatedAt: now,
+        };
+        if (c.type === 'Grimoire') {
+            item.abilities = c.abilities;
+        } else {
+            item.text = c.text;
+        }
+        return item;
+    });
 }
 
 async function batchWrite(ddb, tableName, items) {
-  const CHUNK = 25;
-  for (let i = 0; i < items.length; i += CHUNK) {
-    const chunk = items.slice(i, i + CHUNK);
-    const cmd = new BatchWriteCommand({
-      RequestItems: {
-        [tableName]: chunk.map(Item => ({ PutRequest: { Item } })),
-      },
-    });
-    let res = await ddb.send(cmd);
-    let attempts = 0;
-    while (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length && attempts < 5) {
-      attempts++;
-      await new Promise(r => setTimeout(r, 200 * attempts));
-      res = await ddb.send(new BatchWriteCommand({ RequestItems: res.UnprocessedItems }));
+    const CHUNK = 25;
+    for (let i = 0; i < items.length; i += CHUNK) {
+        const chunk = items.slice(i, i + CHUNK);
+        const cmd = new BatchWriteCommand({
+            RequestItems: {
+                [tableName]: chunk.map(Item => ({ PutRequest: { Item } })),
+            },
+        });
+        let res = await ddb.send(cmd);
+        let attempts = 0;
+        while (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length && attempts < 5) {
+            attempts++;
+            await new Promise(r => setTimeout(r, 200 * attempts));
+            res = await ddb.send(new BatchWriteCommand({ RequestItems: res.UnprocessedItems }));
+        }
+        if (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length) {
+            throw new Error(`Failed to write all items after retries (chunk starting at ${i})`);
+        }
+        process.stdout.write('.');
     }
-    if (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length) {
-      throw new Error(`Failed to write all items after retries (chunk starting at ${i})`);
-    }
-    process.stdout.write('.');
-  }
-  process.stdout.write('\n');
+    process.stdout.write('\n');
 }
 
 async function main() {
-  const dataDir = parseArgs();
-  console.log(`Reading card data from: ${dataDir}`);
+    const dataDir = parseArgs();
+    console.log(`Reading card data from: ${dataDir}`);
 
-  const ancestries = readJson(dataDir, 'ancestry_cards.json');
-  const communities = readJson(dataDir, 'community_cards.json');
-  const subclasses = readJson(dataDir, 'subclass_cards.json');
-  const domainCards = readJson(dataDir, 'domain_cards.json');
+    const ancestries = readJson(dataDir, 'ancestry_cards.json');
+    const communities = readJson(dataDir, 'community_cards.json');
+    const subclasses = readJson(dataDir, 'subclass_cards.json');
+    const domainCards = readJson(dataDir, 'domain_cards.json');
 
-  const items = [
-    ...transformAncestries(ancestries),
-    ...transformCommunities(communities),
-    ...transformSubclasses(subclasses),
-    ...transformDomainCards(domainCards),
-  ];
+    const items = [
+        ...transformAncestries(ancestries),
+        ...transformCommunities(communities),
+        ...transformSubclasses(subclasses),
+        ...transformDomainCards(domainCards),
+    ];
 
-  console.log(`Loaded:`);
-  console.log(`  ${ancestries.length} ancestries`);
-  console.log(`  ${communities.length} communities`);
-  console.log(`  ${subclasses.length} subclass tiers`);
-  console.log(`  ${domainCards.length} domain cards`);
-  console.log(`  ${items.length} total items`);
+    console.log(`Loaded:`);
+    console.log(`  ${ancestries.length} ancestries`);
+    console.log(`  ${communities.length} communities`);
+    console.log(`  ${subclasses.length} subclass tiers`);
+    console.log(`  ${domainCards.length} domain cards`);
+    console.log(`  ${items.length} total items`);
 
-  const tableName = await discoverTableName();
-  console.log(`\nTarget table: ${tableName} (${REGION})`);
+    const tableName = await discoverTableName();
+    console.log(`\nTarget table: ${tableName} (${REGION})`);
 
-  const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+    const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
-  console.log('Writing ancestries...');
-  await batchWrite(ddb, tableName, transformAncestries(ancestries));
-  console.log('Writing communities...');
-  await batchWrite(ddb, tableName, transformCommunities(communities));
-  console.log('Writing subclass tiers...');
-  await batchWrite(ddb, tableName, transformSubclasses(subclasses));
-  console.log('Writing domain cards...');
-  await batchWrite(ddb, tableName, transformDomainCards(domainCards));
+    console.log('Writing ancestries...');
+    await batchWrite(ddb, tableName, transformAncestries(ancestries));
+    console.log('Writing communities...');
+    await batchWrite(ddb, tableName, transformCommunities(communities));
+    console.log('Writing subclass tiers...');
+    await batchWrite(ddb, tableName, transformSubclasses(subclasses));
+    console.log('Writing domain cards...');
+    await batchWrite(ddb, tableName, transformDomainCards(domainCards));
 
-  console.log(`\nDone. Wrote ${items.length} items to ${tableName}.`);
+    console.log(`\nDone. Wrote ${items.length} items to ${tableName}.`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
