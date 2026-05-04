@@ -10,4 +10,7 @@
   campaignCode={data.campaign.joinCode}
   isGmEditing={true}
   backHref="/campaigns/{data.campaign.joinCode}"
+  ancestries={data.ancestries ?? []}
+  communities={data.communities ?? []}
+  subclasses={data.subclasses ?? []}
 />

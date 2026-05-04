@@ -3,4 +3,10 @@
   let { data } = $props();
 </script>
 
-<CharacterSheet initial={data.character} backHref="/characters" />
+<CharacterSheet
+  initial={data.character}
+  backHref="/characters"
+  ancestries={data.ancestries ?? []}
+  communities={data.communities ?? []}
+  subclasses={data.subclasses ?? []}
+/>

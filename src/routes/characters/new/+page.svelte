@@ -4,13 +4,13 @@
 
   let { data } = $props();
 
-  console.log('data', data);
-
-  // If joining a campaign, pass the campaign code through
   let campaignCode = $derived($page.url.searchParams.get('campaign') ?? null);
 </script>
 
 <CharacterSheet
   campaignCode={campaignCode}
   backHref="/characters"
+  ancestries={data.ancestries ?? []}
+  communities={data.communities ?? []}
+  subclasses={data.subclasses ?? []}
 />
