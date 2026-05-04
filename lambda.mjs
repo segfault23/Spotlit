@@ -76,7 +76,7 @@ export const handler = async (event) => {
 
   // 1. Static assets from client/
   if (method === 'GET' || method === 'HEAD') {
-    const clientFile = path.join(CLIENT_DIR, decodedPath);
+    const clientFile = path.join(CLIENT_DIR, decodedPath.startsWith('/') ? decodedPath.slice(1) : decodedPath);
     const content = await readFileIfExists(clientFile, CLIENT_DIR);
     if (content) {
       const ext = path.extname(clientFile).toLowerCase();
