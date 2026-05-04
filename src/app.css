@@ -184,7 +184,7 @@ body.theme-eldritch {
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 html.no-scroll,html.no-scroll body{overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(14px,1.4vw,18px);display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(14px,1.4vw,18px);display:flex;flex-direction:column;min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
 
 /* ─ Header ─ */
