@@ -14,3 +14,4 @@ cdk/test/*.js
 cdk/test/*.d.ts
 cdk/cdk.context.json
 .vscode/
+cdk/scripts/data/*
