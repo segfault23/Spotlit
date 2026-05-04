@@ -1,8 +1,9 @@
 <script>
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
-  import { featuresByName } from '$lib/stores/catalog.js';
-  import FeatureEditor from '../FeatureEditor.svelte';
+  import AbilityCard from '../cards/AbilityCard.svelte';
+  import DomainCardPicker from '../cards/DomainCardPicker.svelte';
+  import OverviewTab from '../tabs/OverviewTab.svelte';
 
   let {
     initial = null,
@@ -12,6 +13,9 @@
     isGmEditing = false,
     campaignCode = null,
     backHref = '/characters',
+    ancestries = [],
+    communities = [],
+    subclasses = [],
   } = $props();
 
   // ── Identity ──────────────────────────────────────────────────────────────────
@@ -21,6 +25,7 @@
   let subclass   = $state(initial?.subclass ?? '');
   let level      = $state(initial?.level ?? 1);
   let ancestry   = $state(initial?.ancestry ?? '');
+  let ancestry2  = $state(initial?.ancestry2 ?? '');
   let community  = $state(initial?.community ?? '');
   let pronouns   = $state(initial?.pronouns ?? '');
 
@@ -47,57 +52,52 @@
   let chests     = $state(initial?.chests     ?? 0);
 
   // ── Content ───────────────────────────────────────────────────────────────────
-  // Normalize experiences: support legacy string[] or new {text,modifier}[]
   function normalizeExp(raw) {
     return (raw ?? ['', '', '']).map(e =>
       typeof e === 'string' ? { text: e, modifier: 0 } : e
     );
   }
-  let experiences = $state(normalizeExp(initial?.experiences));
-  let features    = $state([...(initial?.features    ?? [])]);
-  let items       = $state([...(initial?.items       ?? [])]);
-  let notes       = $state(initial?.notes ?? '');
-  let thresholds  = $state({
+  let experiences   = $state(normalizeExp(initial?.experiences));
+  let features      = $state([...(initial?.features      ?? [])]);
+  let items         = $state([...(initial?.items         ?? [])]);
+  let notes         = $state(initial?.notes ?? '');
+  let thresholds    = $state({
     minor:  initial?.thresholds?.minor  ?? 0,
     major:  initial?.thresholds?.major  ?? 0,
     severe: initial?.thresholds?.severe ?? 0,
   });
+  let domainLoadout = $state([...(initial?.domainLoadout ?? [])]);
+  let domainVault   = $state([...(initial?.domainVault   ?? [])]);
+
+  // ── Card data derived ─────────────────────────────────────────────────────────
+  let sortedAncestries  = $derived([...ancestries].sort((a, b) => a.name.localeCompare(b.name)));
+  let sortedCommunities = $derived([...communities].sort((a, b) => a.name.localeCompare(b.name)));
+
+  let ancestryData  = $derived(ancestries.find(a => a.name === ancestry) ?? null);
+  let ancestry2Data = $derived(ancestry2 ? (ancestries.find(a => a.name === ancestry2) ?? null) : null);
+  let communityData = $derived(communities.find(c => c.name === community) ?? null);
+
+  let classes            = $derived([...new Set(subclasses.map(s => s.class))].sort());
+  let filteredSubclasses = $derived(
+    [...new Set(subclasses.filter(s => s.class === charClass).map(s => s.subclass))].sort()
+  );
+  let subclassTiers = $derived(
+    [...subclasses.filter(s => s.class === charClass && s.subclass === subclass)]
+      .sort((a, b) => tierOrder(a.tier) - tierOrder(b.tier))
+  );
+  let activeDomains  = $derived(subclassTiers[0]?.domains ?? []);
+  let spellcastTrait = $derived(subclassTiers[0]?.spellcastTrait ?? null);
+
+  let ability1 = $derived(ancestryData?.abilities?.[0] ?? null);
+  let ability2 = $derived(
+    ancestry2Data ? (ancestry2Data?.abilities?.[1] ?? null) : (ancestryData?.abilities?.[1] ?? null)
+  );
 
   // ── UI ────────────────────────────────────────────────────────────────────────
   let activeTab  = $state('identity');
   let charId     = $state(initial?.id ?? null);
-  let saveStatus = $state('idle'); // idle | saving | saved | error
+  let saveStatus = $state('idle');
   let saveTimer;
-
-  // ── Feature picker ────────────────────────────────────────────────────────────
-  const FEAT_TYPES = ['Passive', 'Action', 'Reaction', 'Fear'];
-  let pickerQuery       = $state('');
-  let pickerType        = $state('');
-  let createFeatureOpen = $state(false);
-
-  let attachedNames = $derived(new Set(features.map(f => f.split('|')[0])));
-  let pickerResults  = $derived.by(() => {
-    const q = pickerQuery.trim().toLowerCase();
-    return Object.entries($featuresByName)
-      .filter(([n])     => !attachedNames.has(n))
-      .filter(([, fd])  => !pickerType || (fd?.t ?? '') === pickerType)
-      .filter(([n, fd]) => !q || n.toLowerCase().includes(q) || (fd?.t ?? '').toLowerCase().includes(q))
-      .sort(([a], [b])  => a.localeCompare(b))
-      .slice(0, 80);
-  });
-
-  function attachFeature(featName) { features = [...features, featName]; pickerQuery = ''; }
-  function detachFeature(idx)      { features = features.filter((_, i) => i !== idx); }
-  function setFeatNote(idx, note) {
-    const [base] = features[idx].split('|');
-    const next = [...features];
-    next[idx] = note ? `${base}|${note}` : base;
-    features = next;
-  }
-  function onFeatureCreated({ name: n }) {
-    createFeatureOpen = false;
-    if (n && !attachedNames.has(n)) features = [...features, n];
-  }
 
   // ── Items ─────────────────────────────────────────────────────────────────────
   const ITEM_TYPES = ['weapon', 'armor', 'consumable', 'gear', 'tool', 'treasure'];
@@ -122,15 +122,50 @@
     }];
     newItemName = '';
   }
-  function removeItem(id)              { items = items.filter(i => i.id !== id); }
-  function updateItem(id, key, value)  { items = items.map(i => i.id === id ? { ...i, [key]: value } : i); }
+  function removeItem(id)             { items = items.filter(i => i.id !== id); }
+  function updateItem(id, key, value) { items = items.map(i => i.id === id ? { ...i, [key]: value } : i); }
+
+  // ── Tier helpers ──────────────────────────────────────────────────────────────
+  function tierOrder(tier) {
+    const t = tier?.toLowerCase();
+    if (t === 'foundation') return 0;
+    if (t === 'specialization') return 1;
+    if (t === 'mastery') return 2;
+    return 3;
+  }
+
+  function tierUnlockLevel(tier) {
+    const t = tier?.toLowerCase();
+    if (t === 'specialization') return 5;
+    if (t === 'mastery') return 8;
+    return 1;
+  }
+
+  // ── Class/subclass change handlers ────────────────────────────────────────────
+  function onClassChange(newClass) {
+    charClass = newClass;
+    const newSubs = [...new Set(subclasses.filter(s => s.class === newClass).map(s => s.subclass))];
+    if (!newSubs.includes(subclass)) {
+      subclass = '';
+      domainLoadout = [];
+      domainVault = [];
+    }
+    touch();
+  }
+
+  function onSubclassChange(newSubclass) {
+    subclass = newSubclass;
+    domainLoadout = [];
+    domainVault = [];
+    touch();
+  }
 
   // ── Persist ───────────────────────────────────────────────────────────────────
   function payload() {
     return {
       name: name.trim(), playerName: playerName.trim(),
-      class: charClass.trim(), subclass: subclass.trim(), level: +level || 1,
-      ancestry: ancestry.trim(), community: community.trim(), pronouns: pronouns.trim(),
+      class: charClass, subclass, level: +level || 1,
+      ancestry, ancestry2, community, pronouns: pronouns.trim(),
       agility: +agility, strength: +strength, finesse: +finesse,
       instinct: +instinct, presence: +presence, knowledge: +knowledge,
       maxHP: +maxHP, hp: +hp, maxStress: +maxStress, stress: +stress,
@@ -138,6 +173,7 @@
       armorSlots: +armorSlots, armorUsed: +armorUsed,
       handfuls: +handfuls, bags: +bags, chests: +chests,
       experiences, features, items, notes, thresholds,
+      domainLoadout, domainVault,
       ...(campaignCode ? { campaignCode, campaignGmSub: campaign?.gmSub } : {}),
     };
   }
@@ -220,7 +256,7 @@
       <div class="hero-class-row">
         {#if charClass}<span class="hero-badge">{charClass}{subclass ? ` · ${subclass}` : ''}</span>{/if}
         {#if level}<span class="hero-badge dim">Level {level}</span>{/if}
-        {#if ancestry}<span class="hero-badge dim">{ancestry}{community ? ` · ${community}` : ''}</span>{/if}
+        {#if ancestry}<span class="hero-badge dim">{ancestry}{ancestry2 ? ` / ${ancestry2}` : ''}{community ? ` · ${community}` : ''}</span>{/if}
       </div>
       {#if playerName}<div class="hero-player">Played by {playerName}</div>{/if}
     </div>
@@ -332,7 +368,7 @@
     <!-- RIGHT: tabs -->
     <div class="cs-right">
       <div class="tab-strip">
-        {#each [['identity','Identity'],['exp','Experiences'],['features','Features'],['equipment','Equipment'],['notes','Notes']] as [t, label] (t)}
+        {#each [['identity','Identity'],['overview','Overview'],['exp','Experiences'],['domain-cards','Domain Cards'],['equipment','Equipment'],['notes','Notes']] as [t, label] (t)}
           <button class="tab" class:active={activeTab === t} onclick={() => (activeTab = t)}>{label}</button>
         {/each}
       </div>
@@ -354,27 +390,128 @@
               <label>Pronouns</label>
               <input type="text" bind:value={pronouns} oninput={touch} placeholder="they/them" />
             </div>
+
+            <!-- Class -->
             <div class="fg">
               <label>Class</label>
-              <input type="text" bind:value={charClass} oninput={touch} placeholder="e.g. Ranger" />
+              {#if classes.length > 0}
+                <select value={charClass} onchange={(e) => onClassChange(e.currentTarget.value)}>
+                  <option value="">— Select class —</option>
+                  {#each classes as c (c)}<option value={c}>{c}</option>{/each}
+                </select>
+              {:else}
+                <input type="text" bind:value={charClass} oninput={touch} placeholder="e.g. Ranger" />
+              {/if}
             </div>
+
+            <!-- Subclass -->
             <div class="fg">
               <label>Subclass</label>
-              <input type="text" bind:value={subclass} oninput={touch} placeholder="e.g. Beastbound" />
+              {#if classes.length > 0}
+                <select value={subclass} disabled={!charClass} onchange={(e) => onSubclassChange(e.currentTarget.value)}>
+                  <option value="">— Select subclass —</option>
+                  {#each filteredSubclasses as s (s)}<option value={s}>{s}</option>{/each}
+                </select>
+              {:else}
+                <input type="text" bind:value={subclass} oninput={touch} placeholder="e.g. Beastbound" />
+              {/if}
             </div>
+
             <div class="fg">
               <label>Level</label>
               <input type="number" min="1" max="10" bind:value={level} oninput={touch} />
             </div>
+
+            <!-- Primary Ancestry -->
             <div class="fg">
               <label>Ancestry</label>
-              <input type="text" bind:value={ancestry} oninput={touch} placeholder="e.g. Elf" />
+              {#if sortedAncestries.length > 0}
+                <select bind:value={ancestry} onchange={touch}>
+                  <option value="">— Select ancestry —</option>
+                  {#each sortedAncestries as a (a.name)}<option value={a.name}>{a.name}</option>{/each}
+                </select>
+              {:else}
+                <input type="text" bind:value={ancestry} oninput={touch} placeholder="e.g. Elf" />
+              {/if}
             </div>
+
+            <!-- Secondary Ancestry -->
             <div class="fg">
+              <label>Secondary Ancestry <span class="label-hint">(mixed)</span></label>
+              {#if sortedAncestries.length > 0}
+                <select bind:value={ancestry2} onchange={touch}>
+                  <option value="">None</option>
+                  {#each sortedAncestries as a (a.name)}<option value={a.name}>{a.name}</option>{/each}
+                </select>
+              {:else}
+                <input type="text" bind:value={ancestry2} oninput={touch} placeholder="Optional" />
+              {/if}
+            </div>
+
+            <!-- Community -->
+            <div class="fg span2">
               <label>Community</label>
-              <input type="text" bind:value={community} oninput={touch} placeholder="e.g. Wanderer" />
+              {#if sortedCommunities.length > 0}
+                <select bind:value={community} onchange={touch}>
+                  <option value="">— Select community —</option>
+                  {#each sortedCommunities as c (c.name)}<option value={c.name}>{c.name}</option>{/each}
+                </select>
+              {:else}
+                <input type="text" bind:value={community} oninput={touch} placeholder="e.g. Wanderer" />
+              {/if}
             </div>
           </div>
+
+          <!-- Inline ancestry ability preview -->
+          {#if ability1 || ability2}
+            <div class="card-preview-section">
+              <div class="section-sublabel">Ancestry Abilities</div>
+              <div class="card-preview-list">
+                {#if ability1}
+                  <AbilityCard name={ability1.name ?? ''} text={ability1.text ?? ability1.description ?? ''} source={ancestry} />
+                {/if}
+                {#if ability2}
+                  <AbilityCard name={ability2.name ?? ''} text={ability2.text ?? ability2.description ?? ''} source={ancestry2 || ancestry} />
+                {/if}
+              </div>
+            </div>
+          {/if}
+
+          <!-- Inline community feature preview -->
+          {#if communityData?.features?.length}
+            <div class="card-preview-section">
+              <div class="section-sublabel">Community Feature</div>
+              <div class="card-preview-list">
+                {#each communityData.features as feat}
+                  <AbilityCard name={feat.name ?? ''} text={feat.text ?? feat.description ?? ''} source={community} />
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <!-- Inline subclass tier preview -->
+          {#if subclassTiers.length > 0}
+            <div class="card-preview-section">
+              <div class="section-sublabel">Subclass Features</div>
+              {#each subclassTiers as tier}
+                {@const unlockLvl = tierUnlockLevel(tier.tier)}
+                {@const locked = level < unlockLvl}
+                <div class="tier-block" class:locked>
+                  <div class="tier-block-head">
+                    <span class="tier-block-name">{tier.tier}</span>
+                    {#if unlockLvl > 1}
+                      <span class="tier-block-lock">{locked ? `Unlocked at level ${unlockLvl}` : ''}</span>
+                    {/if}
+                  </div>
+                  <div class="card-preview-list">
+                    {#each tier.features ?? [] as feat}
+                      <AbilityCard name={feat.name ?? ''} text={feat.text ?? feat.description ?? ''} />
+                    {/each}
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
 
           <div class="section-label" style="margin-top:18px">Traits</div>
           <div class="traits-edit-grid">
@@ -385,7 +522,7 @@
                   value={key === 'agility' ? agility : key === 'strength' ? strength : key === 'finesse' ? finesse : key === 'instinct' ? instinct : key === 'presence' ? presence : knowledge}
                   oninput={(e) => {
                     const v = +e.currentTarget.value;
-                    if (key === 'agility')   agility   = v;
+                    if (key === 'agility')        agility   = v;
                     else if (key === 'strength')  strength  = v;
                     else if (key === 'finesse')   finesse   = v;
                     else if (key === 'instinct')  instinct  = v;
@@ -408,6 +545,22 @@
           </div>
         {/if}
 
+        <!-- OVERVIEW TAB -->
+        {#if activeTab === 'overview'}
+          <OverviewTab
+            {ancestry}
+            {ancestry2}
+            {ancestryData}
+            {ancestry2Data}
+            {communityData}
+            {subclassTiers}
+            {charClass}
+            {subclass}
+            {level}
+            {spellcastTrait}
+          />
+        {/if}
+
         <!-- EXPERIENCES TAB -->
         {#if activeTab === 'exp'}
           <p class="tab-hint">Three short phrases describing what your character has experienced. Add a +modifier to roll when relevant.</p>
@@ -428,48 +581,27 @@
           </div>
         {/if}
 
-        <!-- FEATURES TAB -->
-        {#if activeTab === 'features'}
-          {#if features.length === 0}
-            <div class="empty-feats">No features attached. Search below or create a new one.</div>
+        <!-- DOMAIN CARDS TAB -->
+        {#if activeTab === 'domain-cards'}
+          {#if !subclass || activeDomains.length === 0}
+            <div class="domain-empty">
+              <p>Select a class and subclass on the <button class="inline-link" onclick={() => (activeTab = 'identity')}>Identity</button> tab to unlock domain cards.</p>
+            </div>
+          {:else}
+            <div class="domain-tab-header">
+              <span class="section-sublabel">Domains</span>
+              {#each activeDomains as d (d)}<span class="domain-badge">{d}</span>{/each}
+              {#if spellcastTrait}<span class="spellcast-badge">Spellcast: {spellcastTrait}</span>{/if}
+            </div>
+            <DomainCardPicker
+              loadout={domainLoadout}
+              vault={domainVault}
+              domains={activeDomains}
+              maxLevel={level}
+              onLoadoutChange={(v) => { domainLoadout = v; touch(); }}
+              onVaultChange={(v) => { domainVault = v; touch(); }}
+            />
           {/if}
-          <div class="attached-list">
-            {#each features as feat, idx (idx + ':' + feat)}
-              {@const [fname, fnote] = [feat.split('|')[0], feat.split('|')[1] ?? '']}
-              {@const fd = $featuresByName[fname]}
-              <div class="attached-row">
-                <div class="attached-head">
-                  <span class="ftype-mini t-{(fd?.t ?? 'feature').toLowerCase()}">{fd?.t ?? '?'}</span>
-                  <span class="attached-name">{fname}</span>
-                  <button class="detach-btn" onclick={() => { detachFeature(idx); touch(); }}>✕</button>
-                </div>
-                {#if fd?.tx}<div class="attached-tx">{fd.tx}</div>{/if}
-                <input class="note-input" type="text" placeholder="Optional note…" value={fnote}
-                  oninput={(e) => { setFeatNote(idx, e.currentTarget.value); touch(); }} />
-              </div>
-            {/each}
-          </div>
-
-          <hr class="divider-soft" />
-          <div class="type-filters">
-            <button class="type-filter-btn" class:active={pickerType === ''} onclick={() => (pickerType = '')}>All</button>
-            {#each FEAT_TYPES as ft (ft)}
-              <button class="type-filter-btn t-{ft.toLowerCase()}" class:active={pickerType === ft} onclick={() => (pickerType = ft)}>{ft}</button>
-            {/each}
-          </div>
-          <input class="picker-search" type="text" placeholder="Search features…" bind:value={pickerQuery} />
-          <div class="picker-results">
-            {#each pickerResults as [n, fd] (n)}
-              <button class="picker-row" onclick={() => { attachFeature(n); touch(); }}>
-                <span class="ftype-mini t-{(fd?.t ?? 'feature').toLowerCase()}">{fd?.t ?? '?'}</span>
-                <span class="picker-name">{n}</span>
-                {#if fd?.custom}<span class="custom-pip">★</span>{/if}
-              </button>
-            {:else}
-              <div class="picker-empty">{pickerQuery || pickerType ? 'No matches.' : 'Type to search…'}</div>
-            {/each}
-          </div>
-          <button class="create-feature-btn" onclick={() => (createFeatureOpen = true)}>+ Create new feature</button>
         {/if}
 
         <!-- EQUIPMENT TAB -->
@@ -531,17 +663,6 @@
   </div>
 </div>
 
-{#if createFeatureOpen}
-  <div class="overlay show" role="dialog" aria-modal="true" tabindex="-1"
-    onclick={(e) => e.target === e.currentTarget && (createFeatureOpen = false)}
-    onkeydown={(e) => e.key === 'Escape' && (createFeatureOpen = false)}>
-    <div class="modal modal-md">
-      <div class="modal-title">New Feature</div>
-      <FeatureEditor afterSave={onFeatureCreated} afterCancel={() => (createFeatureOpen = false)} />
-    </div>
-  </div>
-{/if}
-
 <style>
   .cs-wrap { max-width: 1200px; margin: 0 auto; padding: 16px 20px 60px; display: flex; flex-direction: column; gap: 14px; }
 
@@ -595,7 +716,6 @@
   .res-fraction { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); display: flex; align-items: center; gap: 2px; }
   .res-max-inp { width: 28px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); font-family: var(--font-mono); font-size: 0.72rem; text-align: center; padding: 0; outline: none; }
   .res-max-inp:focus { border-bottom-color: var(--accent); }
-  /* Dot track */
   .dot-track { display: flex; flex-wrap: wrap; gap: 3px; }
   .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; padding: 0; transition: background 0.1s, border-color 0.1s; -webkit-tap-highlight-color: transparent; }
   .dot.filled { background: var(--hp-on, #d64040); border-color: var(--hp-on, #d64040); }
@@ -603,12 +723,10 @@
   .dot.hope-dot.filled { background: var(--accent); border-color: var(--accent); }
   .dot.armor-dot.filled { background: var(--text-dim); border-color: var(--text-dim); }
   .dot:hover { border-color: var(--accent); }
-  /* Gold */
   .gold-track { display: flex; align-items: center; gap: 4px; }
   .gold-val { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; min-width: 24px; text-align: center; }
   .res-btn { width: 20px; height: 20px; background: var(--surface3); border: 1px solid var(--border); border-radius: 3px; color: var(--text); cursor: pointer; font-size: 0.85rem; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .res-btn:hover { border-color: var(--accent); color: var(--accent); }
-  /* Thresholds */
   .threshold-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
   .threshold-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 4px; }
   .threshold-lbl { font-family: var(--font-mono); font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
@@ -617,8 +735,9 @@
 
   /* Right panel */
   .cs-right { display: flex; flex-direction: column; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-  .tab-strip { display: flex; border-bottom: 1px solid var(--border); }
-  .tab { background: transparent; border: none; color: var(--text-dim); padding: 9px 14px; font-size: 0.82rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; white-space: nowrap; }
+  .tab-strip { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tab-strip::-webkit-scrollbar { display: none; }
+  .tab { background: transparent; border: none; color: var(--text-dim); padding: 9px 12px; font-size: 0.8rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--text); border-bottom-color: var(--accent); }
   .tab-body { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -626,8 +745,24 @@
   /* Tab: identity */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .span2 { grid-column: span 2; }
+  .fg { display: flex; flex-direction: column; gap: 3px; }
+  .fg label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; }
+  .fg input, .fg select { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: 0.88rem; padding: 5px 8px; outline: none; font-family: inherit; }
+  .fg input:focus, .fg select:focus { border-color: var(--accent); }
+  .fg select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .label-hint { font-weight: 400; font-size: 0.62rem; color: var(--text-faint); text-transform: none; letter-spacing: 0; }
   .traits-edit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .section-sublabel { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); font-weight: 600; }
   .tab-hint { color: var(--text-dim); font-size: 0.82rem; margin: 0; line-height: 1.5; }
+
+  /* Inline card previews on Identity tab */
+  .card-preview-section { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; }
+  .card-preview-list { display: flex; flex-direction: column; gap: 6px; }
+  .tier-block { display: flex; flex-direction: column; gap: 4px; }
+  .tier-block.locked { opacity: 0.55; }
+  .tier-block-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .tier-block-name { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); font-weight: 600; }
+  .tier-block-lock { font-size: 0.68rem; color: #d8a040; font-style: italic; }
 
   /* Tab: experiences */
   .exp-list { display: flex; flex-direction: column; gap: 10px; }
@@ -639,40 +774,12 @@
   .exp-text-inp { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: 0.88rem; padding: 5px 8px; outline: none; }
   .exp-text-inp:focus { border-color: var(--accent); }
 
-  /* Tab: features */
-  .empty-feats { color: var(--text-dim); font-style: italic; font-size: 0.8rem; }
-  .attached-list { display: flex; flex-direction: column; gap: 8px; }
-  .attached-row { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
-  .attached-head { display: flex; align-items: center; gap: 6px; }
-  .attached-name { flex: 1; font-weight: 600; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attached-tx { font-size: 0.75rem; color: var(--text-dim); line-height: 1.35; }
-  .detach-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 0 4px; font-size: 0.85rem; opacity: 0.6; }
-  .detach-btn:hover { color: var(--danger); opacity: 1; }
-  .note-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 0.75rem; padding: 3px 7px; border-radius: 3px; font-family: var(--font-mono); }
-  .divider-soft { border: none; border-top: 1px dashed var(--border); margin: 4px 0; }
-  .type-filters { display: flex; gap: 4px; flex-wrap: wrap; }
-  .type-filter-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); padding: 3px 10px; border-radius: 3px; font-size: 0.72rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
-  .type-filter-btn.t-passive { color: var(--feat-passive, #6ec38c); }
-  .type-filter-btn.t-action { color: var(--feat-action, #d8a040); }
-  .type-filter-btn.t-reaction { color: var(--feat-reaction, #5aafdd); }
-  .type-filter-btn.t-fear { color: var(--feat-fear, #d64040); }
-  .type-filter-btn.active { background: color-mix(in srgb, currentColor 18%, var(--surface2)); border-color: currentColor; }
-  .picker-search { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 3px; font-size: 0.85rem; }
-  .picker-results { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto; }
-  .picker-row { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: transparent; border: 1px solid transparent; border-radius: 3px; cursor: pointer; text-align: left; color: var(--text); font-size: 0.82rem; }
-  .picker-row:hover { background: var(--surface); border-color: var(--border); }
-  .picker-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .picker-empty { color: var(--text-dim); font-style: italic; font-size: 0.78rem; padding: 8px 4px; }
-  .custom-pip { color: var(--accent); font-size: 0.75rem; }
-  .create-feature-btn { background: transparent; border: 1px dashed var(--border); color: var(--accent); padding: 7px; border-radius: 3px; cursor: pointer; font-size: 0.82rem; margin-top: 2px; }
-  .create-feature-btn:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: var(--accent); }
-
-  /* Feature type mini badges (shared with AdversaryEditor) */
-  .ftype-mini { display: inline-block; font-family: var(--font-mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 3px; background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); flex-shrink: 0; }
-  .ftype-mini.t-passive  { color: var(--feat-passive,  #6ec38c); border-color: currentColor; }
-  .ftype-mini.t-action   { color: var(--feat-action,   #d8a040); border-color: currentColor; }
-  .ftype-mini.t-reaction { color: var(--feat-reaction, #5aafdd); border-color: currentColor; }
-  .ftype-mini.t-fear     { color: var(--feat-fear,     #d64040); border-color: currentColor; }
+  /* Tab: domain cards */
+  .domain-empty { color: var(--text-dim); font-size: 0.82rem; line-height: 1.6; }
+  .inline-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: inherit; padding: 0; font-family: inherit; text-decoration: underline; }
+  .domain-tab-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .domain-badge { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 2px 7px; }
+  .spellcast-badge { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 2px 7px; }
 
   /* Tab: equipment */
   .equip-section { display: flex; flex-direction: column; gap: 6px; }
@@ -691,6 +798,4 @@
   /* Tab: notes */
   .notes-area { width: 100%; min-height: 220px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: var(--font-body); font-size: 0.88rem; resize: vertical; line-height: 1.6; }
   .notes-area:focus { outline: none; border-color: var(--accent); }
-
-  .modal-md { width: 560px; max-width: 96vw; }
 </style>
