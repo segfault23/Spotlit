@@ -323,6 +323,7 @@ const DEFAULT_CHARACTER = {
   gallery: [],
   notes: '',
   conditions: { hidden: false, restrained: false, vulnerable: false },
+  resourceState: {},
 };
 
 export async function listMyCharacters(ownerSub) {

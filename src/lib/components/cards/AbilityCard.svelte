@@ -1,8 +1,9 @@
 <script>
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
+  import ResourceTracker from '../ResourceTracker.svelte';
 
-  let { name = '', text = '', source = '' } = $props();
+  let { name = '', text = '', source = '', resource = null, resourceState = null, resolvedMax = undefined, onResourceChange = null } = $props();
 
   let renderedText = $derived(
     text ? DOMPurify.sanitize(marked.parse(text)) : ''
@@ -20,6 +21,11 @@
       {@html renderedText}
     </div>
   {/if}
+  {#if resource && resource.type !== 'system_note'}
+    <div class="ability-tracker">
+      <ResourceTracker {resource} state={resourceState} {resolvedMax} onchange={onResourceChange} />
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -33,4 +39,5 @@
   .ability-text :global(li) { margin: 2px 0; }
   .ability-text :global(strong) { color: var(--text); }
   .ability-text :global(em) { font-style: italic; }
+  .ability-tracker { padding-top: 2px; }
 </style>

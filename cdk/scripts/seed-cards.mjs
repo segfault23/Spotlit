@@ -110,6 +110,7 @@ function transformDomainCards(cards) {
             level: c.level,
             stressCost: c.stress_cost,
             type: c.type,
+            ...(c.resource !== undefined && { resource: c.resource }),
             updatedAt: now,
             gsi1pk: 'domainCard',
             gsi1sk: c.name,
