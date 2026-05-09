@@ -37,6 +37,30 @@ Copy `.env.example` to `.env` and set:
 
 When `DEV_USER` is set, `hooks.server.js` short-circuits all JWT verification and sets `locals.user` directly.
 
+### Testing Auth-Protected Routes
+
+`DEV_USER` only works in local dev — it is never set in the production Lambda environment, so `spotlit.online` always runs full Cognito JWT verification. There is no way to bypass auth on the deployed site without a real `id_token` cookie from an actual Cognito/Google login.
+
+With `DEV_USER` set locally, all auth guards pass automatically. The following routes require auth:
+
+- `/characters`, `/characters/[id]`, `/characters/[id]/play`
+- `/campaigns/[id]`, `/campaigns/[id]/characters/*`
+- `/player/*` (guarded in `src/routes/player/+layout.server.js`)
+- `/profile`, `/profile/adversaries/*`, `/profile/features/*`
+- `/join/[code]`
+- All `/api/*` endpoints
+
+**Testing the player subdomain locally:**
+
+Player subdomain detection reads `x-forwarded-host` (set by CloudFront Functions in production) and falls back to `event.url.hostname`. Locally that resolves to `localhost`, so `locals.isPlayerDomain` is always `false`.
+
+Two options:
+
+1. **Direct URL** — navigate to `http://localhost:5173/player`; routes work without the subdomain flag. Only the auto-redirect from `/` and any UI conditioned on `isPlayerDomain` won't fire.
+2. **Full simulation** — add `127.0.0.1 player.localhost` to `/etc/hosts`, then visit `http://player.localhost:5173`. This makes `event.url.hostname` start with `player.` so full subdomain behaviour activates.
+
+**Testing the deployed site while authenticated:** if you log in via a browser and pass the `id_token` cookie value, it can be attached as a `Cookie` header in `WebFetch` calls to hit authenticated endpoints on `spotlit.online` for the token's ~1 hour validity.
+
 ## Architecture
 
 ### Runtime Stack
