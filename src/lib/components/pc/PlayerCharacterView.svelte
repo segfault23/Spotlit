@@ -609,6 +609,7 @@
 <style>
   /* ── Shell ───────────────────────────────────────────────────────────────── */
   .pcv {
+    --hdr-h: 60px;
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
@@ -626,6 +627,8 @@
     position: sticky;
     top: 0;
     z-index: 20;
+    min-height: var(--hdr-h);
+    box-sizing: border-box;
   }
   .back-link {
     color: var(--text-dim);
@@ -749,6 +752,8 @@
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
+    /* Ensures background fills the full content area, not just child heights */
+    background: var(--surface2);
   }
 
   /* ── Sidebar ─────────────────────────────────────────────────────────────── */
@@ -757,8 +762,8 @@
     border-right: 1px solid var(--border);
     padding: 14px;
     position: sticky;
-    top: 49px; /* header height */
-    max-height: calc(100dvh - 49px);
+    top: var(--hdr-h);
+    max-height: calc(100dvh - var(--hdr-h));
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -871,7 +876,7 @@
   .pcv-right {
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - 49px - 72px); /* viewport minus header and hero */
+    min-height: calc(100dvh - var(--hdr-h) - 70px); /* viewport minus header and hero */
     background: var(--surface2);
     border-left: 0; /* border is on sidebar */
   }
@@ -1008,11 +1013,12 @@
     .pcv-sidebar {
       position: static;
       max-height: none;
+      overflow-y: visible;
       border-right: none;
       border-bottom: 1px solid var(--border);
     }
     .pcv-right {
-      min-height: auto;
+      min-height: 60vh;
     }
   }
 
