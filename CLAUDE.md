@@ -136,6 +136,27 @@ OAuth state uses HMAC-signed tokens instead of cookies (CloudFront's cache polic
 
 The codebase uses Svelte 5 runes syntax throughout: `$props()`, `$state()`, `$effect()`, `$derived()`. Do not use the legacy `export let` / reactive statement syntax.
 
+## Git Workflow
+
+This is a solo project — commit directly to `main` and push. No feature branching.
+
+```bash
+git add <files>
+git commit -m "description"
+git push origin main
+```
+
+Pushing to `main` triggers the GitHub Actions deploy workflow (`.github/workflows/deploy.yml`), which builds the SvelteKit app, installs Lambda deps, and runs `cdk deploy` for both stacks. The full deploy takes a few minutes.
+
+### Verifying a Deploy
+
+GitHub Actions workflow run results cannot be inspected directly from within this environment (no CLI or MCP tool for it). To confirm a deploy succeeded, use `WebFetch` on the live site:
+
+- `https://spotlit.online` — GM view (should load the encounter tracker)
+- `https://player.spotlit.online` — Player view (should redirect to `/player`)
+
+A working response from either URL confirms the Lambda and CloudFront distribution are serving correctly. A 5xx or timeout indicates the deploy may have failed or the Lambda cold-started with an error.
+
 ## Tooling
 
 - **ESLint** (`eslint.config.js`): flat config with `eslint-plugin-svelte`. `_`-prefixed variables are allowed as intentionally unused. `tracker-data.js` and `Combat Tracker.html` (legacy standalone files) are ignored.
