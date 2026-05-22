@@ -26,7 +26,7 @@
       {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
         <PCCompactCard {creature} />
       {:else}
-        <span class="empty" style="padding:4px 0;font-size:0.8rem;align-self:center">No PCs added yet.</span>
+        <span class="text-text-faint text-[0.8rem] italic self-center py-1">No PCs added yet.</span>
       {/each}
     </div>
   </div>
@@ -35,7 +35,7 @@
     {#each $encounter.creatures.filter(c => !c.isPC) as creature (creature.id)}
       <CreatureCard {creature} />
     {:else}
-      <div class="empty" style="grid-column:1/-1">No adversaries yet.</div>
+      <div class="text-text-faint text-[0.88rem] italic text-center py-7 px-4 col-span-full">No adversaries yet.</div>
     {/each}
   </div>
 </div>

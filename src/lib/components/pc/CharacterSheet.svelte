@@ -243,7 +243,7 @@
       {#if saveStatus === 'saving'}<span class="ss saving">Saving…</span>
       {:else if saveStatus === 'saved'}<span class="ss saved">Saved</span>
       {:else if saveStatus === 'error'}<span class="ss error">Error</span>{/if}
-      <button class="btn-p" onclick={save}>{isGmCreating ? 'Create' : 'Save'}</button>
+      <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85" onclick={save}>{isGmCreating ? 'Create' : 'Save'}</button>
     </div>
   </div>
 
@@ -647,7 +647,7 @@
               <select bind:value={newItemType}>
                 {#each ITEM_TYPES as t (t)}<option value={t}>{t}</option>{/each}
               </select>
-              <button class="btn-c" onclick={() => { addItem(); touch(); }}>+ Add</button>
+              <button class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem]" onclick={() => { addItem(); touch(); }}>+ Add</button>
             </div>
           </div>
         {/if}

@@ -59,7 +59,7 @@
                 <div class="avail-sub">{fmtLevel(char)}</div>
               </div>
               <button
-                class="btn-p"
+                class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 disabled:opacity-50"
                 disabled={joining === char.id}
                 onclick={() => linkCharacter(char.id)}
               >
@@ -72,7 +72,7 @@
       {/if}
 
       <p class="sect-title">Create a new character for this campaign</p>
-      <a class="btn-p create-btn" href="/characters/new?campaign={code}">
+      <a class="block text-center p-[10px] text-[0.9rem] no-underline bg-accent-dim border border-accent rounded text-[#f0dfa0] font-body font-semibold cursor-pointer transition-opacity hover:opacity-85" href="/characters/new?campaign={code}">
         + Create New Character
       </a>
 
@@ -192,14 +192,6 @@
   .avail-sub { font-size: 0.72rem; color: var(--text-dim); }
 
   .divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
-
-  .create-btn {
-    display: block;
-    text-align: center;
-    padding: 10px;
-    font-size: 0.9rem;
-    text-decoration: none;
-  }
 
   .cancel-link {
     text-align: center;

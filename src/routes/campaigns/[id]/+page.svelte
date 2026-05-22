@@ -42,7 +42,7 @@
   <header class="camp-head">
     <a class="back-link" href="/profile?tab=campaigns">← Campaigns</a>
     <div class="camp-actions">
-      <button class="btn-c btn-danger" onclick={deleteCampaign}>Delete Campaign</button>
+      <button class="bg-surface2 border border-border rounded px-3 py-[7px] font-body cursor-pointer text-[0.88rem] text-danger hover:bg-danger/[.18]" onclick={deleteCampaign}>Delete Campaign</button>
     </div>
   </header>
 
@@ -56,7 +56,7 @@
       <span class="join-label">Player invite link</span>
       <div class="join-row">
         <code class="join-code">{campaign.joinCode}</code>
-        <button class="btn-p" onclick={copyJoinCode}>
+        <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85" onclick={copyJoinCode}>
           {copied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
@@ -66,7 +66,7 @@
 
   <div class="section-head">
     <h2>Characters ({characters.length})</h2>
-    <a class="btn-p" href="/campaigns/{campaign.joinCode}/characters/new">
+    <a class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 no-underline" href="/campaigns/{campaign.joinCode}/characters/new">
       + Add Character
     </a>
   </div>
@@ -109,8 +109,8 @@
             </div>
           </div>
           <div class="char-foot">
-            <a class="btn-c" href={editCharHref(char)}>Edit Sheet</a>
-            <button class="btn-c btn-danger" onclick={() => deleteCharacter(char)}>
+            <a class="bg-surface2 border border-border rounded text-text-dim font-body cursor-pointer no-underline" href={editCharHref(char)}>Edit Sheet</a>
+            <button class="bg-surface2 border border-border rounded font-body cursor-pointer text-danger hover:bg-danger/[.18]" onclick={() => deleteCharacter(char)}>
               Remove
             </button>
           </div>
@@ -320,8 +320,4 @@
     padding: 5px 8px;
   }
 
-  .btn-danger { color: var(--danger); }
-  .btn-danger:hover {
-    background: color-mix(in srgb, var(--danger) 15%, var(--surface2));
-  }
 </style>

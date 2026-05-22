@@ -90,6 +90,10 @@
       goto(`/profile/features/${encodeURIComponent(slug)}`);
     }
   }
+
+  const btnP = 'bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 no-underline';
+  const btnC = 'bg-surface2 border border-border rounded text-text-dim font-body cursor-pointer no-underline';
+  const btnDanger = 'bg-surface2 border border-border rounded font-body cursor-pointer text-danger hover:bg-danger/[.18]';
 </script>
 
 <div class="profile-page">
@@ -135,10 +139,10 @@
                 <div class="enc-sub">Last edited {fmtDate(enc.updatedAt)}</div>
               </div>
               <div class="enc-actions">
-                <button class="btn-p" onclick={() => loadEncounter(enc.id)} disabled={loadingId !== null}>
+                <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 disabled:opacity-50" onclick={() => loadEncounter(enc.id)} disabled={loadingId !== null}>
                   {loadingId === enc.id ? 'Loading…' : 'Load'}
                 </button>
-                <button class="btn-c btn-danger" onclick={() => deleteEncounter(enc.id)}>Delete</button>
+                <button class="bg-surface2 border border-border rounded px-3 py-[7px] font-body cursor-pointer text-[0.88rem] text-danger hover:bg-danger/[.18]" onclick={() => deleteEncounter(enc.id)}>Delete</button>
               </div>
             </li>
           {/each}
@@ -149,7 +153,7 @@
     {#if activeTab === 'adversaries'}
       <div class="tab-head">
         <h2>My Adversaries</h2>
-        <a class="btn-p" href="/profile/adversaries/new">+ New Adversary</a>
+        <a class={btnP} href="/profile/adversaries/new">+ New Adversary</a>
       </div>
       {#if data.customCreatures.length === 0}
         <div class="empty-block">
@@ -180,9 +184,9 @@
                 </div>
               {/if}
               <div class="lib-foot">
-                <a class="btn-c" href="/profile/adversaries/{encodeURIComponent(c.slug)}">Edit</a>
-                <button class="btn-c" onclick={() => duplicateAdversary(c)}>Duplicate</button>
-                <button class="btn-c btn-danger" onclick={() => deleteAdversary(c.slug)}>Delete</button>
+                <a class={btnC} href="/profile/adversaries/{encodeURIComponent(c.slug)}">Edit</a>
+                <button class={btnC} onclick={() => duplicateAdversary(c)}>Duplicate</button>
+                <button class={btnDanger} onclick={() => deleteAdversary(c.slug)}>Delete</button>
               </div>
             </div>
           {/each}
@@ -193,7 +197,7 @@
     {#if activeTab === 'features'}
       <div class="tab-head">
         <h2>My Features</h2>
-        <a class="btn-p" href="/profile/features/new">+ New Feature</a>
+        <a class={btnP} href="/profile/features/new">+ New Feature</a>
       </div>
       {#if data.customFeatures.length === 0}
         <div class="empty-block">
@@ -211,9 +215,9 @@
               {#if f.cost}<div class="feat-cost">{f.cost}</div>{/if}
               <div class="feat-body">{f.body}</div>
               <div class="lib-foot">
-                <a class="btn-c" href="/profile/features/{encodeURIComponent(f.slug)}">Edit</a>
-                <button class="btn-c" onclick={() => duplicateFeature(f)}>Duplicate</button>
-                <button class="btn-c btn-danger" onclick={() => deleteFeature(f.slug)}>Delete</button>
+                <a class={btnC} href="/profile/features/{encodeURIComponent(f.slug)}">Edit</a>
+                <button class={btnC} onclick={() => duplicateFeature(f)}>Duplicate</button>
+                <button class={btnDanger} onclick={() => deleteFeature(f.slug)}>Delete</button>
               </div>
             </div>
           {/each}
@@ -224,7 +228,7 @@
     {#if activeTab === 'campaigns'}
       <div class="tab-head">
         <h2>My Campaigns</h2>
-        <a class="btn-p" href="/campaigns/new">+ New Campaign</a>
+        <a class={btnP} href="/campaigns/new">+ New Campaign</a>
       </div>
       {#if !data.campaigns?.length}
         <div class="empty-block">
@@ -241,13 +245,13 @@
               {#if c.description}<div class="camp-desc">{c.description}</div>{/if}
               <div class="camp-code-row">
                 <code class="camp-code">{c.joinCode}</code>
-                <button class="btn-c" onclick={() => copyJoinLink(c.joinCode)}>
+                <button class={btnC} onclick={() => copyJoinLink(c.joinCode)}>
                   {copiedCode === c.joinCode ? 'Copied!' : 'Copy Link'}
                 </button>
               </div>
               <div class="lib-foot">
-                <a class="btn-c" href="/campaigns/{c.joinCode}">Open</a>
-                <button class="btn-c btn-danger" onclick={() => deleteCampaign(c.joinCode)}>Delete</button>
+                <a class={btnC} href="/campaigns/{c.joinCode}">Open</a>
+                <button class={btnDanger} onclick={() => deleteCampaign(c.joinCode)}>Delete</button>
               </div>
             </div>
           {/each}
@@ -470,13 +474,6 @@
     max-height: 4.2em;
     overflow: hidden;
     flex: 1;
-  }
-
-  .btn-danger {
-    color: var(--feat-fear);
-  }
-  .btn-danger:hover {
-    background: color-mix(in srgb, var(--feat-fear) 18%, var(--surface2));
   }
 
   .camp-card { gap: 10px; }
