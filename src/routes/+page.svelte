@@ -19,10 +19,11 @@
 
 <EncounterHeader />
 
-<div id="main">
-  <div class="pc-strip">
-    <span class="col-title pc-strip-label">Party</span>
-    <div class="pc-cards">
+<div class="flex-1 flex flex-col overflow-hidden relative z-[1]">
+  <!-- PC strip: label stays fixed, cards scroll horizontally on small screens -->
+  <div class="flex items-start gap-[10px] px-3 sm:px-[14px] py-[7px] border-b border-border bg-surface shrink-0">
+    <span class="font-mono text-[0.6rem] uppercase tracking-[3px] text-text-dim self-center shrink-0">Party</span>
+    <div class="flex flex-nowrap sm:flex-wrap gap-[5px] flex-1 min-w-0 overflow-x-auto">
       {#each $encounter.creatures.filter(c => c.isPC) as creature (creature.id)}
         <PCCompactCard {creature} />
       {:else}
@@ -31,7 +32,8 @@
     </div>
   </div>
 
-  <div class="adv-grid">
+  <!-- Adversary grid: 1-col mobile → 2-col md → auto-fill lg -->
+  <div class="flex-1 overflow-y-auto px-3 sm:px-[14px] py-[10px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[10px] content-start [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-[2px]">
     {#each $encounter.creatures.filter(c => !c.isPC) as creature (creature.id)}
       <CreatureCard {creature} />
     {:else}
