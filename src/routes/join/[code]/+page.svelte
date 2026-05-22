@@ -1,10 +1,24 @@
 <script>
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
 
   let { data } = $props();
-  let { campaign, available, code } = $derived(data);
+  let { campaign, code } = $derived(data);
 
+  let available = $state([]);
+  let loadingCampaign = $state(true);
   let joining = $state(null); // charId being joined
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/characters');
+      if (!res.ok) return;
+      const { characters } = await res.json();
+      available = characters.filter((c) => c.campaignCode !== code);
+    } catch { /* silently ignore */ } finally {
+      loadingCampaign = false;
+    }
+  });
 
   async function linkCharacter(charId) {
     joining = charId;
@@ -42,7 +56,22 @@
     </div>
 
     <div class="join-body">
-      {#if available.length > 0}
+      {#if loadingCampaign}
+        <p class="sect-title">Link an existing character</p>
+        <div class="avail-list">
+          {#each {length: 3} as _}
+            <div class="avail-row">
+              <div class="avail-avatar bg-surface3 animate-pulse"></div>
+              <div class="avail-info">
+                <div class="h-4 w-32 bg-surface3 rounded animate-pulse mb-1"></div>
+                <div class="h-3 w-24 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="h-8 w-14 bg-surface3 rounded animate-pulse shrink-0"></div>
+            </div>
+          {/each}
+        </div>
+        <hr class="divider" />
+      {:else if available.length > 0}
         <p class="sect-title">Link an existing character</p>
         <div class="avail-list">
           {#each available as char (char.id)}

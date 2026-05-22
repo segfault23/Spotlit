@@ -115,7 +115,16 @@
 
       {#if activeTab === 'campaign'}
         {#if loadingCampaign}
-          <div class="text-text-dim text-[0.82rem] py-3 text-center italic">Loading campaign characters…</div>
+          {#each {length: 3} as _}
+            <div class="flex items-center gap-[10px] py-2 border-b border-border last:border-b-0">
+              <div class="flex-1 flex flex-col gap-1">
+                <div class="h-4 w-32 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-48 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-36 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="h-7 w-12 bg-surface3 rounded animate-pulse shrink-0"></div>
+            </div>
+          {/each}
         {:else if campaignChars.length === 0}
           <div class="text-text-dim text-[0.82rem] py-3 text-center italic">No campaign characters found. Create a campaign and have players join via <a class="text-accent" href="/campaigns/new">Campaigns</a>.</div>
         {:else}

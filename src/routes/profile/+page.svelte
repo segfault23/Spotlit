@@ -20,6 +20,7 @@
 
   // ── Encounters ────────────────────────────────────────────────────────
   let loadingId = $state(null);
+  let loading = $state(false);
 
   async function loadEncounter(id) {
     loadingId = id;
@@ -35,14 +36,18 @@
     if (!confirm('Delete this saved encounter?')) return;
     await fetch(`/api/encounters/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if ($encounter.currentEncounterId === id) encounter.new();
+    loading = true;
     await invalidateAll();
+    loading = false;
   }
 
   // ── Custom adversaries ────────────────────────────────────────────────
   async function deleteAdversary(slug) {
     if (!confirm('Delete this custom adversary?')) return;
     await fetch(`/api/creatures/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+    loading = true;
     await invalidateAll();
+    loading = false;
   }
   async function duplicateAdversary(c) {
     const copy = { ...c, name: `${c.name} (copy)` };
@@ -63,7 +68,9 @@
   async function deleteFeature(slug) {
     if (!confirm('Delete this custom feature? Adversaries that reference it by name will show "no data".')) return;
     await fetch(`/api/features/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+    loading = true;
     await invalidateAll();
+    loading = false;
   }
   // ── Campaigns ─────────────────────────────────────────────────────────
   let copiedCode = $state(null);
@@ -75,7 +82,9 @@
   async function deleteCampaign(code) {
     if (!confirm('Delete this campaign?')) return;
     await fetch(`/api/campaigns/${code}`, { method: 'DELETE' });
+    loading = true;
     await invalidateAll();
+    loading = false;
   }
 
   async function duplicateFeature(f) {
@@ -126,7 +135,22 @@
       <div class="tab-head">
         <h2>Saved Encounters</h2>
       </div>
-      {#if data.encounters.length === 0}
+      {#if loading}
+        <ul class="enc-rows">
+          {#each {length: 3} as _}
+            <li class="enc-row">
+              <div class="enc-meta">
+                <div class="h-[18px] w-48 bg-surface3 rounded animate-pulse mb-2"></div>
+                <div class="h-3 w-32 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="enc-actions">
+                <div class="h-8 w-16 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-8 w-16 bg-surface3 rounded animate-pulse"></div>
+              </div>
+            </li>
+          {/each}
+        </ul>
+      {:else if data.encounters.length === 0}
         <div class="empty-block">
           No saved encounters yet. Build one and it'll auto-save here.
         </div>
@@ -155,7 +179,31 @@
         <h2>My Adversaries</h2>
         <a class={btnP} href="/profile/adversaries/new">+ New Adversary</a>
       </div>
-      {#if data.customCreatures.length === 0}
+      {#if loading}
+        <div class="card-grid">
+          {#each {length: 4} as _}
+            <div class="lib-card">
+              <div class="lib-head">
+                <div class="h-5 w-36 bg-surface3 rounded animate-pulse"></div>
+                <div class="flex gap-1 ml-auto">
+                  <div class="h-4 w-10 bg-surface3 rounded animate-pulse"></div>
+                  <div class="h-4 w-7 bg-surface3 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="h-3 w-14 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-14 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-14 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="lib-foot mt-auto">
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else if data.customCreatures.length === 0}
         <div class="empty-block">
           No custom adversaries yet.
           <br /><a class="empty-cta" href="/profile/adversaries/new">Build your first one →</a>
@@ -199,7 +247,29 @@
         <h2>My Features</h2>
         <a class={btnP} href="/profile/features/new">+ New Feature</a>
       </div>
-      {#if data.customFeatures.length === 0}
+      {#if loading}
+        <div class="card-grid feat-grid">
+          {#each {length: 4} as _}
+            <div class="lib-card feat-card">
+              <div class="lib-head">
+                <div class="h-4 w-12 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-5 w-32 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="h-3 w-20 bg-surface3 rounded animate-pulse"></div>
+              <div class="flex flex-col gap-1 flex-1">
+                <div class="h-3 w-full bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-full bg-surface3 rounded animate-pulse"></div>
+                <div class="h-3 w-3/4 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="lib-foot">
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else if data.customFeatures.length === 0}
         <div class="empty-block">
           No custom features yet.
           <br /><a class="empty-cta" href="/profile/features/new">Author your first one →</a>
@@ -230,7 +300,27 @@
         <h2>My Campaigns</h2>
         <a class={btnP} href="/campaigns/new">+ New Campaign</a>
       </div>
-      {#if !data.campaigns?.length}
+      {#if loading}
+        <div class="card-grid">
+          {#each {length: 3} as _}
+            <div class="lib-card camp-card">
+              <div class="lib-head">
+                <div class="h-5 w-36 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="h-3 w-full bg-surface3 rounded animate-pulse"></div>
+              <div class="h-3 w-3/4 bg-surface3 rounded animate-pulse"></div>
+              <div class="camp-code-row">
+                <div class="h-8 w-24 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-8 w-20 bg-surface3 rounded animate-pulse"></div>
+              </div>
+              <div class="lib-foot">
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+                <div class="h-7 bg-surface3 rounded animate-pulse"></div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else if !data.campaigns?.length}
         <div class="empty-block">
           No campaigns yet.
           <br /><a class="empty-cta" href="/campaigns/new">Create your first campaign →</a>
