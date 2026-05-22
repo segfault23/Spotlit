@@ -10,34 +10,31 @@
   );
 </script>
 
-<div class="ability-card">
-  <div class="ability-head">
-    <span class="ability-name">{name}</span>
-    {#if source}<span class="ability-source">{source}</span>{/if}
+<div class="bg-surface border border-border rounded py-2 px-2.5 flex flex-col gap-1">
+  <div class="flex items-center gap-2">
+    <span class="font-semibold text-[0.85rem] flex-1">{name}</span>
+    {#if source}
+      <span class="text-[0.68rem] text-text-dim font-mono border border-border rounded-[3px] px-1.5 py-px shrink-0">{source}</span>
+    {/if}
   </div>
   {#if text}
-    <div class="ability-text">
+    <div class="ability-text text-[0.78rem] text-text-dim leading-[1.45]">
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
       {@html renderedText}
     </div>
   {/if}
   {#if resource && resource.type !== 'system_note'}
-    <div class="ability-tracker">
+    <div class="pt-0.5">
       <ResourceTracker {resource} state={resourceState} {resolvedMax} onchange={onResourceChange} />
     </div>
   {/if}
 </div>
 
 <style>
-  .ability-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
-  .ability-head { display: flex; align-items: center; gap: 8px; }
-  .ability-name { font-weight: 600; font-size: 0.85rem; flex: 1; }
-  .ability-source { font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; flex-shrink: 0; }
-  .ability-text { font-size: 0.78rem; color: var(--text-dim); line-height: 1.45; }
+  /* :global() rules target markdown-rendered HTML injected via {@html} */
   .ability-text :global(p) { margin: 0; }
   .ability-text :global(ul), .ability-text :global(ol) { margin: 4px 0; padding-left: 16px; }
   .ability-text :global(li) { margin: 2px 0; }
   .ability-text :global(strong) { color: var(--text); }
   .ability-text :global(em) { font-style: italic; }
-  .ability-tracker { padding-top: 2px; }
 </style>
