@@ -35,12 +35,12 @@
     >{creature.name}</span>
 
     <div class="pc-tracks">
-      <DotTrack type="hp"  max={creature.maxHP}  current={creature.hp}  creatureId={creature.id} showAside={false} />
+      <DotTrack type="hp"  max={creature.maxHP}  current={creature.hp}  creatureId={creature.id} showAside={false} compact={true} />
       {#if creature.maxStr > 0}
-        <DotTrack type="str" max={creature.maxStr} current={creature.str} creatureId={creature.id} showAside={false} />
+        <DotTrack type="str" max={creature.maxStr} current={creature.str} creatureId={creature.id} showAside={false} compact={true} />
       {/if}
       {#if creature.armor > 0}
-        <DotTrack type="arm" max={creature.armor} current={creature.armUsed || 0} creatureId={creature.id} showAside={false} />
+        <DotTrack type="arm" max={creature.armor} current={creature.armUsed || 0} creatureId={creature.id} showAside={false} compact={true} />
       {/if}
     </div>
 

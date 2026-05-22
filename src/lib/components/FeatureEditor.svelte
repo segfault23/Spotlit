@@ -108,13 +108,13 @@
 
     <div class="preview-wrap">
       <span class="lbl-sm">Preview</span>
-      <div class="fblock {cls}">
-        <div class="fblock-head">
-          <span class="ftype">{type}</span>
-          <span class="fname">{name || '(unnamed)'}</span>
-          {#if cost}<span class="fcost">{cost}</span>{/if}
+      <div class="fblock {cls} rounded py-1.5 px-2 border">
+        <div class="flex items-center gap-1.5 mb-[3px]">
+          <span class="ftype font-mono text-[0.54rem] uppercase tracking-[1px] px-[5px] py-px rounded-sm font-medium">{type}</span>
+          <span class="font-head text-[0.85rem] text-text">{name || '(unnamed)'}</span>
+          {#if cost}<span class="font-mono text-[0.56rem] text-text-faint ml-auto">{cost}</span>{/if}
         </div>
-        <div class="ftext">{body || '…rules text appears here'}</div>
+        <div class="text-[0.8rem] text-text-dim leading-[1.4]">{body || '…rules text appears here'}</div>
       </div>
     </div>
   </div>
@@ -206,6 +206,16 @@
     background: color-mix(in srgb, currentColor 22%, var(--surface2));
     border-color: currentColor;
   }
+
+  .fblock.passive  { background: var(--f-passive);  border-color: #2a5070; }
+  .fblock.action   { background: var(--f-action);   border-color: #5a4010; }
+  .fblock.reaction { background: var(--f-reaction); border-color: #5a3010; }
+  .fblock.fear     { background: var(--f-fear);     border-color: #6a1a08; }
+
+  .fblock.passive  .ftype { color: var(--f-passive-t);  background: rgba(90,171,223,.12); }
+  .fblock.action   .ftype { color: var(--f-action-t);   background: rgba(200,152,48,.12); }
+  .fblock.reaction .ftype { color: var(--f-reaction-t); background: rgba(208,120,50,.12); }
+  .fblock.fear     .ftype { color: var(--f-fear-t);     background: rgba(224,64,32,.12); }
 
   .preview-wrap {
     padding: 10px;
