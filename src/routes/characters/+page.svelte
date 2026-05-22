@@ -23,7 +23,7 @@
   <header class="pg-head">
     <a class="back-link" href="/">← Encounter</a>
     <h1 class="pg-title">My Characters</h1>
-    <a class="btn-p" href="/characters/new">+ New Character</a>
+    <a class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 no-underline" href="/characters/new">+ New Character</a>
   </header>
 
   {#if data.characters.length === 0}
@@ -75,9 +75,9 @@
           </div>
 
           <div class="char-foot">
-            <a class="btn-c" href="/characters/{b64(char.id)}">Edit Sheet</a>
-            <a class="btn-p" href="/characters/{b64(char.id)}/play">Play</a>
-            <button class="btn-c btn-danger" onclick={() => deleteCharacter(char)}>Delete</button>
+            <a class="bg-surface2 border border-border rounded text-text-dim font-body cursor-pointer no-underline" href="/characters/{b64(char.id)}">Edit Sheet</a>
+            <a class="bg-accent-dim border border-accent rounded text-[#f0dfa0] font-body font-semibold cursor-pointer no-underline" href="/characters/{b64(char.id)}/play">Play</a>
+            <button class="bg-surface2 border border-border rounded font-body cursor-pointer text-danger hover:bg-danger/[.18]" onclick={() => deleteCharacter(char)}>Delete</button>
           </div>
         </div>
       {/each}
@@ -213,8 +213,4 @@
     padding: 5px 6px;
   }
 
-  .btn-danger { color: var(--danger); }
-  .btn-danger:hover {
-    background: color-mix(in srgb, var(--danger) 15%, var(--surface2));
-  }
 </style>
