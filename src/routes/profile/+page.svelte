@@ -163,8 +163,8 @@
               <div class="lib-head">
                 <a class="lib-name" href="/profile/adversaries/{encodeURIComponent(c.slug)}">{c.name}</a>
                 <div class="lib-badges">
-                  <span class="badge type">{c.type}</span>
-                  <span class="badge">T{c.tier}</span>
+                  <span class="font-mono text-[0.56rem] uppercase tracking-[1px] px-[5px] py-px rounded-[3px] border border-accent-dim bg-surface2 text-accent">{c.type}</span>
+                  <span class="font-mono text-[0.56rem] uppercase tracking-[1px] px-[5px] py-px rounded-[3px] border border-border bg-surface2 text-text-dim">T{c.tier}</span>
                 </div>
               </div>
               <div class="lib-stats">
