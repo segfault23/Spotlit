@@ -69,6 +69,9 @@
     if (afterCancel) afterCancel();
     else goto('/profile?tab=features');
   }
+
+  const fieldCls = 'bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none w-full focus:border-accent-dim';
+  const labelCls = 'font-mono text-[0.58rem] uppercase tracking-[1.5px] text-text-dim';
 </script>
 
 <div class="feat-editor">
@@ -78,12 +81,12 @@
 
   <div class="ed-cols">
     <div class="ed-fields">
-      <div class="fg">
-        <label for="ed-fname">Name</label>
-        <input id="ed-fname" type="text" placeholder="e.g. Bone Crush" bind:value={name} />
+      <div class="flex flex-col gap-1">
+        <label for="ed-fname" class={labelCls}>Name</label>
+        <input id="ed-fname" type="text" placeholder="e.g. Bone Crush" class={fieldCls} bind:value={name} />
       </div>
 
-      <div class="fg">
+      <div class="flex flex-col gap-1">
         <span class="lbl">Type</span>
         <div class="type-row">
           {#each TYPES as t (t)}
@@ -95,14 +98,14 @@
         </div>
       </div>
 
-      <div class="fg">
-        <label for="ed-fcost">Cost <span class="dim">(optional)</span></label>
-        <input id="ed-fcost" type="text" placeholder="e.g. 1 Fear, Mark a Stress" bind:value={cost} />
+      <div class="flex flex-col gap-1">
+        <label for="ed-fcost" class={labelCls}>Cost <span class="dim">(optional)</span></label>
+        <input id="ed-fcost" type="text" placeholder="e.g. 1 Fear, Mark a Stress" class={fieldCls} bind:value={cost} />
       </div>
 
-      <div class="fg">
-        <label for="ed-fbody">Body</label>
-        <textarea id="ed-fbody" rows="8" placeholder="Rules text…" bind:value={body}></textarea>
+      <div class="flex flex-col gap-1">
+        <label for="ed-fbody" class={labelCls}>Body</label>
+        <textarea id="ed-fbody" rows="8" placeholder="Rules text…" class={fieldCls} bind:value={body}></textarea>
       </div>
     </div>
 
@@ -121,12 +124,12 @@
 
   {#if err}<div class="ed-err">{err}</div>{/if}
 
-  <div class="ed-bar">
-    <button class="btn-c" onclick={cancel}>Cancel</button>
+  <div class="flex gap-2 mt-2 items-center">
+    <button class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem]" onclick={cancel}>Cancel</button>
     {#if slug && !afterSave}
-      <button class="btn-c btn-danger" onclick={del}>Delete</button>
+      <button class="bg-surface2 border border-border rounded px-3 py-[7px] font-body cursor-pointer text-[0.88rem] text-danger hover:bg-danger/[.18]" onclick={del}>Delete</button>
     {/if}
-    <button class="btn-p" disabled={saving} onclick={save}>
+    <button class="ml-auto bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 disabled:opacity-50" disabled={saving} onclick={save}>
       {saving ? 'Saving…' : slug ? 'Save Changes' : 'Create Feature'}
     </button>
   </div>
@@ -230,19 +233,5 @@
     padding: 6px 10px;
     background: color-mix(in srgb, var(--feat-fear, #d64040) 12%, transparent);
     border-radius: 3px;
-  }
-
-  .ed-bar {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    align-items: center;
-  }
-  .ed-bar .btn-p { margin-left: auto; }
-  .btn-danger {
-    color: var(--feat-fear);
-  }
-  .btn-danger:hover {
-    background: color-mix(in srgb, var(--feat-fear) 18%, var(--surface2));
   }
 </style>

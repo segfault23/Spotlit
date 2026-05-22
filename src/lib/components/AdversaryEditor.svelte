@@ -168,6 +168,10 @@
     if (looksDirty() && !confirm('Discard changes?')) return;
     goto('/profile?tab=adversaries');
   }
+
+  const fieldCls = 'bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none w-full focus:border-accent-dim';
+  const selectCls = 'bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none w-full focus:border-accent-dim [&_option]:bg-surface2';
+  const labelCls = 'font-mono text-[0.58rem] uppercase tracking-[1.5px] text-text-dim';
 </script>
 
 <div class="adv-editor">
@@ -176,21 +180,21 @@
   <div class="ed-grid">
     <!-- Left: stats -->
     <div class="col">
-      <div class="fg">
-        <label for="ae-name">Name</label>
-        <input id="ae-name" type="text" placeholder="e.g. Crypt Wraith" bind:value={name} />
+      <div class="flex flex-col gap-1">
+        <label for="ae-name" class={labelCls}>Name</label>
+        <input id="ae-name" type="text" placeholder="e.g. Crypt Wraith" class={fieldCls} bind:value={name} />
       </div>
 
-      <div class="fgrow">
-        <div class="fg">
-          <label for="ae-type">Type</label>
-          <select id="ae-type" bind:value={type}>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1">
+          <label for="ae-type" class={labelCls}>Type</label>
+          <select id="ae-type" class={selectCls} bind:value={type}>
             {#each TYPES as t (t)}<option>{t}</option>{/each}
           </select>
         </div>
-        <div class="fg">
-          <label for="ae-tier">Tier</label>
-          <select id="ae-tier" bind:value={tier}>
+        <div class="flex flex-col gap-1">
+          <label for="ae-tier" class={labelCls}>Tier</label>
+          <select id="ae-tier" class={selectCls} bind:value={tier}>
             <option value={1}>T1</option>
             <option value={2}>T2</option>
             <option value={3}>T3</option>
@@ -199,61 +203,47 @@
         </div>
       </div>
 
-      <div class="fgrow3">
-        <div class="fg">
-          <label for="ae-diff">Difficulty</label><input
-            id="ae-diff"
-            type="number"
-            bind:value={diff}
-          />
+      <div class="grid grid-cols-3 gap-2">
+        <div class="flex flex-col gap-1">
+          <label for="ae-diff" class={labelCls}>Difficulty</label>
+          <input id="ae-diff" type="number" class={fieldCls} bind:value={diff} />
         </div>
-        <div class="fg">
-          <label for="ae-atk">ATK Mod</label><input id="ae-atk" type="text" bind:value={atk} />
+        <div class="flex flex-col gap-1">
+          <label for="ae-atk" class={labelCls}>ATK Mod</label>
+          <input id="ae-atk" type="text" class={fieldCls} bind:value={atk} />
         </div>
-        <div class="fg">
-          <label for="ae-hp">Max HP</label><input
-            id="ae-hp"
-            type="number"
-            min="1"
-            bind:value={maxHP}
-          />
+        <div class="flex flex-col gap-1">
+          <label for="ae-hp" class={labelCls}>Max HP</label>
+          <input id="ae-hp" type="number" min="1" class={fieldCls} bind:value={maxHP} />
         </div>
       </div>
 
-      <div class="fgrow">
-        <div class="fg">
-          <label for="ae-str">Max Stress</label><input
-            id="ae-str"
-            type="number"
-            min="0"
-            bind:value={maxStr}
-          />
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1">
+          <label for="ae-str" class={labelCls}>Max Stress</label>
+          <input id="ae-str" type="number" min="0" class={fieldCls} bind:value={maxStr} />
         </div>
-        <div class="fg">
-          <label for="ae-thresh">Thresholds (Major / Severe)</label><input
-            id="ae-thresh"
-            type="text"
-            placeholder="20 / 32"
-            bind:value={thresh}
-          />
+        <div class="flex flex-col gap-1">
+          <label for="ae-thresh" class={labelCls}>Thresholds (Major / Severe)</label>
+          <input id="ae-thresh" type="text" placeholder="20 / 32" class={fieldCls} bind:value={thresh} />
         </div>
       </div>
 
-      <div class="fg">
-        <label>Damage</label>
+      <div class="flex flex-col gap-1">
+        <label class={labelCls}>Damage</label>
         <div class="split-row">
-          <input type="text" placeholder="3d12+5" bind:value={dmgBase} />
-          <select bind:value={dmgType}>
+          <input type="text" placeholder="3d12+5" class="bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none focus:border-accent-dim" bind:value={dmgBase} />
+          <select class="bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none focus:border-accent-dim [&_option]:bg-surface2" bind:value={dmgType}>
             {#each DMG_TYPES as t (t)}<option>{t}</option>{/each}
           </select>
         </div>
       </div>
 
-      <div class="fg">
-        <label>Standard Attack</label>
+      <div class="flex flex-col gap-1">
+        <label class={labelCls}>Standard Attack</label>
         <div class="split-row">
-          <input type="text" placeholder="Bone Crush" bind:value={atkNameBase} />
-          <select bind:value={atkNameRange}>
+          <input type="text" placeholder="Bone Crush" class="bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none focus:border-accent-dim" bind:value={atkNameBase} />
+          <select class="bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none focus:border-accent-dim [&_option]:bg-surface2" bind:value={atkNameRange}>
             {#each ATK_RANGES as r (r)}<option>{r}</option>{/each}
           </select>
         </div>
@@ -347,12 +337,12 @@
 
   {#if err}<div class="ed-err">{err}</div>{/if}
 
-  <div class="ed-bar">
-    <button class="btn-c" onclick={cancel}>Cancel</button>
+  <div class="flex gap-2 items-center pt-1.5 border-t border-border">
+    <button class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem]" onclick={cancel}>Cancel</button>
     {#if slug}
-      <button class="btn-c btn-danger" onclick={del}>Delete</button>
+      <button class="bg-surface2 border border-border rounded px-3 py-[7px] font-body cursor-pointer text-[0.88rem] text-danger hover:bg-danger/[.18]" onclick={del}>Delete</button>
     {/if}
-    <button class="btn-p" disabled={saving} onclick={save}>
+    <button class="ml-auto bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 disabled:opacity-50" disabled={saving} onclick={save}>
       {saving ? 'Saving…' : slug ? 'Save Changes' : 'Create Adversary'}
     </button>
   </div>
@@ -360,15 +350,15 @@
 
 {#if createFeatureOpen}
   <div
-    class="overlay show"
+    class="fixed inset-0 bg-black/[.78] z-[100] flex items-center justify-center"
     role="dialog"
     aria-modal="true"
     tabindex="-1"
     onclick={(e) => e.target === e.currentTarget && (createFeatureOpen = false)}
     onkeydown={(e) => e.key === 'Escape' && (createFeatureOpen = false)}
   >
-    <div class="modal modal-md">
-      <div class="modal-title">New Feature</div>
+    <div class="bg-surface border border-border2 rounded-[10px] p-5 w-[560px] max-w-[96vw] max-h-[88vh] overflow-y-auto flex flex-col gap-3">
+      <div class="font-head text-[1.1rem] text-accent pb-[10px] border-b border-border shrink-0">New Feature</div>
       <FeatureEditor afterSave={onFeatureCreated} afterCancel={() => (createFeatureOpen = false)} />
     </div>
   </div>
@@ -634,32 +624,10 @@
   }
 
   .ed-err {
-    color: var(--feat-fear);
+    color: var(--feat-fear, #d64040);
     font-size: 0.8rem;
     padding: 6px 10px;
-    background: color-mix(in srgb, var(--feat-fear) 12%, transparent);
+    background: color-mix(in srgb, var(--feat-fear, #d64040) 12%, transparent);
     border-radius: 3px;
-  }
-
-  .ed-bar {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding-top: 6px;
-    border-top: 1px solid var(--border);
-  }
-  .ed-bar .btn-p {
-    margin-left: auto;
-  }
-  .btn-danger {
-    color: var(--feat-fear);
-  }
-  .btn-danger:hover {
-    background: color-mix(in srgb, var(--feat-fear) 18%, var(--surface2));
-  }
-
-  .modal-md {
-    width: 560px;
-    max-width: 96vw;
   }
 </style>

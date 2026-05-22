@@ -24,6 +24,9 @@
       saving = false;
     }
   }
+
+  const fieldCls = 'bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none w-full focus:border-accent-dim';
+  const labelCls = 'font-mono text-[0.58rem] uppercase tracking-[1.5px] text-text-dim';
 </script>
 
 <div class="page">
@@ -34,21 +37,21 @@
   <div class="form-card">
     <h1 class="form-title">New Campaign</h1>
 
-    <div class="fg">
-      <label for="camp-name">Campaign Name</label>
-      <input id="camp-name" type="text" placeholder="e.g. Shattered Realms" bind:value={name} />
+    <div class="flex flex-col gap-1">
+      <label for="camp-name" class={labelCls}>Campaign Name</label>
+      <input id="camp-name" type="text" placeholder="e.g. Shattered Realms" class={fieldCls} bind:value={name} />
     </div>
 
-    <div class="fg">
-      <label for="camp-desc">Description <span class="dim">(optional)</span></label>
-      <textarea id="camp-desc" rows="3" placeholder="A short description for your players…" bind:value={description}></textarea>
+    <div class="flex flex-col gap-1">
+      <label for="camp-desc" class={labelCls}>Description <span class="dim">(optional)</span></label>
+      <textarea id="camp-desc" rows="3" placeholder="A short description for your players…" class="{fieldCls} resize-y" bind:value={description}></textarea>
     </div>
 
     {#if err}<div class="err">{err}</div>{/if}
 
     <div class="form-foot">
-      <a class="btn-c" href="/profile?tab=campaigns">Cancel</a>
-      <button class="btn-p" disabled={saving} onclick={save}>
+      <a class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem] no-underline" href="/profile?tab=campaigns">Cancel</a>
+      <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85 disabled:opacity-50" disabled={saving} onclick={save}>
         {saving ? 'Creating…' : 'Create Campaign'}
       </button>
     </div>
@@ -91,5 +94,6 @@
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+    align-items: center;
   }
 </style>
