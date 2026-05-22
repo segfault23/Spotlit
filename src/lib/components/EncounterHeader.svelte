@@ -99,11 +99,11 @@
 
 <svelte:window onclick={handleOutsideClick} />
 
-<div id="header">
+<header class="relative z-10 bg-surface border-b border-border px-3 sm:px-[14px] py-2 flex items-center gap-2 sm:gap-[10px] shrink-0 flex-wrap">
   <button class="hdr-btn" onclick={handleNew}>🗎 New</button>
 
   <input
-    id="encounter-name"
+    class="enc-name"
     type="text"
     placeholder="Name this encounter…"
     value={$encounter.encounterName}
@@ -118,7 +118,7 @@
   <div class="hgroup">
     <span class="hg-label" style="color:var(--fear)">Fear</span>
     <button class="icon-btn" onclick={() => encounter.adj('fear', -1)}>−</button>
-    <div id="fear-tokens">
+    <div class="fear-tokens">
       {#each Array(12) as _, i (i)}
         <div
           class="ft"
@@ -142,7 +142,7 @@
     <button class="icon-btn" onclick={() => handleRoundAdj(1)}>+</button>
   </div>
 
-  <span id="round-flash" class:show={showFlash}>— spotlights cleared —</span>
+  <span class="round-flash" class:show={showFlash}>— spotlights cleared —</span>
 
   <button class="hdr-btn accent" onclick={() => activeModal.set('roster')}>⊞ Roster</button>
   <button class="hdr-btn" onclick={() => activeModal.set('addPC')}>+ PC</button>
@@ -242,10 +242,131 @@
       </div>
     {/if}
   </div>
-</div>
+</header>
 
 <style>
-  /* save-status indicator inline next to name */
+  /* ── Encounter name input ── */
+  .enc-name {
+    flex: 1;
+    min-width: 120px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 1.2rem;
+    padding: 2px 4px;
+    outline: none;
+  }
+  .enc-name::placeholder { color: var(--text-faint); }
+  .enc-name:read-only {
+    border: none;
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: default;
+  }
+
+  /* ── Header groups (Fear / Round) ── */
+  .hgroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 10px;
+    flex-shrink: 0;
+  }
+  .hg-label {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+  .hg-val {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 22px;
+    text-align: center;
+  }
+
+  /* ── Fear tokens ── */
+  .fear-tokens { display: flex; gap: 2px; }
+  .ft {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 1px solid var(--fear-bg);
+    background: var(--fear-bg);
+    cursor: pointer;
+    transition: background .1s, box-shadow .1s;
+    flex-shrink: 0;
+  }
+  .ft.lit {
+    background: var(--fear);
+    border-color: var(--fear-glow);
+    box-shadow: 0 0 5px var(--fear);
+  }
+
+  /* ── Icon buttons (±) ── */
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    transition: border-color .15s, color .15s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+
+  /* ── Header buttons ── */
+  .hdr-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    transition: all .15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .hdr-btn:hover { border-color: var(--border2); color: var(--text); }
+  .hdr-btn.accent { border-color: var(--accent-dim); color: var(--accent-dim); }
+  .hdr-btn.accent:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Round flash ── */
+  .round-flash {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--text-faint);
+    opacity: 0;
+    transition: opacity .5s;
+  }
+  .round-flash.show { opacity: 1; }
+
+  /* ── Responsive: compact fear tokens on small screens ── */
+  @media (max-width: 480px) {
+    .ft { width: 11px; height: 11px; }
+    .fear-tokens { gap: 1px; }
+    .hgroup { padding: 4px 8px; gap: 4px; }
+  }
+
+  /* ── Save status indicator ── */
   .save-indicator {
     font-size: 0.72rem;
     font-family: var(--font-mono);
@@ -259,7 +380,7 @@
   .save-indicator.save-saved  { color: var(--accent, #6ec38c); }
   .save-indicator.save-error  { color: var(--feat-fear); background: color-mix(in srgb, var(--feat-fear) 15%, transparent); }
 
-  /* settings menu trigger */
+  /* ── Settings button ── */
   .settings-btn {
     font-size: 1rem;
     line-height: 1;
@@ -274,6 +395,7 @@
     position: relative;
   }
 
+  /* ── Settings dropdown ── */
   .settings-menu {
     position: absolute;
     top: calc(100% + 6px);
@@ -366,7 +488,7 @@
     padding: 4px 0;
   }
 
-  /* encounter list */
+  /* ── Encounter list ── */
   .enc-list {
     display: flex;
     flex-direction: column;
@@ -421,7 +543,7 @@
     color: var(--feat-fear);
   }
 
-  /* theme grid */
+  /* ── Theme grid ── */
   .theme-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -462,7 +584,7 @@
     white-space: nowrap;
   }
 
-  /* responsive: pin menu to viewport on narrow screens */
+  /* ── Settings menu: pin to viewport on narrow screens ── */
   @media (max-width: 600px) {
     .settings-menu {
       position: fixed;
