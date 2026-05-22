@@ -1,4 +1,67 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/*
+  @theme inline: Tailwind reads the CSS variable reference at build time and
+  emits utilities that call var(--bg) etc. at runtime, so all 11 theme
+  overrides automatically flow through into any Tailwind utility class.
+*/
+@theme inline {
+  /* Surfaces */
+  --color-bg:       var(--bg);
+  --color-surface:  var(--surface);
+  --color-surface2: var(--surface2);
+  --color-surface3: var(--surface3);
+
+  /* Borders */
+  --color-border:  var(--border);
+  --color-border2: var(--border2);
+
+  /* Text */
+  --color-text:       var(--text);
+  --color-text-dim:   var(--text-dim);
+  --color-text-faint: var(--text-faint);
+
+  /* Accent */
+  --color-accent:     var(--accent);
+  --color-accent-dim: var(--accent-dim);
+
+  /* Fear */
+  --color-fear:     var(--fear);
+  --color-fear-glow: var(--fear-glow);
+  --color-fear-bg:  var(--fear-bg);
+
+  /* HP / Stress / Armor */
+  --color-hp-on:         var(--hp-on);
+  --color-hp-off:        var(--hp-off);
+  --color-hp-border:     var(--hp-border);
+  --color-stress-on:     var(--stress-on);
+  --color-stress-off:    var(--stress-off);
+  --color-stress-border: var(--stress-border);
+  --color-armor-on:      var(--armor-on);
+  --color-armor-off:     var(--armor-off);
+  --color-armor-border:  var(--armor-border);
+
+  /* Semantic */
+  --color-spotlight: var(--spotlight);
+  --color-pc-border: var(--pc-border);
+  --color-danger:    var(--danger);
+
+  /* Feature type backgrounds */
+  --color-f-passive:   var(--f-passive);
+  --color-f-passive-t: var(--f-passive-t);
+  --color-f-action:    var(--f-action);
+  --color-f-action-t:  var(--f-action-t);
+  --color-f-reaction:  var(--f-reaction);
+  --color-f-reaction-t: var(--f-reaction-t);
+  --color-f-fear:      var(--f-fear);
+  --color-f-fear-t:    var(--f-fear-t);
+
+  /* Typography */
+  --font-head: var(--font-head);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
 
 /* ═ Color Themes ═ */
 
@@ -181,7 +244,6 @@ body.theme-eldritch {
   --f-fear:#3a0810;--f-fear-t:#ff8888;
 }
 
-*{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 html.no-scroll,html.no-scroll body{overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(14px,1.4vw,18px);display:flex;flex-direction:column;min-height:100vh}
