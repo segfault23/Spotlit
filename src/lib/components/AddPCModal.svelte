@@ -88,18 +88,22 @@
     name = '';
     closeModal();
   }
+
+  const inputCls = 'bg-surface2 border border-border rounded px-2 py-1.5 text-text font-body text-[0.88rem] outline-none w-full focus:border-accent-dim';
+  const labelCls = 'font-mono text-[0.58rem] uppercase tracking-[1.5px] text-text-dim';
+  const addBtn = 'bg-surface2 border border-border text-text px-[10px] py-1 rounded-[3px] cursor-pointer text-[0.8rem] shrink-0 hover:border-accent hover:text-accent';
 </script>
 
 <div
-  class="overlay show"
+  class="fixed inset-0 bg-black/[.78] z-[100] flex items-center justify-center"
   role="dialog"
   aria-modal="true"
   tabindex="-1"
   onclick={e => e.target === e.currentTarget && closeModal()}
   onkeydown={e => e.key === 'Escape' && closeModal()}
 >
-  <div class="modal modal-sm">
-    <div class="modal-title">Add PC to Encounter</div>
+  <div class="bg-surface border border-border2 rounded-[10px] p-5 w-[380px] max-w-[96vw] max-h-[88vh] overflow-hidden flex flex-col">
+    <div class="font-head text-[1.1rem] text-accent pb-[10px] border-b border-border shrink-0 mb-3">Add PC to Encounter</div>
 
     <div class="modal-tab-strip">
       <button class="modal-tab" class:active={activeTab === 'campaign'} onclick={() => (activeTab = 'campaign')}>Campaign</button>
@@ -107,67 +111,85 @@
       <button class="modal-tab" class:active={activeTab === 'custom'}   onclick={() => (activeTab = 'custom')}>Custom</button>
     </div>
 
-    <div class="modal-scroll-body">
+    <div class="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 pt-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-sm">
 
       {#if activeTab === 'campaign'}
         {#if loadingCampaign}
-          <div class="empty">Loading campaign characters…</div>
+          <div class="text-text-dim text-[0.82rem] py-3 text-center italic">Loading campaign characters…</div>
         {:else if campaignChars.length === 0}
-          <div class="empty">No campaign characters found. Create a campaign and have players join via <a href="/campaigns/new">Campaigns</a>.</div>
+          <div class="text-text-dim text-[0.82rem] py-3 text-center italic">No campaign characters found. Create a campaign and have players join via <a class="text-accent" href="/campaigns/new">Campaigns</a>.</div>
         {:else}
           {#each campaignChars as char (char.id)}
-            <div class="roster-row">
-              <div style="flex:1">
-                <div class="roster-name">{char.name || 'Unnamed'}</div>
-                <div class="roster-stats">
+            <div class="flex items-center gap-[10px] py-2 border-b border-border last:border-b-0">
+              <div class="flex-1">
+                <div class="font-semibold text-[0.88rem]">{char.name || 'Unnamed'}</div>
+                <div class="text-[0.72rem] text-text-dim mt-0.5">
                   {[char.class, char.subclass].filter(Boolean).join(' · ')}
                   {char.class ? ' · ' : ''}HP {char.maxHP} · Stress {char.maxStress} · Hope {char.maxHope}
                 </div>
-                <div class="roster-campaign">{char._campaignName} · {char.playerName || 'Unknown player'}</div>
+                <div class="text-[0.68rem] text-text-faint italic">{char._campaignName} · {char.playerName || 'Unknown player'}</div>
               </div>
-              <button class="roster-add-btn" onclick={() => addFromCampaign(char)}>+ Add</button>
+              <button class={addBtn} onclick={() => addFromCampaign(char)}>+ Add</button>
             </div>
           {/each}
         {/if}
       {/if}
 
       {#if activeTab === 'roster'}
-        <div class="roster-list">
+        <div class="flex flex-col">
           {#if $roster.length}
             {#each $roster as r (r.id)}
-              <div class="roster-row">
-                <div style="flex:1">
-                  <div class="roster-name">{r.name}</div>
-                  <div class="roster-stats">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion}</div>
+              <div class="flex items-center gap-[10px] py-2 border-b border-border last:border-b-0">
+                <div class="flex-1">
+                  <div class="font-semibold text-[0.88rem]">{r.name}</div>
+                  <div class="text-[0.72rem] text-text-dim mt-0.5">HP {r.maxHP} · Stress {r.maxStr} · Evasion {r.evasion}</div>
                 </div>
-                <button class="roster-add-btn" onclick={() => addFromRoster(r)}>+ Add</button>
+                <button class={addBtn} onclick={() => addFromRoster(r)}>+ Add</button>
               </div>
             {/each}
           {:else}
-            <div class="empty">No roster characters saved yet.</div>
+            <div class="text-text-dim text-[0.82rem] py-3 text-center italic">No roster characters saved yet.</div>
           {/if}
         </div>
       {/if}
 
       {#if activeTab === 'custom'}
-        <div class="fg"><label for="pc-name">Name</label><input id="pc-name" type="text" placeholder="Character name" bind:value={name} /></div>
-        <div class="fgrow">
-          <div class="fg"><label for="pc-hp">Max HP</label><input id="pc-hp" type="number" min="1" bind:value={maxHP} /></div>
-          <div class="fg"><label for="pc-str">Max Stress</label><input id="pc-str" type="number" min="1" bind:value={maxStr} /></div>
+        <div class="flex flex-col gap-1">
+          <label for="pc-name" class={labelCls}>Name</label>
+          <input id="pc-name" type="text" placeholder="Character name" class={inputCls} bind:value={name} />
         </div>
-        <div class="fgrow">
-          <div class="fg"><label for="pc-hope">Max Hope</label><input id="pc-hope" type="number" min="1" bind:value={maxHope} /></div>
-          <div class="fg"><label for="pc-ev">Evasion</label><input id="pc-ev" type="number" bind:value={evasion} /></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1">
+            <label for="pc-hp" class={labelCls}>Max HP</label>
+            <input id="pc-hp" type="number" min="1" class={inputCls} bind:value={maxHP} />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="pc-str" class={labelCls}>Max Stress</label>
+            <input id="pc-str" type="number" min="1" class={inputCls} bind:value={maxStr} />
+          </div>
         </div>
-        <div class="fg"><label for="pc-arm">Armor Slots</label><input id="pc-arm" type="number" min="0" bind:value={armor} /></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1">
+            <label for="pc-hope" class={labelCls}>Max Hope</label>
+            <input id="pc-hope" type="number" min="1" class={inputCls} bind:value={maxHope} />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="pc-ev" class={labelCls}>Evasion</label>
+            <input id="pc-ev" type="number" class={inputCls} bind:value={evasion} />
+          </div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="pc-arm" class={labelCls}>Armor Slots</label>
+          <input id="pc-arm" type="number" min="0" class={inputCls} bind:value={armor} />
+        </div>
       {/if}
 
     </div>
 
-    <div class="modal-foot">
-      <button class="btn-c" onclick={closeModal}>Cancel</button>
+    <div class="flex gap-[7px] justify-end pt-[10px] mt-[10px] border-t border-border shrink-0">
+      <button class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem]" onclick={closeModal}>Cancel</button>
       {#if activeTab === 'custom'}
-        <button class="btn-p" onclick={addCustom}>Add Custom PC</button>
+        <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85" onclick={addCustom}>Add Custom PC</button>
       {/if}
     </div>
   </div>
@@ -179,6 +201,7 @@
     border-bottom: 1px solid var(--border);
     padding: 0 12px;
     gap: 2px;
+    flex-shrink: 0;
   }
   .modal-tab {
     background: transparent;
@@ -193,15 +216,4 @@
   }
   .modal-tab:hover { color: var(--text); }
   .modal-tab.active { color: var(--text); border-bottom-color: var(--accent); }
-
-  .roster-list { display: flex; flex-direction: column; gap: 4px; }
-  .roster-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .roster-row:last-child { border-bottom: none; }
-  .roster-name { font-weight: 600; font-size: 0.88rem; }
-  .roster-stats { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
-  .roster-campaign { font-size: 0.68rem; color: var(--text-faint); font-style: italic; }
-  .roster-add-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; }
-  .roster-add-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .empty { color: var(--text-dim); font-size: 0.82rem; padding: 12px 0; text-align: center; }
-  .empty a { color: var(--accent); }
 </style>

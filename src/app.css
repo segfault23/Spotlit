@@ -307,31 +307,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 /* ─ Conditions / Card footer / Notes ─ (converted to Tailwind in CreatureCard.svelte) */
 .empty{text-align:center;padding:28px 16px;color:var(--text-faint);font-style:italic;font-size:0.88rem}
 
-/* ─ Modals ─ */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;align-items:center;justify-content:center}
-.overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:500px;max-width:96vw;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;gap:0}
-.modal-sm{width:380px}
-.modal-lg{width:850px;max-height:92vh}
-.modal-title{font-family:var(--font-head);font-size:1.1rem;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--border);flex-shrink:0;margin-bottom:12px}
-.modal-scroll-body{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:12px}
-.modal-scroll-body::-webkit-scrollbar{width:4px}
-.modal-scroll-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.modal-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-body);font-size:0.9rem;padding:7px 10px;outline:none}
-.modal-search:focus{border-color:var(--accent-dim)}
-.modal-search::placeholder{color:var(--text-faint)}
+/* ─ Modals ─ (converted to Tailwind in RosterModal, AddAdversaryModal, AddPCModal, AdversaryEditor) */
 
-/* ─ Adversary picker / Roster ─ (converted to Tailwind in AddAdversaryModal.svelte and RosterModal.svelte) */
-
-/* ─ Form elements ─ */
+/* ─ Form elements ─ (.fgrow/.fgrow3 converted; .fg still used in CharacterSheet.svelte) */
 .fg{display:flex;flex-direction:column;gap:4px}
 .fg label{font-family:var(--font-mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim)}
 .fg input,.fg select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-body);font-size:0.88rem;padding:6px 8px;outline:none;width:100%}
 .fg input:focus,.fg select:focus{border-color:var(--accent-dim)}
 .fg select option{background:var(--surface2)}
-.fgrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fgrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.modal-foot{display:flex;gap:7px;justify-content:flex-end;padding-top:10px;margin-top:10px;border-top:1px solid var(--border);flex-shrink:0}
 .btn-p{background:var(--accent-dim);border:1px solid var(--accent);border-radius:4px;color:#f0dfa0;font-family:var(--font-body);font-weight:600;padding:7px 18px;cursor:pointer;font-size:0.88rem;transition:opacity .12s}
 .btn-p:hover{opacity:.85}
 .btn-c{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-family:var(--font-body);padding:7px 12px;cursor:pointer;font-size:0.88rem}
