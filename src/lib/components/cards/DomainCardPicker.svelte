@@ -6,6 +6,7 @@
     vault = [],
     domains = [],
     maxLevel = 10,
+    maxTotal = null,
     onLoadoutChange = () => {},
     onVaultChange = () => {},
   } = $props();
@@ -18,7 +19,18 @@
   let pickerExpanded = $state(true);
 
   let addedNames = $derived(new Set([...loadout, ...vault]));
+  // Total cards chosen across loadout + vault. When a maxTotal is set (e.g. the
+  // two cards a level-1 character may pick) we stop accepting new cards once the
+  // cap is reached. Moving a card between loadout and vault never adds to the
+  // total, so it stays allowed.
+  let totalSelected = $derived(loadout.length + vault.length);
+  let atTotalLimit = $derived(maxTotal != null && totalSelected >= maxTotal);
   let loadoutFull = $derived(loadout.length >= 5);
+  // The picker's "+ Add" button pulls new cards in, so it must respect both the
+  // 5-card active cap and the overall total cap.
+  let addDisabled = $derived(loadoutFull || atTotalLimit);
+  // The active loadout can never exceed the overall cap when one is set.
+  let loadoutCap = $derived(maxTotal != null ? Math.min(5, maxTotal) : 5);
 
   let cardByName = $derived(Object.fromEntries(cards.map(c => [c.name, c])));
 
@@ -45,6 +57,7 @@
   });
 
   function addToVault(name) {
+    if (addDisabled) return;
     onVaultChange([...vault, name]);
   }
 
@@ -72,7 +85,7 @@
 <div class="picker-section">
   <div class="picker-section-head">
     <span class="picker-section-title">Active Loadout</span>
-    <span class="loadout-count" class:full={loadoutFull}>{loadout.length} / 5</span>
+    <span class="loadout-count" class:full={loadout.length >= loadoutCap}>{loadout.length} / {loadoutCap}</span>
   </div>
 
   {#if loadout.length === 0}
@@ -133,6 +146,9 @@
   <button class="picker-section-head toggle-head" onclick={() => (pickerExpanded = !pickerExpanded)}>
     <span class="picker-section-title">Add Cards</span>
     {#if loading}<span class="loading-txt">Loading…</span>{/if}
+    {#if maxTotal != null}
+      <span class="chosen-count" class:full={atTotalLimit}>{totalSelected} / {maxTotal} chosen</span>
+    {/if}
     <span class="chevron">{pickerExpanded ? '▲' : '▼'}</span>
   </button>
 
@@ -156,6 +172,8 @@
 
     {#if loading}
       <div class="picker-empty">Loading cards…</div>
+    {:else if atTotalLimit}
+      <div class="picker-empty">You've chosen all {maxTotal} cards. Remove one to swap your selection.</div>
     {:else if availableCards.length === 0}
       <div class="picker-empty">{addedNames.size > 0 && cards.length > 0 ? 'All available cards added.' : 'No cards match the current filters.'}</div>
     {:else}
@@ -164,7 +182,7 @@
           <DomainCard
             {card}
             mode="picker"
-            {loadoutFull}
+            loadoutFull={addDisabled}
             added={addedNames.has(card.name)}
             onMoveToVault={addToVault}
           />
@@ -183,6 +201,8 @@
   .loadout-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
   .loadout-count.full { color: #d8a040; }
   .vault-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+  .chosen-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+  .chosen-count.full { color: #6ec38c; }
   .loading-txt { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
   .chevron { font-size: 0.65rem; color: var(--text-dim); }
   .picker-empty { font-size: 0.78rem; color: var(--text-dim); font-style: italic; padding: 4px 0; }
