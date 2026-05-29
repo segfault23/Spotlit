@@ -1,6 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import AbilityCard from '../cards/AbilityCard.svelte';
+  import DomainCardPicker from '../cards/DomainCardPicker.svelte';
   import NumberStepper from '../NumberStepper.svelte';
   import SelectTile from './SelectTile.svelte';
 
@@ -32,6 +33,11 @@
   let presence  = $state(0);
   let knowledge = $state(0);
 
+  // Two Experiences at +2 each (Daggerheart level-1 default).
+  let experiences   = $state([{ text: '', modifier: 2 }, { text: '', modifier: 2 }]);
+  let domainLoadout = $state([]);
+  let domainVault   = $state([]);
+
   // ── Wizard navigation ───────────────────────────────────────────────────────
   const STEPS = [
     { key: 'identity',  label: 'Name' },
@@ -39,6 +45,8 @@
     { key: 'ancestry',  label: 'Ancestry' },
     { key: 'community', label: 'Community' },
     { key: 'traits',    label: 'Traits' },
+    { key: 'exp',       label: 'Experiences' },
+    { key: 'domains',   label: 'Domains' },
     { key: 'review',    label: 'Review' },
   ];
   let stepIndex  = $state(0);
@@ -91,6 +99,7 @@
       .filter(s => s.class === charClass && s.subclass === subclass)
       .sort((a, b) => tierOrder(a.tier) - tierOrder(b.tier))[0] ?? null
   );
+  let activeDomains = $derived(foundationTier?.domains ?? []);
 
   let ancestryData  = $derived(ancestries.find(a => a.name === ancestry) ?? null);
   let ancestry2Data = $derived(ancestry2 ? (ancestries.find(a => a.name === ancestry2) ?? null) : null);
@@ -104,10 +113,24 @@
   );
 
   // ── Selection handlers ──────────────────────────────────────────────────────
+  // Changing class or subclass invalidates any picked domain cards, since the
+  // available domains come from the chosen subclass.
+  function clearDomains() {
+    domainLoadout = [];
+    domainVault = [];
+  }
   function selectClass(c) {
     charClass = c;
     const subs = [...new Set(subclasses.filter(s => s.class === c).map(s => s.subclass))];
-    if (!subs.includes(subclass)) subclass = '';
+    if (!subs.includes(subclass)) {
+      subclass = '';
+      clearDomains();
+    }
+  }
+  function selectSubclass(s) {
+    if (s === subclass) return;
+    subclass = s;
+    clearDomains();
   }
 
   function toggleMixed() {
@@ -145,6 +168,9 @@
       community,
       agility: +agility, strength: +strength, finesse: +finesse,
       instinct: +instinct, presence: +presence, knowledge: +knowledge,
+      experiences: experiences.map(e => ({ text: e.text.trim(), modifier: +e.modifier || 0 })),
+      domainLoadout,
+      domainVault,
       ...(campaignCode ? { campaignCode, campaignGmSub: campaign?.gmSub } : {}),
     };
   }
@@ -239,7 +265,7 @@
           <p class="step-hint">Your subclass shapes your starting features and domains.</p>
           <div class="tile-grid">
             {#each filteredSubclasses as s (s)}
-              <SelectTile label={s} selected={subclass === s} onSelect={() => (subclass = s)} />
+              <SelectTile label={s} selected={subclass === s} onSelect={() => selectSubclass(s)} />
             {/each}
           </div>
 
@@ -377,10 +403,60 @@
         {/each}
       </div>
 
+    <!-- ── Step: Experiences ── -->
+    {:else if step === 'exp'}
+      <h2 class="step-title">Write your experiences</h2>
+      <p class="step-hint">
+        You start with two Experiences, each a +2 modifier you can spend Hope to add to a
+        relevant roll. Keep them evocative but not too broad — e.g. "Raised by smugglers"
+        rather than "Lucky".
+      </p>
+      <div class="exp-list">
+        {#each experiences as _exp, i (i)}
+          <div class="exp-row">
+            <div class="exp-mod">
+              <span class="exp-mod-sign">+</span>
+              <NumberStepper size="sm" min={0} max={9}
+                value={experiences[i].modifier}
+                onchange={(raw) => { experiences[i].modifier = Number(raw) || 0; experiences = [...experiences]; }} />
+            </div>
+            <input class="exp-text" type="text" placeholder="e.g. Grew up in the mines"
+              bind:value={experiences[i].text} />
+          </div>
+        {/each}
+      </div>
+
+    <!-- ── Step: Domain cards ── -->
+    {:else if step === 'domains'}
+      <h2 class="step-title">Choose your domain cards</h2>
+      {#if !subclass || activeDomains.length === 0}
+        <p class="step-hint">
+          Pick a class and subclass first — your domains come from your subclass.
+          <button type="button" class="inline-link" onclick={() => goToStep(1)}>Go to Class</button>
+        </p>
+      {:else}
+        <p class="step-hint">
+          At level 1, choose <strong>two</strong> cards from your domains — one from each, or
+          both from the same. Added cards go to your active loadout.
+        </p>
+        <div class="detail-meta">
+          <span class="meta-label">Domains</span>
+          {#each activeDomains as d (d)}<span class="badge">{d}</span>{/each}
+        </div>
+        <DomainCardPicker
+          loadout={domainLoadout}
+          vault={domainVault}
+          domains={activeDomains}
+          maxLevel={1}
+          onLoadoutChange={(v) => { domainLoadout = v; }}
+          onVaultChange={(v) => { domainVault = v; }}
+        />
+      {/if}
+
     <!-- ── Step: Review ── -->
     {:else if step === 'review'}
       <h2 class="step-title">Review</h2>
-      <p class="step-hint">Create the character, then fine-tune everything (HP, equipment, domain cards) on the full sheet.</p>
+      <p class="step-hint">Create the character, then fine-tune the rest (HP, equipment, notes) on the full sheet.</p>
       <dl class="review-list">
         <div class="review-row"><dt>Name</dt><dd>{name || '—'}{pronouns ? ` (${pronouns})` : ''}</dd></div>
         {#if playerName}<div class="review-row"><dt>Player</dt><dd>{playerName}</dd></div>{/if}
@@ -394,6 +470,17 @@
             <span>Ins {traitSign(instinct)}</span><span>Pre {traitSign(presence)}</span><span>Kno {traitSign(knowledge)}</span>
           </dd>
         </div>
+        {#if experiences.some(e => e.text.trim())}
+          <div class="review-row">
+            <dt>Experiences</dt>
+            <dd>
+              {#each experiences.filter(e => e.text.trim()) as e, i (i)}
+                <div>{e.text.trim()} <span class="review-mod">+{e.modifier}</span></div>
+              {/each}
+            </dd>
+          </div>
+        {/if}
+        <div class="review-row"><dt>Domain cards</dt><dd>{domainLoadout.length + domainVault.length || '—'}{domainLoadout.length + domainVault.length ? ` selected` : ''}</dd></div>
       </dl>
       {#if createError}
         <p class="create-error">Something went wrong creating the character. Please try again.</p>
@@ -466,7 +553,17 @@
   .trait-field { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
   .trait-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; }
 
+  /* Experiences */
+  .exp-list { display: flex; flex-direction: column; gap: 10px; }
+  .exp-row { display: flex; align-items: center; gap: 8px; }
+  .exp-mod { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+  .exp-mod-sign { font-family: var(--font-mono); font-size: 0.95rem; color: var(--accent); font-weight: 700; }
+  .exp-text { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: 0.9rem; padding: 6px 9px; outline: none; font-family: inherit; }
+  .exp-text:focus { border-color: var(--accent); }
+  .inline-link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+
   /* Review */
+  .review-mod { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); }
   .review-list { display: flex; flex-direction: column; gap: 0; margin: 0; }
   .review-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .review-row dt { width: 90px; flex-shrink: 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; padding-top: 2px; }
