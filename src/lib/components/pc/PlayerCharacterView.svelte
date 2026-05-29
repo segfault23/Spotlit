@@ -3,7 +3,7 @@
   import AbilityCard from '../cards/AbilityCard.svelte';
   import DomainCard from '../cards/DomainCard.svelte';
   import PlayerSettingsMenu from '../PlayerSettingsMenu.svelte';
-  import { theme } from '$lib/stores/theme.js';
+  import { deriveStats, normalizeInventory, formatWeaponDamage, CATEGORY_LABELS } from '$lib/items.js';
 
   let {
     initial,
@@ -22,24 +22,26 @@
   const ancestry   = initial?.ancestry  ?? '';
   const ancestry2  = initial?.ancestry2 ?? '';
   const community  = initial?.community ?? '';
-  const pronouns   = initial?.pronouns  ?? '';
   const playerName = initial?.playerName ?? '';
-  const evasion    = initial?.evasion   ?? 10;
   const charId     = initial?.id        ?? null;
 
+  // Fold equipped gear into the displayed stats (inventory is read-only here).
+  const stats = deriveStats(initial);
+  const evasion = stats.evasion;
+
   const traits = [
-    ['Agility',   initial?.agility   ?? 0],
-    ['Strength',  initial?.strength  ?? 0],
-    ['Finesse',   initial?.finesse   ?? 0],
-    ['Instinct',  initial?.instinct  ?? 0],
-    ['Presence',  initial?.presence  ?? 0],
-    ['Knowledge', initial?.knowledge ?? 0],
+    ['Agility',   stats.traits.agility],
+    ['Strength',  stats.traits.strength],
+    ['Finesse',   stats.traits.finesse],
+    ['Instinct',  stats.traits.instinct],
+    ['Presence',  stats.traits.presence],
+    ['Knowledge', stats.traits.knowledge],
   ];
 
   const experiences = initial?.experiences ?? [];
-  const thresholds  = initial?.thresholds ?? { minor: 0, major: 0, severe: 0 };
+  const thresholds  = stats.thresholds;
   const features    = initial?.features   ?? [];
-  const items       = initial?.items      ?? [];
+  const items       = normalizeInventory(initial?.items);
 
   // ── Mutable play-state ───────────────────────────────────────────────────────
   let maxHP      = $state(initial?.maxHP      ?? 6);
@@ -48,7 +50,7 @@
   let stress     = $state(initial?.stress     ?? 0);
   let maxHope    = $state(initial?.maxHope    ?? 5);
   let hope       = $state(initial?.hope       ?? maxHope);
-  let armorSlots = $state(initial?.armorSlots ?? 0);
+  let armorSlots = $state(stats.armorScore);
   let armorUsed  = $state(initial?.armorUsed  ?? 0);
   let handfuls   = $state(initial?.handfuls   ?? 0);
   let bags       = $state(initial?.bags       ?? 0);
@@ -546,13 +548,15 @@
                 <div class="item-row" class:equipped={item.equipped}>
                   <div class="item-info">
                     <div class="item-name">{item.name}</div>
-                    {#if item.type}
-                      <span class="item-type">{item.type}</span>
+                    {#if item.category}
+                      <span class="item-type">{CATEGORY_LABELS[item.category] ?? item.category}</span>
                     {/if}
-                    {#if item.type === 'weapon' && item.trait}
-                      <span class="item-detail">{item.trait}{item.range ? ` · ${item.range}` : ''}{item.damage ? ` · ${item.damage}` : ''}</span>
+                    {#if item.category === 'weapon'}
+                      <span class="item-detail">{item.trait}{item.range ? ` · ${item.range}` : ''} · {formatWeaponDamage(item, level)}</span>
                     {/if}
-                    {#if item.notes}
+                    {#if item.feature}
+                      <div class="item-notes">★ {item.feature.name}: {item.feature.text}</div>
+                    {:else if item.notes}
                       <div class="item-notes">{item.notes}</div>
                     {/if}
                   </div>

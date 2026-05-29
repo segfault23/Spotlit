@@ -1,7 +1,11 @@
 <script>
   import PlayerSettingsMenu from './PlayerSettingsMenu.svelte';
+  import { deriveStats } from '$lib/items.js';
 
   let { initial } = $props();
+
+  // Inventory is fixed in the play view, so gear-derived stats are computed once.
+  const stats = deriveStats(initial);
 
   let name      = $state(initial?.name      ?? '');
   let charClass = $state(initial?.class     ?? '');
@@ -14,7 +18,7 @@
   let stress     = $state(initial?.stress     ?? 0);
   let maxHope    = $state(initial?.maxHope    ?? 5);
   let hope       = $state(initial?.hope       ?? maxHope);
-  let armorSlots = $state(initial?.armorSlots ?? 0);
+  let armorSlots = $state(stats.armorScore);
   let armorUsed  = $state(initial?.armorUsed  ?? 0);
 
   let saveTimer;

@@ -6,6 +6,8 @@
   import OverviewTab from '../tabs/OverviewTab.svelte';
   import PlayerSettingsMenu from '../PlayerSettingsMenu.svelte';
   import NumberStepper from '../NumberStepper.svelte';
+  import InventoryManager from './InventoryManager.svelte';
+  import { deriveStats } from '$lib/items.js';
 
   let {
     initial = null,
@@ -101,31 +103,29 @@
   let saveStatus = $state('idle');
   let saveTimer;
 
-  // ── Items ─────────────────────────────────────────────────────────────────────
-  const ITEM_TYPES = ['weapon', 'armor', 'consumable', 'gear', 'tool', 'treasure'];
-  const WEAPON_TRAITS = ['Agility', 'Strength', 'Finesse', 'Instinct', 'Presence', 'Knowledge'];
-  const WEAPON_RANGES = ['Melee', 'Close', 'Far', 'Very Far'];
+  // ── Items & gear-derived stats ──────────────────────────────────────────────
+  // Equipped gear is folded into the character's effective stats at display time
+  // (see $lib/items.js). The stored evasion/armorSlots/thresholds remain the
+  // manual base; gear adds on top.
+  let stats = $derived(
+    deriveStats({
+      evasion, armorSlots, thresholds, level,
+      agility, strength, finesse, instinct, presence, knowledge,
+      maxHP, maxStress, maxHope, items,
+    })
+  );
+  let armorFromGear = $derived(!!stats.activeArmor || stats.modifiers.armorScore !== 0);
+  let thresholdsFromGear = $derived(
+    !!stats.activeArmor || stats.modifiers.thresholdMajor !== 0 || stats.modifiers.thresholdSevere !== 0
+  );
 
-  let newItemName = $state('');
-  let newItemType = $state('gear');
-
-  function addItem() {
-    if (!newItemName.trim()) return;
-    items = [...items, {
-      id: crypto.randomUUID(),
-      name: newItemName.trim(),
-      type: newItemType,
-      quantity: 1,
-      equipped: false,
-      notes: '',
-      trait: newItemType === 'weapon' ? 'Agility' : '',
-      range: newItemType === 'weapon' ? 'Melee' : '',
-      damage: '',
-    }];
-    newItemName = '';
+  function onItemsChange(next) {
+    items = next;
+    // Keep armor consumption within the (possibly reduced) effective score.
+    const max = deriveStats({ armorSlots, items: next }).armorScore;
+    if (armorUsed > max) armorUsed = max;
+    touch();
   }
-  function removeItem(id)             { items = items.filter(i => i.id !== id); }
-  function updateItem(id, key, value) { items = items.map(i => i.id === id ? { ...i, [key]: value } : i); }
 
   // ── Tier helpers ──────────────────────────────────────────────────────────────
   function tierOrder(tier) {
@@ -280,8 +280,8 @@
         {/each}
       </div>
 
-      <div class="section-label" style="margin-top:14px">Evasion</div>
-      <div class="evasion-badge">{evasion}</div>
+      <div class="section-label" style="margin-top:14px">Evasion{#if stats.evasion !== evasion}<span class="gear-tag" title="Base {evasion} + gear {stats.evasion - evasion >= 0 ? '+' : ''}{stats.evasion - evasion}">· gear</span>{/if}</div>
+      <div class="evasion-badge">{stats.evasion}</div>
 
       <div class="section-label" style="margin-top:14px">Resources</div>
       <div class="resources-list">
@@ -324,12 +324,16 @@
         <!-- Armor -->
         <div class="res-block">
           <div class="res-head">
-            <span class="res-label">Armor</span>
-            <span class="res-fraction">{armorUsed} / <input class="res-max-inp" type="number" min="0" bind:value={armorSlots} oninput={touch} /></span>
+            <span class="res-label">Armor{#if stats.activeArmor}<span class="gear-tag" title={stats.activeArmor.name}>· {stats.activeArmor.name}</span>{/if}</span>
+            {#if armorFromGear}
+              <span class="res-fraction">{armorUsed} / <span class="res-derived" title="From equipped gear">{stats.armorScore}</span></span>
+            {:else}
+              <span class="res-fraction">{armorUsed} / <input class="res-max-inp" type="number" min="0" bind:value={armorSlots} oninput={touch} /></span>
+            {/if}
           </div>
-          {#if armorSlots > 0}
+          {#if stats.armorScore > 0}
           <div class="dot-track">
-            {#each Array.from({length: armorSlots}, (_, i) => i) as i (i)}
+            {#each Array.from({length: stats.armorScore}, (_, i) => i) as i (i)}
               <button class="dot armor-dot {i < armorUsed ? 'filled' : ''}" onclick={() => { armorUsed = i < armorUsed ? i : i + 1; touch(); }}></button>
             {/each}
           </div>
@@ -350,7 +354,7 @@
         {/each}
 
         <!-- Damage Thresholds -->
-        <div class="section-label" style="margin-top:10px">Thresholds</div>
+        <div class="section-label" style="margin-top:10px">Thresholds{#if thresholdsFromGear}<span class="gear-tag" title="Derived from equipped armor + level">· gear</span>{/if}</div>
         <div class="threshold-grid">
           <div class="threshold-cell">
             <div class="threshold-lbl">Minor</div>
@@ -358,11 +362,19 @@
           </div>
           <div class="threshold-cell">
             <div class="threshold-lbl">Major</div>
-            <input class="threshold-inp" type="number" min="0" bind:value={thresholds.major} oninput={touch} />
+            {#if thresholdsFromGear}
+              <div class="threshold-derived" title="Armor base + level">{stats.thresholds.major}</div>
+            {:else}
+              <input class="threshold-inp" type="number" min="0" bind:value={thresholds.major} oninput={touch} />
+            {/if}
           </div>
           <div class="threshold-cell">
             <div class="threshold-lbl">Severe</div>
-            <input class="threshold-inp" type="number" min="0" bind:value={thresholds.severe} oninput={touch} />
+            {#if thresholdsFromGear}
+              <div class="threshold-derived" title="Armor base + level">{stats.thresholds.severe}</div>
+            {:else}
+              <input class="threshold-inp" type="number" min="0" bind:value={thresholds.severe} oninput={touch} />
+            {/if}
           </div>
         </div>
       </div>
@@ -610,48 +622,12 @@
         <!-- EQUIPMENT TAB -->
         {#if activeTab === 'equipment'}
           <div class="equip-section">
-            <div class="section-label">Weapons</div>
-            {#each items.filter(i => i.type === 'weapon') as item (item.id)}
-              <div class="item-row weapon-row">
-                <input class="item-name-inp" type="text" value={item.name}
-                  oninput={(e) => { updateItem(item.id, 'name', e.currentTarget.value); touch(); }} />
-                <select onchange={(e) => { updateItem(item.id, 'trait', e.currentTarget.value); touch(); }}>
-                  {#each WEAPON_TRAITS as t (t)}<option selected={item.trait === t}>{t}</option>{/each}
-                </select>
-                <select onchange={(e) => { updateItem(item.id, 'range', e.currentTarget.value); touch(); }}>
-                  {#each WEAPON_RANGES as r (r)}<option selected={item.range === r}>{r}</option>{/each}
-                </select>
-                <input class="damage-inp" type="text" placeholder="2d6+1" value={item.damage}
-                  oninput={(e) => { updateItem(item.id, 'damage', e.currentTarget.value); touch(); }} />
-                <button class="rm-btn" onclick={() => { removeItem(item.id); touch(); }}>✕</button>
-              </div>
-            {/each}
-
-            <div class="section-label" style="margin-top:14px">Armor &amp; Other Items</div>
-            {#each items.filter(i => i.type !== 'weapon') as item (item.id)}
-              <div class="item-row">
-                <span class="item-type-badge">{item.type}</span>
-                <input class="item-name-inp" type="text" value={item.name}
-                  oninput={(e) => { updateItem(item.id, 'name', e.currentTarget.value); touch(); }} />
-                <input class="item-qty-inp" type="number" min="1" value={item.quantity}
-                  oninput={(e) => { updateItem(item.id, 'quantity', +e.currentTarget.value); touch(); }} />
-                <label class="item-equip">
-                  <input type="checkbox" checked={item.equipped}
-                    onchange={(e) => { updateItem(item.id, 'equipped', e.currentTarget.checked); touch(); }} />
-                  Equipped
-                </label>
-                <button class="rm-btn" onclick={() => { removeItem(item.id); touch(); }}>✕</button>
-              </div>
-            {/each}
-
-            <div class="add-item-row">
-              <input class="item-name-inp" type="text" placeholder="Item name…" bind:value={newItemName}
-                onkeydown={(e) => e.key === 'Enter' && addItem()} />
-              <select bind:value={newItemType}>
-                {#each ITEM_TYPES as t (t)}<option value={t}>{t}</option>{/each}
-              </select>
-              <button class="bg-surface2 border border-border rounded px-3 py-[7px] text-text-dim font-body cursor-pointer text-[0.88rem]" onclick={() => { addItem(); touch(); }}>+ Add</button>
-            </div>
+            <InventoryManager
+              {items}
+              {level}
+              character={{ evasion, armorSlots, thresholds, agility, strength, finesse, instinct, presence, knowledge }}
+              onChange={onItemsChange}
+            />
           </div>
         {/if}
 
@@ -709,6 +685,11 @@
 
   /* Evasion */
   .evasion-badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border2); background: var(--surface3); font-family: var(--font-head); font-size: 1.2rem; color: var(--text); }
+
+  /* Gear-derived stat indicators */
+  .gear-tag { margin-left: 6px; font-size: 0.6rem; text-transform: none; letter-spacing: 0; color: var(--accent); font-weight: 500; }
+  .res-derived { font-family: var(--font-mono); color: var(--accent); }
+  .threshold-derived { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); text-align: center; padding: 4px 0; border: 1px solid var(--accent); border-radius: 4px; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 
   /* Resources */
   .resources-list { display: flex; flex-direction: column; gap: 8px; }
@@ -786,17 +767,6 @@
 
   /* Tab: equipment */
   .equip-section { display: flex; flex-direction: column; gap: 6px; }
-  .item-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
-  .weapon-row { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
-  .item-name-inp { flex: 1; min-width: 100px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.85rem; padding: 2px 0; outline: none; }
-  .item-name-inp:focus { border-bottom-color: var(--accent); }
-  .damage-inp { width: 70px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.82rem; padding: 2px 0; outline: none; font-family: var(--font-mono); }
-  .item-qty-inp { width: 40px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.82rem; text-align: center; padding: 2px 0; outline: none; }
-  .item-type-badge { font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; flex-shrink: 0; }
-  .item-equip { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-dim); cursor: pointer; }
-  .rm-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.85rem; padding: 0 4px; opacity: 0.5; flex-shrink: 0; }
-  .rm-btn:hover { color: var(--danger); opacity: 1; }
-  .add-item-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border); }
 
   /* Tab: notes */
   .notes-area { width: 100%; min-height: 220px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: var(--font-body); font-size: 0.88rem; resize: vertical; line-height: 1.6; }
@@ -830,14 +800,6 @@
     .res-btn { width: 26px; height: 26px; font-size: 1rem; }
 
     /* Keep text-entry fields at 16px to stop iOS Safari zooming on focus */
-    .fg input, .fg select, .exp-text-inp, .item-name-inp, .notes-area { font-size: 16px; }
-
-    /* Equipment: lay weapon controls out as a tidy grid instead of wrapping */
-    .weapon-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
-    .weapon-row .item-name-inp { grid-column: 1 / -1; }
-    .weapon-row select, .weapon-row .damage-inp { width: 100%; }
-    .weapon-row .rm-btn { justify-self: end; }
-    .add-item-row { flex-wrap: wrap; }
-    .add-item-row .item-name-inp { flex-basis: 100%; }
+    .fg input, .fg select, .exp-text-inp, .notes-area { font-size: 16px; }
   }
 </style>
