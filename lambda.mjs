@@ -87,6 +87,13 @@ export const handler = async (event) => {
       return fileResponse(content, contentType, cacheControl);
     }
 
+    // Immutable chunks that aren't found must not fall through to SSR — SSR
+    // can return application/json on error, which the browser rejects as a
+    // JS module with a MIME type error.
+    if (decodedPath.startsWith(`/${manifest.appPath}/immutable/`)) {
+      return { statusCode: 404, headers: { 'content-type': 'text/plain' }, body: 'Not Found', isBase64Encoded: false };
+    }
+
     // 2. Prerendered pages
     if (prerendered.has(decodedPath)) {
       const candidates = [
@@ -138,10 +145,20 @@ export const handler = async (event) => {
     body: reqBody,
   });
 
-  const response = await server.respond(request, {
-    getClientAddress: () => requestContext.http.sourceIp,
-    platform: { event },
-  });
+  let response;
+  try {
+    response = await server.respond(request, {
+      getClientAddress: () => requestContext.http.sourceIp,
+      platform: { event },
+    });
+  } catch {
+    return {
+      statusCode: 500,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+      body: 'Internal Server Error',
+      isBase64Encoded: false,
+    };
+  }
 
   const respHeaders = {};
   const respCookies = [];
