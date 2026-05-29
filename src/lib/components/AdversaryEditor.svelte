@@ -2,6 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { featuresByName } from '$lib/stores/catalog.js';
   import FeatureEditor from './FeatureEditor.svelte';
+  import NumberStepper from './NumberStepper.svelte';
 
   let { initial = null, slug = null } = $props();
 
@@ -206,7 +207,7 @@
       <div class="grid grid-cols-3 gap-2">
         <div class="flex flex-col gap-1">
           <label for="ae-diff" class={labelCls}>Difficulty</label>
-          <input id="ae-diff" type="number" class={fieldCls} bind:value={diff} />
+          <NumberStepper id="ae-diff" bind:value={diff} />
         </div>
         <div class="flex flex-col gap-1">
           <label for="ae-atk" class={labelCls}>ATK Mod</label>
@@ -214,14 +215,14 @@
         </div>
         <div class="flex flex-col gap-1">
           <label for="ae-hp" class={labelCls}>Max HP</label>
-          <input id="ae-hp" type="number" min="1" class={fieldCls} bind:value={maxHP} />
+          <NumberStepper id="ae-hp" min={1} bind:value={maxHP} />
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1">
           <label for="ae-str" class={labelCls}>Max Stress</label>
-          <input id="ae-str" type="number" min="0" class={fieldCls} bind:value={maxStr} />
+          <NumberStepper id="ae-str" min={0} bind:value={maxStr} />
         </div>
         <div class="flex flex-col gap-1">
           <label for="ae-thresh" class={labelCls}>Thresholds (Major / Severe)</label>
