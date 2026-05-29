@@ -4,7 +4,9 @@
   import DomainCardPicker from '../cards/DomainCardPicker.svelte';
   import NumberStepper from '../NumberStepper.svelte';
   import SelectTile from './SelectTile.svelte';
+  import InventoryManager from './InventoryManager.svelte';
   import { classInfo, DEFAULT_TRAIT_PRIORITY, STANDARD_ARRAY } from '$lib/data/classes.js';
+  import { recommendStarter } from '$lib/items.js';
 
   let {
     campaign = null,
@@ -38,6 +40,33 @@
   let experiences   = $state([{ text: '', modifier: 2 }, { text: '', modifier: 2 }]);
   let domainLoadout = $state([]);
   let domainVault   = $state([]);
+  let items         = $state([]);
+
+  // ── Equipment catalogue (for starter recommendations) ───────────────────────
+  let catalog       = $state(null);
+  let catalogError  = $state(false);
+  let starterApplied = $state(false);
+
+  async function ensureCatalog() {
+    if (catalog !== null) return;
+    try {
+      const res = await fetch('/api/items');
+      if (!res.ok) throw new Error();
+      catalog = (await res.json()).items ?? [];
+    } catch {
+      catalogError = true;
+      catalog = [];
+    }
+  }
+
+  let starterPicks = $derived(
+    catalog ? recommendStarter(catalog, { traitPriority }) : []
+  );
+
+  function applyStarter() {
+    items = starterPicks;
+    starterApplied = true;
+  }
 
   // ── Wizard navigation ───────────────────────────────────────────────────────
   const STEPS = [
@@ -48,6 +77,7 @@
     { key: 'traits',    label: 'Traits' },
     { key: 'exp',       label: 'Experiences' },
     { key: 'domains',   label: 'Domains' },
+    { key: 'equipment', label: 'Equipment' },
     { key: 'review',    label: 'Review' },
   ];
   let stepIndex  = $state(0);
@@ -56,6 +86,11 @@
   let createError = $state(false);
 
   let step = $derived(STEPS[stepIndex].key);
+
+  // Lazily load the item catalogue the first time the player reaches Equipment.
+  $effect(() => {
+    if (step === 'equipment') ensureCatalog();
+  });
 
   let canAdvance = $derived.by(() => {
     if (step === 'identity')  return name.trim().length > 0;
@@ -191,6 +226,7 @@
       experiences: experiences.map(e => ({ text: e.text.trim(), modifier: +e.modifier || 0 })),
       domainLoadout,
       domainVault,
+      items,
       ...(campaignCode ? { campaignCode, campaignGmSub: campaign?.gmSub } : {}),
     };
   }
@@ -489,6 +525,36 @@
         />
       {/if}
 
+    <!-- ── Step: Equipment ── -->
+    {:else if step === 'equipment'}
+      <h2 class="step-title">Gear up</h2>
+      <p class="step-hint">
+        Equip a primary weapon and armor to start — equipped gear automatically shapes your
+        Evasion, damage thresholds, and attacks. You can refine all of this on the full sheet later.
+      </p>
+      {#if catalogError}
+        <p class="step-hint">Couldn't load the item catalogue right now — you can add equipment on the sheet after creating.</p>
+      {:else if catalog === null}
+        <p class="step-hint">Loading catalogue…</p>
+      {:else}
+        {#if starterPicks.length > 0}
+          <div class="starter-row">
+            <button type="button" class="btn-ghost" onclick={applyStarter}>
+              {starterApplied ? 'Starter equipment applied' : 'Use recommended starter equipment'}
+            </button>
+            <span class="starter-hint">
+              {#each starterPicks as p (p.id)}<span class="starter-chip">{p.name}</span>{/each}
+            </span>
+          </div>
+        {/if}
+        <InventoryManager
+          {items}
+          level={1}
+          character={{ evasion: 10, armorSlots: 0, thresholds: { major: 0, severe: 0 }, agility, strength, finesse, instinct, presence, knowledge }}
+          onChange={(v) => { items = v; }}
+        />
+      {/if}
+
     <!-- ── Step: Review ── -->
     {:else if step === 'review'}
       <h2 class="step-title">Review</h2>
@@ -517,6 +583,16 @@
           </div>
         {/if}
         <div class="review-row"><dt>Domain cards</dt><dd>{domainLoadout.length + domainVault.length || '—'}{domainLoadout.length + domainVault.length ? ` selected` : ''}</dd></div>
+        {#if items.length}
+          <div class="review-row">
+            <dt>Equipment</dt>
+            <dd>
+              {#each items as it (it.id)}
+                <div>{it.name}{it.equipped ? ' (equipped)' : ''}{it.quantity > 1 ? ` ×${it.quantity}` : ''}</div>
+              {/each}
+            </dd>
+          </div>
+        {/if}
       </dl>
       {#if createError}
         <p class="create-error">Something went wrong creating the character. Please try again.</p>
@@ -583,6 +659,11 @@
   .badge.dim { color: var(--text-dim); border-color: var(--border); }
 
   .mixed-toggle { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--text-dim); cursor: pointer; }
+
+  /* Equipment step */
+  .starter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .starter-hint { display: flex; gap: 5px; flex-wrap: wrap; }
+  .starter-chip { font-size: 0.68rem; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; }
 
   /* Traits */
   .traits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
