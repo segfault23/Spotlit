@@ -2,7 +2,8 @@
   import FeatureBlock from '../FeatureBlock.svelte';
   import AbilityCard from '../cards/AbilityCard.svelte';
   import DomainCard from '../cards/DomainCard.svelte';
-  import { theme, THEMES } from '$lib/stores/theme.js';
+  import PlayerSettingsMenu from '../PlayerSettingsMenu.svelte';
+  import { theme } from '$lib/stores/theme.js';
 
   let {
     initial,
@@ -69,8 +70,6 @@
     { id: 'inventory', label: 'Inventory', icon: '⊞' },
     { id: 'notes',     label: 'Notes',     icon: '✎' },
   ];
-
-  const themeKeys = Object.keys(THEMES);
 
   function b64(str) {
     return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -254,11 +253,6 @@
   function adjBags(d)     { bags     = Math.max(0, bags     + d); touch(); }
   function adjChests(d)   { chests   = Math.max(0, chests   + d); touch(); }
 
-  function cycleTheme() {
-    const idx = themeKeys.indexOf($theme);
-    theme.set(themeKeys[(idx + 1) % themeKeys.length]);
-  }
-
   // ── Derived ───────────────────────────────────────────────────────────────────
   let classLine = $derived(
     [charClass, subclass ? `(${subclass})` : null, `Lv ${level}`].filter(Boolean).join(' ')
@@ -322,9 +316,7 @@
         <a class="icon-btn edit-link" href="/characters/{b64(charId)}" title="Edit character">✎</a>
       {/if}
 
-      <button class="theme-btn" onclick={cycleTheme} title="Change theme"
-              style="background: {THEMES[$theme]?.swatches[0] ?? '#e85f35'}">
-      </button>
+      <PlayerSettingsMenu />
     </div>
   </header>
 
@@ -663,16 +655,7 @@
     line-height: 1.4;
   }
   .icon-btn:active { color: var(--text); border-color: var(--border2); }
-  .theme-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2px solid var(--border2);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    flex-shrink: 0;
-  }
-  .rest-wrap { position: relative; }
+.rest-wrap { position: relative; }
   .rest-popup {
     position: absolute;
     top: calc(100% + 6px);

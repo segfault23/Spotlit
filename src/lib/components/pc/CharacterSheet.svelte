@@ -4,6 +4,7 @@
   import AbilityCard from '../cards/AbilityCard.svelte';
   import DomainCardPicker from '../cards/DomainCardPicker.svelte';
   import OverviewTab from '../tabs/OverviewTab.svelte';
+  import PlayerSettingsMenu from '../PlayerSettingsMenu.svelte';
 
   let {
     initial = null,
@@ -244,6 +245,7 @@
       {:else if saveStatus === 'saved'}<span class="ss saved">Saved</span>
       {:else if saveStatus === 'error'}<span class="ss error">Error</span>{/if}
       <button class="bg-accent-dim border border-accent rounded px-[18px] py-[7px] text-[#f0dfa0] font-body font-semibold cursor-pointer text-[0.88rem] transition-opacity hover:opacity-85" onclick={save}>{isGmCreating ? 'Create' : 'Save'}</button>
+      <PlayerSettingsMenu />
     </div>
   </div>
 

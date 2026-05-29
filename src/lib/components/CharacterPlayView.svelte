@@ -1,4 +1,6 @@
 <script>
+  import PlayerSettingsMenu from './PlayerSettingsMenu.svelte';
+
   let { initial } = $props();
 
   let name      = $state(initial?.name      ?? '');
@@ -62,6 +64,7 @@
       {#if saveStatus === 'saving'}<span class="ss">Saving…</span>
       {:else if saveStatus === 'saved'}<span class="ss ok">✓</span>
       {:else if saveStatus === 'error'}<span class="ss err">!</span>{/if}
+      <PlayerSettingsMenu />
     </div>
   </header>
 
