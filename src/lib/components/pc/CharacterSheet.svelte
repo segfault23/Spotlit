@@ -5,6 +5,7 @@
   import DomainCardPicker from '../cards/DomainCardPicker.svelte';
   import OverviewTab from '../tabs/OverviewTab.svelte';
   import PlayerSettingsMenu from '../PlayerSettingsMenu.svelte';
+  import NumberStepper from '../NumberStepper.svelte';
 
   let {
     initial = null,
@@ -421,7 +422,7 @@
 
             <div class="fg">
               <label>Level</label>
-              <input type="number" min="1" max="10" bind:value={level} oninput={touch} />
+              <NumberStepper min={1} max={10} bind:value={level} onchange={touch} />
             </div>
 
             <!-- Primary Ancestry -->
@@ -520,10 +521,10 @@
             {#each [['Agility', 'agility'], ['Strength', 'strength'], ['Finesse', 'finesse'], ['Instinct', 'instinct'], ['Presence', 'presence'], ['Knowledge', 'knowledge']] as [label, key] (key)}
               <div class="fg">
                 <label>{label}</label>
-                <input type="number" min="-5" max="5"
+                <NumberStepper min={-5} max={5}
                   value={key === 'agility' ? agility : key === 'strength' ? strength : key === 'finesse' ? finesse : key === 'instinct' ? instinct : key === 'presence' ? presence : knowledge}
-                  oninput={(e) => {
-                    const v = +e.currentTarget.value;
+                  onchange={(raw) => {
+                    const v = Number(raw) || 0;
                     if (key === 'agility')        agility   = v;
                     else if (key === 'strength')  strength  = v;
                     else if (key === 'finesse')   finesse   = v;
@@ -539,11 +540,11 @@
 
           <div class="section-label" style="margin-top:18px">Combat Stats</div>
           <div class="form-grid">
-            <div class="fg"><label>Evasion</label><input type="number" bind:value={evasion} oninput={touch} /></div>
-            <div class="fg"><label>Max HP</label><input type="number" min="1" bind:value={maxHP} oninput={touch} /></div>
-            <div class="fg"><label>Max Stress</label><input type="number" min="1" bind:value={maxStress} oninput={touch} /></div>
-            <div class="fg"><label>Max Hope</label><input type="number" min="1" bind:value={maxHope} oninput={touch} /></div>
-            <div class="fg"><label>Armor Slots</label><input type="number" min="0" bind:value={armorSlots} oninput={touch} /></div>
+            <div class="fg"><label>Evasion</label><NumberStepper bind:value={evasion} onchange={touch} /></div>
+            <div class="fg"><label>Max HP</label><NumberStepper min={1} bind:value={maxHP} onchange={touch} /></div>
+            <div class="fg"><label>Max Stress</label><NumberStepper min={1} bind:value={maxStress} onchange={touch} /></div>
+            <div class="fg"><label>Max Hope</label><NumberStepper min={1} bind:value={maxHope} onchange={touch} /></div>
+            <div class="fg"><label>Armor Slots</label><NumberStepper min={0} bind:value={armorSlots} onchange={touch} /></div>
           </div>
         {/if}
 
@@ -571,9 +572,9 @@
               <div class="exp-row">
                 <div class="exp-mod-wrap">
                   <label class="exp-mod-label">+</label>
-                  <input class="exp-mod-inp" type="number" min="0" max="9"
+                  <NumberStepper size="sm" min={0} max={9}
                     bind:value={experiences[i].modifier}
-                    oninput={() => { experiences = [...experiences]; touch(); }} />
+                    onchange={() => { experiences = [...experiences]; touch(); }} />
                 </div>
                 <input class="exp-text-inp" type="text" placeholder="e.g. Grew up in the mines"
                   bind:value={experiences[i].text}

@@ -3,6 +3,7 @@
   import { encounter } from '$lib/stores/encounter.js';
   import { closeModal } from '$lib/stores/modal.js';
   import { onMount } from 'svelte';
+  import NumberStepper from './NumberStepper.svelte';
 
   let activeTab = $state('campaign'); // 'campaign' | 'roster' | 'custom'
 
@@ -170,26 +171,26 @@
         <div class="grid grid-cols-2 gap-2">
           <div class="flex flex-col gap-1">
             <label for="pc-hp" class={labelCls}>Max HP</label>
-            <input id="pc-hp" type="number" min="1" class={inputCls} bind:value={maxHP} />
+            <NumberStepper id="pc-hp" min={1} bind:value={maxHP} />
           </div>
           <div class="flex flex-col gap-1">
             <label for="pc-str" class={labelCls}>Max Stress</label>
-            <input id="pc-str" type="number" min="1" class={inputCls} bind:value={maxStr} />
+            <NumberStepper id="pc-str" min={1} bind:value={maxStr} />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div class="flex flex-col gap-1">
             <label for="pc-hope" class={labelCls}>Max Hope</label>
-            <input id="pc-hope" type="number" min="1" class={inputCls} bind:value={maxHope} />
+            <NumberStepper id="pc-hope" min={1} bind:value={maxHope} />
           </div>
           <div class="flex flex-col gap-1">
             <label for="pc-ev" class={labelCls}>Evasion</label>
-            <input id="pc-ev" type="number" class={inputCls} bind:value={evasion} />
+            <NumberStepper id="pc-ev" bind:value={evasion} />
           </div>
         </div>
         <div class="flex flex-col gap-1">
           <label for="pc-arm" class={labelCls}>Armor Slots</label>
-          <input id="pc-arm" type="number" min="0" class={inputCls} bind:value={armor} />
+          <NumberStepper id="pc-arm" min={0} bind:value={armor} />
         </div>
       {/if}
 

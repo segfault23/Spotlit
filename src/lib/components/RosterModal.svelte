@@ -1,6 +1,7 @@
 <script>
   import { roster } from '$lib/stores/roster.js';
   import { closeModal } from '$lib/stores/modal.js';
+  import NumberStepper from './NumberStepper.svelte';
 
   let name    = $state('');
   let maxHP   = $state(6);
@@ -71,21 +72,21 @@
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1">
           <label for="r-hp" class={labelCls}>Max HP</label>
-          <input id="r-hp" type="number" min="1" max="12" class={inputCls} bind:value={maxHP} />
+          <NumberStepper id="r-hp" min={1} max={12} bind:value={maxHP} />
         </div>
         <div class="flex flex-col gap-1">
           <label for="r-str" class={labelCls}>Max Stress</label>
-          <input id="r-str" type="number" min="1" max="12" class={inputCls} bind:value={maxStr} />
+          <NumberStepper id="r-str" min={1} max={12} bind:value={maxStr} />
         </div>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1">
           <label for="r-ev" class={labelCls}>Evasion</label>
-          <input id="r-ev" type="number" class={inputCls} bind:value={evasion} />
+          <NumberStepper id="r-ev" bind:value={evasion} />
         </div>
         <div class="flex flex-col gap-1">
           <label for="r-arm" class={labelCls}>Armor Score</label>
-          <input id="r-arm" type="number" min="0" max="12" class={inputCls} bind:value={armor} />
+          <NumberStepper id="r-arm" min={0} max={12} bind:value={armor} />
         </div>
       </div>
     </div>
