@@ -1,4 +1,6 @@
 <script>
+  import PlayerSettingsMenu from '$lib/components/PlayerSettingsMenu.svelte';
+
   let { data } = $props();
 
   function b64(str) {
@@ -25,7 +27,10 @@
       <span class="wordmark">Spotlit</span>
       <span class="header-sub">Player Portal</span>
     </div>
-    <a class="new-btn" href="/characters/new">+ New Character</a>
+    <div class="header-actions">
+      <a class="new-btn" href="/characters/new">+ New Character</a>
+      <PlayerSettingsMenu />
+    </div>
   </header>
 
   {#if data.characters.length === 0}
@@ -114,6 +119,13 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-dim);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .new-btn {
