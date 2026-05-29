@@ -12,7 +12,7 @@ const TABLE = env.CONTENT_TABLE;
 function assertTable() {
   if (!TABLE) throw new Error('CONTENT_TABLE env var not set');
 }
-1
+
 export async function getFeature(slug) {
   assertTable();
   const r = await ddb.send(new GetCommand({

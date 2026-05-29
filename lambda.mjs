@@ -17,6 +17,20 @@ const PRERENDERED_DIR = path.join(__dirname, 'prerendered');
 const server = new Server(manifest);
 await server.init({ env: process.env });
 
+// Pre-warm: scan build/client/ once at startup and record every relative path.
+// Chunk requests become an in-memory Set lookup with no fs.stat on the hot
+// path, eliminating the window where a transient filesystem error causes a
+// file to appear missing and fall through to SSR.
+const clientAssets = new Set();
+async function scanClientDir(dir) {
+  for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) await scanClientDir(full);
+    else if (entry.isFile()) clientAssets.add(path.relative(CLIENT_DIR, full));
+  }
+}
+await scanClientDir(CLIENT_DIR);
+
 const TEXT_TYPES = /^(text\/|application\/(json|javascript|xml|graphql)|image\/svg\+xml)/;
 
 const MIME = {
@@ -39,8 +53,10 @@ const MIME = {
   '.map': 'application/json; charset=utf-8',
 };
 
+// Only suppress ENOENT — any other filesystem error (permission denied,
+// EMFILE, etc.) propagates so it surfaces in CloudWatch logs rather than
+// silently causing a file to appear missing.
 async function readFileIfExists(filePath, rootDir) {
-  // Path traversal guard
   const resolved = path.resolve(filePath);
   if (
     !resolved.startsWith(path.resolve(rootDir) + path.sep) &&
@@ -51,7 +67,9 @@ async function readFileIfExists(filePath, rootDir) {
   try {
     const stat = await fs.stat(resolved);
     if (stat.isFile()) return await fs.readFile(resolved);
-  } catch {}
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
   return null;
 }
 
@@ -76,15 +94,23 @@ export const handler = async (event) => {
 
   // 1. Static assets from client/
   if (method === 'GET' || method === 'HEAD') {
-    const clientFile = path.join(CLIENT_DIR, decodedPath.startsWith('/') ? decodedPath.slice(1) : decodedPath);
-    const content = await readFileIfExists(clientFile, CLIENT_DIR);
-    if (content) {
-      const ext = path.extname(clientFile).toLowerCase();
+    const relPath = decodedPath.startsWith('/') ? decodedPath.slice(1) : decodedPath;
+
+    if (clientAssets.has(relPath)) {
+      const content = await fs.readFile(path.join(CLIENT_DIR, relPath));
+      const ext = path.extname(relPath).toLowerCase();
       const contentType = MIME[ext] || 'application/octet-stream';
       const cacheControl = decodedPath.startsWith(`/${manifest.appPath}/immutable/`)
         ? 'public, immutable, max-age=31536000'
         : 'public, max-age=0, must-revalidate';
       return fileResponse(content, contentType, cacheControl);
+    }
+
+    // /_app/immutable/* not in the asset map means it genuinely doesn't exist
+    // in this build. Return 404 rather than falling through to SSR, which can
+    // return application/json on error and trigger a browser MIME type block.
+    if (decodedPath.startsWith(`/${manifest.appPath}/immutable/`)) {
+      return { statusCode: 404, headers: { 'content-type': 'text/plain' }, body: 'Not Found', isBase64Encoded: false };
     }
 
     // 2. Prerendered pages
@@ -138,10 +164,20 @@ export const handler = async (event) => {
     body: reqBody,
   });
 
-  const response = await server.respond(request, {
-    getClientAddress: () => requestContext.http.sourceIp,
-    platform: { event },
-  });
+  let response;
+  try {
+    response = await server.respond(request, {
+      getClientAddress: () => requestContext.http.sourceIp,
+      platform: { event },
+    });
+  } catch {
+    return {
+      statusCode: 500,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+      body: 'Internal Server Error',
+      isBase64Encoded: false,
+    };
+  }
 
   const respHeaders = {};
   const respCookies = [];
