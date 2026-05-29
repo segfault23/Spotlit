@@ -801,4 +801,43 @@
   /* Tab: notes */
   .notes-area { width: 100%; min-height: 220px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: var(--font-body); font-size: 0.88rem; resize: vertical; line-height: 1.6; }
   .notes-area:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  @media (max-width: 560px) {
+    .cs-wrap { padding: 12px 12px 48px; gap: 12px; }
+
+    /* Top bar: back-link + save controls share the top row, the name input
+       drops to its own full-width line below so nothing gets squeezed. */
+    .cs-topbar { flex-wrap: wrap; }
+    .back-link { flex: 1; }
+    .cs-title-area { order: 3; flex-basis: 100%; }
+    .cs-name-input { font-size: 1.2rem; }
+
+    /* Hero: tighter spacing, smaller avatar */
+    .cs-hero { padding: 12px 14px; gap: 12px; }
+    .hero-avatar { width: 48px; height: 48px; }
+    .avatar-ph { font-size: 1.25rem; }
+
+    /* Single-column forms so selects/inputs aren't cramped */
+    .form-grid { grid-template-columns: 1fr; }
+    .span2 { grid-column: span 1; }
+    .traits-edit-grid { grid-template-columns: 1fr 1fr; }
+
+    /* Bigger touch targets */
+    .tab { padding: 11px 14px; font-size: 0.85rem; }
+    .tab-body { padding: 14px; }
+    .dot { width: 15px; height: 15px; }
+    .res-btn { width: 26px; height: 26px; font-size: 1rem; }
+
+    /* Keep text-entry fields at 16px to stop iOS Safari zooming on focus */
+    .fg input, .fg select, .exp-text-inp, .item-name-inp, .notes-area { font-size: 16px; }
+
+    /* Equipment: lay weapon controls out as a tidy grid instead of wrapping */
+    .weapon-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
+    .weapon-row .item-name-inp { grid-column: 1 / -1; }
+    .weapon-row select, .weapon-row .damage-inp { width: 100%; }
+    .weapon-row .rm-btn { justify-self: end; }
+    .add-item-row { flex-wrap: wrap; }
+    .add-item-row .item-name-inp { flex-basis: 100%; }
+  }
 </style>
