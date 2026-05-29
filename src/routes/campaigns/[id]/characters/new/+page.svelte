@@ -1,9 +1,9 @@
 <script>
-  import CharacterSheet from '$lib/components/pc/CharacterSheet.svelte';
+  import CharacterCreationWizard from '$lib/components/pc/CharacterCreationWizard.svelte';
   let { data } = $props();
 </script>
 
-<CharacterSheet
+<CharacterCreationWizard
   campaign={data.campaign}
   isGmCreating={true}
   backHref="/campaigns/{data.campaign.joinCode}"

@@ -8,10 +8,14 @@ export async function GET({ url }) {
   const requestedDomains = domainsParam.split(',').map(s => s.trim()).filter(Boolean);
   const allCards = await listDomains();
 
-  const filtered = allCards.filter(card =>
-    card.level <= maxLevel &&
-    (requestedDomains.length === 0 || requestedDomains.includes(card.domain))
-  );
+  const filtered = allCards
+    .filter(card =>
+      card.level <= maxLevel &&
+      (requestedDomains.length === 0 || requestedDomains.includes(card.domain))
+    )
+    // GSI1 returns cards sorted by name; re-sort by level (then name) so the
+    // picker lists them in a sensible 1 → 10 order instead of alphabetically.
+    .sort((a, b) => (a.level - b.level) || a.name.localeCompare(b.name));
 
   return json(filtered);
 }

@@ -1,5 +1,5 @@
 <script>
-  import CharacterSheet from '$lib/components/pc/CharacterSheet.svelte';
+  import CharacterCreationWizard from '$lib/components/pc/CharacterCreationWizard.svelte';
   import { page } from '$app/stores';
 
   let { data } = $props();
@@ -7,7 +7,7 @@
   let campaignCode = $derived($page.url.searchParams.get('campaign') ?? null);
 </script>
 
-<CharacterSheet
+<CharacterCreationWizard
   campaignCode={campaignCode}
   backHref="/characters"
   ancestries={data.ancestries ?? []}
