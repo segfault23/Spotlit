@@ -37,10 +37,10 @@
       name: char.name,
       maxHP: char.maxHP ?? 6,
       hp: char.hp ?? char.maxHP ?? 6,
-      maxStr: char.maxStress ?? 3,
+      maxStr: char.maxStress ?? 6,
       str: char.stress ?? 0,
-      maxHope: char.maxHope ?? 5,
-      hope: char.hope ?? char.maxHope ?? 5,
+      maxHope: char.maxHope ?? 6,
+      hope: char.hope ?? char.maxHope ?? 6,
       evasion: char.evasion ?? 10,
       armor: char.armorSlots ?? 0,
       armUsed: char.armorUsed ?? 0,
@@ -69,7 +69,7 @@
   let maxStr  = $state(6);
   let evasion = $state(10);
   let armor   = $state(0);
-  let maxHope = $state(5);
+  let maxHope = $state(6);
 
   function addCustom() {
     if (!name.trim()) return;
@@ -80,8 +80,8 @@
       hp: +maxHP || 6,
       maxStr: +maxStr || 6,
       str: 0,
-      maxHope: +maxHope || 5,
-      hope: +maxHope || 5,
+      maxHope: +maxHope || 6,
+      hope: +maxHope || 6,
       evasion: +evasion || 10,
       armor: +armor || 0,
       armUsed: 0,
@@ -116,7 +116,7 @@
 
       {#if activeTab === 'campaign'}
         {#if loadingCampaign}
-          {#each {length: 3} as _}
+          {#each {length: 3} as _, i (i)}
             <div class="flex items-center gap-[10px] py-2 border-b border-border last:border-b-0">
               <div class="flex-1 flex flex-col gap-1">
                 <div class="h-4 w-32 bg-surface3 rounded animate-pulse"></div>

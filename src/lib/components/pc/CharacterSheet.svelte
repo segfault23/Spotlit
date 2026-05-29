@@ -42,10 +42,10 @@
   // ── Resources ─────────────────────────────────────────────────────────────────
   let maxHP      = $state(initial?.maxHP      ?? 6);
   let hp         = $state(initial?.hp         ?? 0);
-  let maxStress  = $state(initial?.maxStress  ?? 3);
+  let maxStress  = $state(initial?.maxStress  ?? 6);
   let stress     = $state(initial?.stress     ?? 0);
-  let maxHope    = $state(initial?.maxHope    ?? 5);
-  let hope       = $state(initial?.hope       ?? 5);
+  let maxHope    = $state(initial?.maxHope    ?? 6);
+  let hope       = $state(initial?.hope       ?? 2);
   let evasion    = $state(initial?.evasion    ?? 10);
   let armorSlots = $state(initial?.armorSlots ?? 0);
   let armorUsed  = $state(initial?.armorUsed  ?? 0);
@@ -485,7 +485,7 @@
             <div class="card-preview-section">
               <div class="section-sublabel">Community Feature</div>
               <div class="card-preview-list">
-                {#each communityData.features as feat}
+                {#each communityData.features as feat (feat.name)}
                   <AbilityCard name={feat.name ?? ''} text={feat.text ?? feat.description ?? ''} source={community} />
                 {/each}
               </div>
@@ -496,7 +496,7 @@
           {#if subclassTiers.length > 0}
             <div class="card-preview-section">
               <div class="section-sublabel">Subclass Features</div>
-              {#each subclassTiers as tier}
+              {#each subclassTiers as tier (tier.tier)}
                 {@const unlockLvl = tierUnlockLevel(tier.tier)}
                 {@const locked = level < unlockLvl}
                 <div class="tier-block" class:locked>
@@ -507,7 +507,7 @@
                     {/if}
                   </div>
                   <div class="card-preview-list">
-                    {#each tier.features ?? [] as feat}
+                    {#each tier.features ?? [] as feat (feat.name)}
                       <AbilityCard name={feat.name ?? ''} text={feat.text ?? feat.description ?? ''} />
                     {/each}
                   </div>
