@@ -4,6 +4,7 @@
   import DomainCardPicker from '../cards/DomainCardPicker.svelte';
   import NumberStepper from '../NumberStepper.svelte';
   import SelectTile from './SelectTile.svelte';
+  import { classInfo, DEFAULT_TRAIT_PRIORITY, STANDARD_ARRAY } from '$lib/data/classes.js';
 
   let {
     campaign = null,
@@ -139,14 +140,33 @@
   }
 
   // ── Traits: Daggerheart starting array ──────────────────────────────────────
-  const SUGGESTED = { agility: 2, strength: 1, finesse: 1, instinct: 0, presence: 0, knowledge: -1 };
+  // Pours the +2/+1/+1/0/0/−1 array into the traits the selected class cares
+  // about most. The priority comes from the class metadata, but if the chosen
+  // subclass exposes a spellcast trait we promote that to the top so the array
+  // matches the character's actual casting stat.
+  let traitPriority = $derived.by(() => {
+    const info = classInfo(charClass);
+    let priority = info?.traitPriority ? [...info.traitPriority] : [...DEFAULT_TRAIT_PRIORITY];
+    const spell = foundationTier?.spellcastTrait?.toLowerCase();
+    if (spell && priority.includes(spell)) {
+      priority = [spell, ...priority.filter(t => t !== spell)];
+    }
+    return priority;
+  });
+
+  // The trait each suggested-array value lands on, for display on the traits step.
+  let suggestedByTrait = $derived(
+    Object.fromEntries(traitPriority.map((trait, i) => [trait, STANDARD_ARRAY[i] ?? 0]))
+  );
+
   function applySuggested() {
-    agility = SUGGESTED.agility;
-    strength = SUGGESTED.strength;
-    finesse = SUGGESTED.finesse;
-    instinct = SUGGESTED.instinct;
-    presence = SUGGESTED.presence;
-    knowledge = SUGGESTED.knowledge;
+    const v = suggestedByTrait;
+    agility = v.agility ?? 0;
+    strength = v.strength ?? 0;
+    finesse = v.finesse ?? 0;
+    instinct = v.instinct ?? 0;
+    presence = v.presence ?? 0;
+    knowledge = v.knowledge ?? 0;
   }
   function traitSign(v) { return v > 0 ? `+${v}` : `${v}`; }
 
@@ -256,7 +276,12 @@
       {:else}
         <div class="tile-grid">
           {#each classes as c (c)}
-            <SelectTile label={c} selected={charClass === c} onSelect={() => selectClass(c)} />
+            <SelectTile
+              label={c}
+              blurb={classInfo(c)?.description ?? ''}
+              selected={charClass === c}
+              onSelect={() => selectClass(c)}
+            />
           {/each}
         </div>
 
@@ -378,14 +403,24 @@
     {:else if step === 'traits'}
       <h2 class="step-title">Assign your traits</h2>
       <p class="step-hint">
-        At level 1 the suggested array is +2, +1, +1, 0, 0, −1. Apply it and rearrange,
-        or set each trait yourself.
+        At level 1 the suggested array is +2, +1, +1, 0, 0, −1.
+        {#if charClass}
+          Applying it weights the highest values toward a {charClass}'s key traits — then
+          rearrange or set each trait yourself.
+        {:else}
+          Apply it and rearrange, or set each trait yourself.
+        {/if}
       </p>
-      <button type="button" class="btn-ghost" onclick={applySuggested}>Apply suggested array</button>
+      <button type="button" class="btn-ghost" onclick={applySuggested}>
+        {charClass ? `Apply ${charClass} array` : 'Apply suggested array'}
+      </button>
       <div class="traits-grid">
         {#each [['Agility', 'agility'], ['Strength', 'strength'], ['Finesse', 'finesse'], ['Instinct', 'instinct'], ['Presence', 'presence'], ['Knowledge', 'knowledge']] as [label, key] (key)}
           <div class="trait-field">
-            <span class="trait-label">{label}</span>
+            <span class="trait-label">
+              {label}
+              {#if charClass && suggestedByTrait[key] === 2}<span class="trait-tag">key</span>{/if}
+            </span>
             <NumberStepper
               min={-1} max={2}
               value={key === 'agility' ? agility : key === 'strength' ? strength : key === 'finesse' ? finesse : key === 'instinct' ? instinct : key === 'presence' ? presence : knowledge}
@@ -448,6 +483,7 @@
           vault={domainVault}
           domains={activeDomains}
           maxLevel={1}
+          maxTotal={2}
           onLoadoutChange={(v) => { domainLoadout = v; }}
           onVaultChange={(v) => { domainVault = v; }}
         />
@@ -551,7 +587,8 @@
   /* Traits */
   .traits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
   .trait-field { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
-  .trait-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; }
+  .trait-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .trait-tag { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 0 4px; }
 
   /* Experiences */
   .exp-list { display: flex; flex-direction: column; gap: 10px; }
