@@ -10,12 +10,14 @@
 // Idempotent: uses PutItem so re-running overwrites existing items.
 //
 // Usage:
-//   node cdk/scripts/seed-items.mjs
+//   node cdk/scripts/seed-items.mjs            # write the catalogue
+//   node cdk/scripts/seed-items.mjs --prune    # also delete catalogue items
+//                                              # not present in the data file
 //
 // Requires AWS credentials (same ones cdk uses) and a deployed SpotlitCdkStack.
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
 import { existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -112,7 +114,52 @@ async function batchWrite(ddb, tableName, items) {
   }
 }
 
+// Every catalogue item currently in the table (queried via the gsi1 'item'
+// partition). Custom items live under USER#<sub>/CUSTOM_ITEM# and are NOT in
+// this partition, so prune never touches a user's custom items.
+async function listExistingCatalogueItems(ddb, tableName) {
+  const keys = [];
+  let lastKey;
+  do {
+    const r = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: 'gsi1',
+        KeyConditionExpression: 'gsi1pk = :p',
+        ExpressionAttributeValues: { ':p': 'item' },
+        ProjectionExpression: 'pk, sk, slug',
+        ExclusiveStartKey: lastKey,
+      })
+    );
+    for (const it of r.Items ?? []) keys.push({ pk: it.pk, sk: it.sk, slug: it.slug });
+    lastKey = r.LastEvaluatedKey;
+  } while (lastKey);
+  return keys;
+}
+
+async function batchDelete(ddb, tableName, keys) {
+  const CHUNK = 25;
+  for (let i = 0; i < keys.length; i += CHUNK) {
+    const chunk = keys.slice(i, i + CHUNK);
+    let res = await ddb.send(
+      new BatchWriteCommand({
+        RequestItems: { [tableName]: chunk.map((Key) => ({ DeleteRequest: { Key } })) },
+      })
+    );
+    let attempts = 0;
+    while (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length && attempts < 5) {
+      attempts++;
+      await new Promise((r) => setTimeout(r, 200 * attempts));
+      res = await ddb.send(new BatchWriteCommand({ RequestItems: res.UnprocessedItems }));
+    }
+    if (res.UnprocessedItems && Object.keys(res.UnprocessedItems).length) {
+      throw new Error(`Failed to delete all items after retries (chunk starting at ${i})`);
+    }
+  }
+}
+
 async function main() {
+  const prune = process.argv.includes('--prune');
   const localPath = resolve(__dirname, 'seed-items.local.mjs');
   const examplePath = resolve(__dirname, 'seed-items.example.mjs');
   const dataPath = existsSync(localPath) ? localPath : examplePath;
@@ -128,6 +175,20 @@ async function main() {
   console.log('Writing items...');
   await batchWrite(ddb, tableName, items);
   console.log(`Done. Wrote ${items.length} items.`);
+
+  if (prune) {
+    console.log('Pruning catalogue items not present in the data file...');
+    const wanted = new Set(items.map((i) => i.slug));
+    const existing = await listExistingCatalogueItems(ddb, tableName);
+    const stale = existing.filter((e) => !wanted.has(e.slug));
+    if (stale.length === 0) {
+      console.log('Nothing to prune — table already matches the data file.');
+    } else {
+      console.log(`Deleting ${stale.length} stale item(s): ${stale.map((s) => s.slug).join(', ')}`);
+      await batchDelete(ddb, tableName, stale.map(({ pk, sk }) => ({ pk, sk })));
+      console.log(`Pruned ${stale.length} item(s).`);
+    }
+  }
 }
 
 main().catch((err) => {
